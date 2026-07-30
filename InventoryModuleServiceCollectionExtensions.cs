@@ -1,0 +1,33 @@
+using GlpiNg.Modules.Inventory.Controllers;
+using GlpiNg.Modules.Inventory.Import;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace GlpiNg.Modules.Inventory;
+
+/// <summary>
+/// Point d'enregistrement du module Inventory dans le conteneur DI de l'application
+/// hôte (GlpiNg.Web). Sert de modèle pour les futurs modules (Tickets, etc.) : chacun
+/// expose une extension du même type (ex. <c>AddTicketsModule</c>), appelée depuis
+/// Program.cs, plutôt que de faire enregistrer ses services par le projet hôte.
+///
+/// Le module ne connaît pas le DbContext concret de l'hôte (voir
+/// GlpiMySqlImportService, qui dépend du <see cref="Microsoft.EntityFrameworkCore.DbContext"/>
+/// de base) : c'est à l'hôte de mapper les entités du module (Computer, ComputerComponent,
+/// GlpiAgent) dans son propre DbContext.
+/// </summary>
+public static class InventoryModuleServiceCollectionExtensions
+{
+    public static IServiceCollection AddInventoryModule(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.Configure<GlpiImportOptions>(configuration.GetSection(GlpiImportOptions.SectionName));
+        services.AddScoped<GlpiMySqlImportService>();
+
+        // Permet à ASP.NET Core de découvrir les contrôleurs de ce module (assembly
+        // distincte de celle du projet hôte).
+        services.AddControllers()
+            .AddApplicationPart(typeof(GlpiImportController).Assembly);
+
+        return services;
+    }
+}

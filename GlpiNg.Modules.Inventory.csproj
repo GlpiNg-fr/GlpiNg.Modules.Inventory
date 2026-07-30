@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>GlpiNg.Modules.Inventory</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      Permet d'utiliser les types ASP.NET Core (ControllerBase, ApiController...)
+      dans cette bibliothèque de classes sans dépendre du projet hôte GlpiNg.Web.
+      Si ce module gagne des pages/composants Razor plus tard, remplacer le Sdk
+      ci-dessus par "Microsoft.NET.Sdk.Razor" (qui reste compatible avec cette
+      FrameworkReference).
+    -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Uniquement les abstractions EF Core (DbContext, DbSet<T>) : ce module ne
+      connaît pas le fournisseur (Sqlite/SqlServer) ni le DbContext concret, qui
+      restent la responsabilité du projet hôte. Voir Import/GlpiMySqlImportService.cs.
+    -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.8" />
+    <PackageReference Include="MySqlConnector" Version="2.6.1" />
+  </ItemGroup>
+
+</Project>
