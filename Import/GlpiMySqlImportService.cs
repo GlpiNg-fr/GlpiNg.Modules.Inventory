@@ -173,18 +173,17 @@ public class GlpiMySqlImportService(DbContext db, IOptions<GlpiImportOptions> op
 
         foreach (GlpiAgentRow row in rows)
         {
-            GlpiAgent? agent = await db.Set<GlpiAgent>().FirstOrDefaultAsync(a => a.DeviceId == row.DeviceId, cancellationToken);
+            // La base GLPI source ne connaît pas le header GLPI-Agent-ID (introduit par le
+            // protocole JSON) : "deviceid" est la seule identité stable disponible ici, on la
+            // réutilise comme AgentUuid. Si l'agent contacte ensuite via le protocole JSON avec
+            // un UUID différent, un second enregistrement sera créé — limite acceptée de l'import.
+            GlpiAgent? agent = await db.Agents.FirstOrDefaultAsync(a => a.AgentUuid == row.DeviceId, cancellationToken);
             bool isNew = agent is null;
-            agent ??= new GlpiAgent { DeviceId = row.DeviceId };
+            agent ??= new GlpiAgent { AgentUuid = row.DeviceId, DeviceId = row.DeviceId };
 
             agent.Hostname = row.Name ?? agent.Hostname;
             agent.AgentVersion = row.Version ?? agent.AgentVersion;
             agent.LastContactAt = row.LastContact ?? agent.LastContactAt;
-
-            if (glpiComputerIdToLocalId.TryGetValue(row.GlpiComputerId, out int localComputerId))
-            {
-                agent.ComputerId = localComputerId;
-            }
 
             if (isNew)
             {
@@ -195,9 +194,19 @@ public class GlpiMySqlImportService(DbContext db, IOptions<GlpiImportOptions> op
             {
                 result.AgentsUpdated++;
             }
-        }
 
-        await db.SaveChangesAsync(cancellationToken);
+            await db.SaveChangesAsync(cancellationToken);
+
+            if (glpiComputerIdToLocalId.TryGetValue(row.GlpiComputerId, out int localComputerId))
+            {
+                Computer? computer = await db.Computers.FirstOrDefaultAsync(c => c.Id == localComputerId, cancellationToken);
+                if (computer is not null)
+                {
+                    computer.AgentId = agent.Id;
+                    await db.SaveChangesAsync(cancellationToken);
+                }
+            }
+        }
     }
 
     private async Task<int> ImportComponentsAsync(

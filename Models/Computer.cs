@@ -18,6 +18,15 @@ public class Computer
     public string? OperatingSystem { get; set; }
     public string? OsVersion { get; set; }
 
+    /// <summary>content.hardware.uuid — identifiant matériel stable, utile pour recoller un inventaire à une fiche existante.</summary>
+    public string? HardwareUuid { get; set; }
+
+    /// <summary>content.hardware.chassis_type — ex: "Notebook", "Server", "Desktop".</summary>
+    public string? ChassisType { get; set; }
+
+    /// <summary>content.hardware.memory — mémoire système totale en Mo.</summary>
+    public int? TotalMemoryMb { get; set; }
+
     public ComputerStatus Status { get; set; } = ComputerStatus.InStock;
 
     public string? Site { get; set; }

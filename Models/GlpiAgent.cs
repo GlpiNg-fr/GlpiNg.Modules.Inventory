@@ -12,16 +12,29 @@ public class GlpiAgent
 {
     public int Id { get; set; }
 
-    /// <summary>Identifiant unique envoyé par l'agent (deviceid), ex: HOSTNAME-2024-01-01-12-00-00</summary>
-    public required string DeviceId { get; set; }
+    /// <summary>
+    /// Identité réelle de l'agent au sens du protocole (header HTTP "GLPI-Agent-ID", UUID).
+    /// C'est la clé de corrélation stable — voir COMMON#glpi-agent-id du protocole JSON GLPI.
+    /// </summary>
+    public required string AgentUuid { get; set; }
+
+    /// <summary>Nom "ami" envoyé dans le corps de la requête contact ("deviceid"), pas garanti unique.</summary>
+    public string? DeviceId { get; set; }
 
     public string? Hostname { get; set; }
+    public string? AgentName { get; set; }
     public string? AgentVersion { get; set; }
-    public string[] Tags { get; set; } = [];
+    public string? Tag { get; set; }
+    public string[] InstalledTasks { get; set; } = [];
+    public string[] EnabledTasks { get; set; } = [];
 
     public DateTime FirstContactAt { get; set; } = DateTime.UtcNow;
     public DateTime LastContactAt { get; set; } = DateTime.UtcNow;
 
-    public int? ComputerId { get; set; }
+    /// <summary>
+    /// Navigation vers le poste rattaché. La FK réelle vit sur Computer.AgentId (relation
+    /// configurée dans GlpiNgDbContext) — il n'y a volontairement pas de "ComputerId" ici
+    /// pour éviter une colonne fantôme non synchronisée par EF Core.
+    /// </summary>
     public Computer? Computer { get; set; }
 }
