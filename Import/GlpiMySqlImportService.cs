@@ -177,7 +177,7 @@ public class GlpiMySqlImportService(DbContext db, IOptions<GlpiImportOptions> op
             // protocole JSON) : "deviceid" est la seule identité stable disponible ici, on la
             // réutilise comme AgentUuid. Si l'agent contacte ensuite via le protocole JSON avec
             // un UUID différent, un second enregistrement sera créé — limite acceptée de l'import.
-            GlpiAgent? agent = await db.Agents.FirstOrDefaultAsync(a => a.AgentUuid == row.DeviceId, cancellationToken);
+            GlpiAgent? agent = await db.Set<GlpiAgent>().FirstOrDefaultAsync(a => a.AgentUuid == row.DeviceId, cancellationToken);
             bool isNew = agent is null;
             agent ??= new GlpiAgent { AgentUuid = row.DeviceId, DeviceId = row.DeviceId };
 
@@ -199,7 +199,7 @@ public class GlpiMySqlImportService(DbContext db, IOptions<GlpiImportOptions> op
 
             if (glpiComputerIdToLocalId.TryGetValue(row.GlpiComputerId, out int localComputerId))
             {
-                Computer? computer = await db.Computers.FirstOrDefaultAsync(c => c.Id == localComputerId, cancellationToken);
+                Computer? computer = await db.Set<Computer>().FirstOrDefaultAsync(c => c.Id == localComputerId, cancellationToken);
                 if (computer is not null)
                 {
                     computer.AgentId = agent.Id;

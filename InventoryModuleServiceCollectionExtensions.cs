@@ -1,3 +1,4 @@
+using GlpiNg.Modules.Abstractions.Menu;
 using GlpiNg.Modules.Inventory.Controllers;
 using GlpiNg.Modules.Inventory.Import;
 using Microsoft.Extensions.Configuration;
@@ -22,6 +23,10 @@ public static class InventoryModuleServiceCollectionExtensions
     {
         services.Configure<GlpiImportOptions>(configuration.GetSection(GlpiImportOptions.SectionName));
         services.AddScoped<GlpiMySqlImportService>();
+
+        // Contribution du module au menu latéral de l'hôte (groupe "Parc" + entrées
+        // Agents/Déploiements dans "Outils") — voir InventoryMenuProvider.
+        services.AddSingleton<IMenuProvider, InventoryMenuProvider>();
 
         // Permet à ASP.NET Core de découvrir les contrôleurs de ce module (assembly
         // distincte de celle du projet hôte).
