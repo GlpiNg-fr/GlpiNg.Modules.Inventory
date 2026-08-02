@@ -15,8 +15,8 @@ public sealed class InventoryMenuProvider : IMenuProvider
         [
             new("Tableau de bord", "/", "ti-layout-dashboard"),
             new("Ordinateurs", "/computers", "ti-device-desktop"),
-            new("Moniteurs", Icon: "ti-device-tv"),
-            new("Logiciels", Icon: "ti-apps"),
+            new("Moniteurs", "/monitors", "ti-device-tv"),
+            new("Logiciels", "/software", "ti-apps"),
             new("Matériels réseau", Icon: "ti-router"),
             new("Périphériques", Icon: "ti-mouse"),
             new("Imprimantes", Icon: "ti-printer"),

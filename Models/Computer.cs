@@ -27,6 +27,15 @@ public class Computer
     /// <summary>content.hardware.memory — mémoire système totale en Mo.</summary>
     public int? TotalMemoryMb { get; set; }
 
+    /// <summary>content.hardware.lastloggeduser — dernier utilisateur connecté sur le poste.</summary>
+    public string? LastLoggedUser { get; set; }
+
+    /// <summary>content.hardware.vmsystem — technologie de virtualisation ("Physical" si machine physique).</summary>
+    public string? VmSystem { get; set; }
+
+    /// <summary>content.operatingsystem.kernel_version.</summary>
+    public string? OsKernelVersion { get; set; }
+
     public ComputerStatus Status { get; set; } = ComputerStatus.InStock;
 
     public string? Site { get; set; }
@@ -41,6 +50,9 @@ public class Computer
     public List<ComputerComponent> Components { get; set; } = [];
     public List<ComputerSoftware> Softwares { get; set; } = [];
     public List<ComputerPeripheral> Peripherals { get; set; } = [];
+    public List<ComputerVolume> Volumes { get; set; } = [];
+    public List<ComputerBattery> Batteries { get; set; } = [];
+    public List<ComputerNetworkPort> NetworkPorts { get; set; } = [];
 
     // Lien vers l'agent GLPI qui remonte les infos pour cette machine
     public int? AgentId { get; set; }
@@ -80,4 +92,61 @@ public class ComputerPeripheral
     public required string Designation { get; set; }
     public string? Manufacturer { get; set; }
     public string? Serial { get; set; }
+}
+
+/// <summary>Volume/partition de disque remonté par content.drives.</summary>
+public class ComputerVolume
+{
+    public int Id { get; set; }
+    public int ComputerId { get; set; }
+    public required string Name { get; set; }
+    public string? Partition { get; set; }
+    public string? MountPoint { get; set; }
+    public string? FileSystem { get; set; }
+    public long? TotalSizeMb { get; set; }
+    public long? FreeSizeMb { get; set; }
+    public string? Encryption { get; set; }
+}
+
+/// <summary>Batterie remontée par content.batteries.</summary>
+public class ComputerBattery
+{
+    public int Id { get; set; }
+    public int ComputerId { get; set; }
+    public required string Name { get; set; }
+    public string? Manufacturer { get; set; }
+    public string? Serial { get; set; }
+    public string? Chemistry { get; set; }
+
+    /// <summary>Tension en mV.</summary>
+    public int? VoltageMv { get; set; }
+
+    /// <summary>Capacité (constructeur) en mWh.</summary>
+    public int? CapacityMwh { get; set; }
+
+    /// <summary>Date de fabrication, telle que remontée par l'agent (format libre).</summary>
+    public string? ManufactureDate { get; set; }
+}
+
+/// <summary>Port/interface réseau (configuration IP) remonté par content.networks.</summary>
+public class ComputerNetworkPort
+{
+    public int Id { get; set; }
+    public int ComputerId { get; set; }
+    public required string Designation { get; set; }
+    public string? Type { get; set; }
+    public string? MacAddress { get; set; }
+    public string? Manufacturer { get; set; }
+    public string? IpAddress { get; set; }
+    public string? IpMask { get; set; }
+    public string? IpGateway { get; set; }
+    public string? IpSubnet { get; set; }
+    public string? IpDhcp { get; set; }
+    public int? Mtu { get; set; }
+
+    /// <summary>Vitesse de liaison en Mb/s.</summary>
+    public int? SpeedMbps { get; set; }
+
+    public string? Status { get; set; }
+    public bool IsVirtual { get; set; }
 }
