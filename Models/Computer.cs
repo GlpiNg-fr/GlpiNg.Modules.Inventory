@@ -53,6 +53,8 @@ public class Computer
     public List<ComputerVolume> Volumes { get; set; } = [];
     public List<ComputerBattery> Batteries { get; set; } = [];
     public List<ComputerNetworkPort> NetworkPorts { get; set; } = [];
+    public List<ComputerImportHistory> ImportHistories { get; set; } = [];
+    public List<ComputerHistoryEntry> HistoryEntries { get; set; } = [];
 
     // Lien vers l'agent GLPI qui remonte les infos pour cette machine
     public int? AgentId { get; set; }
@@ -149,4 +151,36 @@ public class ComputerNetworkPort
 
     public string? Status { get; set; }
     public bool IsVirtual { get; set; }
+}
+
+/// <summary>
+/// Trace un événement d'import d'inventaire pour un ordinateur : quelle règle de
+/// correspondance a été appliquée (création vs mise à jour, et sur quel critère) lors
+/// du traitement d'une requête "inventory" du protocole GLPI-Agent. Alimenté par
+/// InventoryImportService, affiché dans l'onglet "Informations d'import" de la fiche.
+/// </summary>
+public class ComputerImportHistory
+{
+    public int Id { get; set; }
+    public int ComputerId { get; set; }
+    public DateTime OccurredAt { get; set; } = DateTime.UtcNow;
+    public required string RuleName { get; set; }
+    public required string Module { get; set; }
+    public string? AgentIdentifier { get; set; }
+    public string? InputValue { get; set; }
+}
+
+/// <summary>
+/// Ligne du journal de modifications d'un ordinateur (onglet "Historique" de la fiche) :
+/// un changement de champ ou l'ajout/retrait d'un sous-élément (composant, périphérique,
+/// logiciel, ...), détecté par InventoryImportService en comparant l'état avant/après import.
+/// </summary>
+public class ComputerHistoryEntry
+{
+    public int Id { get; set; }
+    public int ComputerId { get; set; }
+    public DateTime OccurredAt { get; set; } = DateTime.UtcNow;
+    public required string User { get; set; }
+    public required string Field { get; set; }
+    public required string Description { get; set; }
 }
