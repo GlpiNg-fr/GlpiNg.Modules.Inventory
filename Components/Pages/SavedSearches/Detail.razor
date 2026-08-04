@@ -1,0 +1,116 @@
+@page "/tools/saved-searches/{SavedSearchId:int}"
+@rendermode InteractiveServer
+
+<PageTitle>GlpiNg — @(_savedSearch?.Name ?? "Recherche sauvegardée")</PageTitle>
+
+@if (_savedSearch is null)
+{
+    <div class="text-center text-secondary py-5">
+        <i class="ti ti-bookmark-off fs-1"></i>
+        <p class="mt-2">Cette recherche sauvegardée est introuvable.</p>
+    </div>
+}
+else
+{
+    <div class="glpi-fiche-topbar">
+        <div class="glpi-fiche-crumb">
+            <i class="ti ti-bookmark"></i>
+            <span>Recherche sauvegardée - @_savedSearch.Name - ID @_savedSearch.Id</span>
+        </div>
+        <div class="glpi-fiche-toolbar">
+            @if (_total > 0)
+            {
+                <span class="glpi-fiche-pager-count">@_position/@_total</span>
+                <a class="glpi-fiche-pager-btn @(_previousId is null ? "disabled" : "")" href="@(_previousId is { } prevId ? $"/tools/saved-searches/{prevId}" : "#")">
+                    <i class="ti ti-chevron-left"></i>
+                </a>
+                <a class="glpi-fiche-pager-btn @(_nextId is null ? "disabled" : "")" href="@(_nextId is { } nextId ? $"/tools/saved-searches/{nextId}" : "#")">
+                    <i class="ti ti-chevron-right"></i>
+                </a>
+            }
+        </div>
+    </div>
+
+    <div class="glpi-fiche-layout">
+        <aside class="glpi-fiche-sidebar">
+            @foreach (FicheTab tab in Tabs)
+            {
+                <button type="button" class="glpi-fiche-tab-item @(_activeTabKey == tab.Key ? "active" : "")" @onclick="() => SetTab(tab.Key)">
+                    <i class="ti @tab.Icon"></i>
+                    <span>@tab.Label</span>
+                </button>
+            }
+        </aside>
+
+        <div class="glpi-fiche-panel">
+            @switch (_activeTabKey)
+            {
+                case "savedsearch":
+                    <EditForm Model="_savedSearch" OnValidSubmit="SaveAsync">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Nom</label>
+                                <input type="text" class="form-control" @bind="_savedSearch.Name" disabled="@(!IsOwner)" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Type d'élément</label>
+                                <input type="text" class="form-control" value="@SavedSearchItemTypes.LabelFor(_savedSearch.ItemType)" disabled />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Compter</label>
+                                <select class="form-select" @bind="_savedSearch.CountMode" disabled="@(!IsOwner)">
+                                    <option value="@SavedSearchCountMode.Auto">Auto</option>
+                                    <option value="@SavedSearchCountMode.Yes">Oui</option>
+                                    <option value="@SavedSearchCountMode.No">Non</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Visibilité</label>
+                                <select class="form-select" value="@(_savedSearch.IsPublic ? "public" : "private")"
+                                        disabled="@(!IsOwner)"
+                                        @onchange="@((ChangeEventArgs e) => _savedSearch.IsPublic = (string)e.Value! == "public")">
+                                    <option value="private">Privé</option>
+                                    <option value="public">Public</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        @if (IsOwner)
+                        {
+                            <div class="d-flex justify-content-end gap-2 mt-3">
+                                <button type="button" class="btn btn-outline-danger" @onclick="DeleteAsync">
+                                    <i class="ti ti-trash me-1"></i>Supprimer définitivement
+                                </button>
+                                <button type="submit" class="btn btn-primary" disabled="@_isSaving">
+                                    <i class="ti ti-device-floppy me-1"></i>@(_isSaving ? "Enregistrement…" : "Sauvegarder")
+                                </button>
+                            </div>
+                        }
+                    </EditForm>
+                    break;
+
+                case "all":
+                    <div class="glpi-fiche-block">
+                        <div class="glpi-fiche-block-title"><i class="ti ti-bookmark"></i>Recherche sauvegardée</div>
+                        <p class="mb-1"><strong>Nom :</strong> @_savedSearch.Name</p>
+                        <p class="mb-1"><strong>Type d'élément :</strong> @SavedSearchItemTypes.LabelFor(_savedSearch.ItemType)</p>
+                        <p class="mb-1"><strong>Compter :</strong> @(_savedSearch.CountMode switch { SavedSearchCountMode.Yes => "Oui", SavedSearchCountMode.No => "Non", _ => "Auto" })</p>
+                        <p class="mb-1"><strong>Visibilité :</strong> @(_savedSearch.IsPublic ? "Public" : "Privé")</p>
+                        <p class="mb-1"><strong>Par défaut :</strong> @(_savedSearch.IsDefault ? "Oui" : "Non")</p>
+                        <p class="mb-1"><strong>Résultats :</strong> @_savedSearch.ResultCount</p>
+                        <p class="mb-1"><strong>Propriétaire :</strong> @(_savedSearch.OwnerName ?? "—")</p>
+                        <p class="mb-0"><strong>Créée le :</strong> @_savedSearch.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</p>
+                    </div>
+                    break;
+
+                default:
+                    var current = Tabs.First(t => t.Key == _activeTabKey);
+                    <div class="glpi-config-placeholder">
+                        <i class="ti @current.Icon"></i>
+                        <p class="mb-0">L'onglet « @current.Label » n'est pas encore disponible.</p>
+                    </div>
+                    break;
+            }
+        </div>
+    </div>
+}

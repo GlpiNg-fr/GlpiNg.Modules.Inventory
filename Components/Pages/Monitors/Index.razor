@@ -1,0 +1,60 @@
+@page "/parc/monitors"
+@rendermode InteractiveServer
+
+<PageTitle>GlpiNg — Moniteurs</PageTitle>
+
+<div class="page-header d-flex align-items-center justify-content-between mb-3">
+    <h2 class="page-title mb-0">Moniteurs</h2>
+    <div class="text-secondary">@_filteredMonitors.Count résultat(s)</div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <div class="input-icon" style="max-width: 320px;">
+            <span class="input-icon-addon">
+                <i class="ti ti-search"></i>
+            </span>
+            <input type="text" class="form-control" placeholder="Rechercher un écran..."
+                   @bind="_searchTerm" @bind:event="oninput" @onkeyup="OnSearchChanged" />
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+            <thead>
+                <tr>
+                    <th>Désignation</th>
+                    <th>Fabricant</th>
+                    <th>N° de série</th>
+                    <th>Poste associé</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (_filteredMonitors.Count == 0)
+                {
+                    <tr>
+                        <td colspan="4" class="text-center text-secondary py-4">Aucun moniteur trouvé.</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (MonitorRow monitor in _filteredMonitors)
+                    {
+                        <tr>
+                            <td class="fw-semibold">
+                                <i class="ti ti-device-tv me-1 text-secondary"></i>@monitor.Designation
+                            </td>
+                            <td>@(monitor.Manufacturer ?? "—")</td>
+                            <td>@(monitor.Serial ?? "—")</td>
+                            <td>
+                                <a href="@($"/parc/computer/{monitor.ComputerId}")" class="text-reset">
+                                    <i class="ti ti-device-desktop me-1 text-secondary"></i>@monitor.ComputerName
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,3 +1,4 @@
+using GlpiNg.Modules.Abstractions.Cron;
 using GlpiNg.Modules.Abstractions.Menu;
 using GlpiNg.Modules.Inventory.Controllers;
 using GlpiNg.Modules.Inventory.Import;
@@ -23,6 +24,12 @@ public static class InventoryModuleServiceCollectionExtensions
     {
         services.Configure<GlpiImportOptions>(configuration.GetSection(GlpiImportOptions.SectionName));
         services.AddScoped<GlpiMySqlImportService>();
+
+        // Contribution du module au service cron de l'hôte (voir GlpiNg.Modules.Cron) :
+        // purge périodique des agents orphelins, réglage "AgentCleanupDays" de l'onglet
+        // "Parc" (Administration > Inventaire).
+        services.Configure<AgentCleanupOptions>(configuration.GetSection(AgentCleanupOptions.SectionName));
+        services.AddScoped<ICronTask, AgentCleanupCronTask>();
 
         // Contribution du module au menu latéral de l'hôte (groupe "Parc" + entrées
         // Agents/Déploiements dans "Outils") — voir InventoryMenuProvider.

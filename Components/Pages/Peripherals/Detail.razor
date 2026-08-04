@@ -1,0 +1,182 @@
+@page "/parc/peripherals/{PeripheralId:int}"
+@using GlpiNg.Modules.Inventory.Models
+@rendermode InteractiveServer
+
+<PageTitle>GlpiNg — @(_peripheral?.Name ?? "Périphérique")</PageTitle>
+
+@if (_peripheral is null)
+{
+    <div class="text-center text-secondary py-5">
+        <i class="ti ti-mouse-off fs-1"></i>
+        <p class="mt-2">Ce périphérique est introuvable.</p>
+    </div>
+}
+else
+{
+    <div class="glpi-fiche-topbar">
+        <div class="glpi-fiche-crumb">
+            <i class="ti ti-mouse"></i>
+            <span>Périphérique - @_peripheral.Name - ID @_peripheral.Id</span>
+            <button type="button" class="glpi-fiche-favorite" title="Ajouter aux favoris">
+                <i class="ti ti-star"></i>
+            </button>
+        </div>
+        <div class="glpi-fiche-toolbar">
+            @if (_total > 0)
+            {
+                <span class="glpi-fiche-pager-count">@_position/@_total</span>
+                <a class="glpi-fiche-pager-btn @(_previousId is null ? "disabled" : "")" href="@(_previousId is { } prevId ? $"/parc/peripherals/{prevId}" : "#")">
+                    <i class="ti ti-chevron-left"></i>
+                </a>
+                <a class="glpi-fiche-pager-btn @(_nextId is null ? "disabled" : "")" href="@(_nextId is { } nextId ? $"/parc/peripherals/{nextId}" : "#")">
+                    <i class="ti ti-chevron-right"></i>
+                </a>
+            }
+        </div>
+    </div>
+
+    <div class="glpi-fiche-layout">
+        <aside class="glpi-fiche-sidebar">
+            @foreach (var tab in _tabs)
+            {
+                <button type="button" class="glpi-fiche-tab-item @(_activeTabKey == tab.Key ? "active" : "")" @onclick="() => SetTab(tab.Key)">
+                    <i class="ti @tab.Icon"></i>
+                    <span>@tab.Label</span>
+                    @if (tab.Count is { } count)
+                    {
+                        <span class="glpi-fiche-tab-count">@count</span>
+                    }
+                </button>
+            }
+        </aside>
+
+        <div class="glpi-fiche-panel">
+            @switch (_activeTabKey)
+            {
+                case "peripheral":
+                    <EditForm Model="_peripheral" OnValidSubmit="SaveAsync">
+                        <PeripheralFormFields Peripheral="_peripheral" />
+
+                        <div class="d-flex justify-content-end gap-2 mt-3">
+                            <button type="button" class="btn btn-outline-danger" @onclick="DeleteAsync">
+                                <i class="ti ti-trash me-1"></i>Supprimer définitivement
+                            </button>
+                            <button type="submit" class="btn btn-primary" disabled="@_isSaving">
+                                <i class="ti ti-device-floppy me-1"></i>@(_isSaving ? "Enregistrement…" : "Sauvegarder")
+                            </button>
+                        </div>
+                    </EditForm>
+                    break;
+
+                case "connections":
+                    <div class="glpi-fiche-block">
+                        <div class="glpi-fiche-block-title"><i class="ti ti-plug-connected"></i>Connexion à un ordinateur</div>
+                        @if (_peripheral.Computer is { } linkedComputer)
+                        {
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <a href="@($"/parc/computer/{linkedComputer.Id}")" class="text-reset fw-semibold">
+                                    <i class="ti ti-device-desktop me-1 text-secondary"></i>@linkedComputer.Name
+                                </a>
+                                <button type="button" class="btn btn-sm btn-outline-danger" @onclick="UnlinkComputerAsync">
+                                    <i class="ti ti-plug-connected-x me-1"></i>Déconnecter
+                                </button>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="glpi-config-placeholder">
+                                <i class="ti ti-plug-connected-x"></i>
+                                <p class="mb-0">Ce périphérique n'est connecté à aucun ordinateur.</p>
+                            </div>
+                        }
+                        <div class="d-flex gap-2 mt-3">
+                            <select class="form-select" style="max-width: 320px;" @bind="_computerIdToLink">
+                                <option value="0">-- Choisir un ordinateur --</option>
+                                @foreach (Computer computer in _allComputers)
+                                {
+                                    <option value="@computer.Id">@computer.Name</option>
+                                }
+                            </select>
+                            <button type="button" class="btn btn-primary" disabled="@(_computerIdToLink == 0)" @onclick="LinkComputerAsync">
+                                <i class="ti ti-plug-connected me-1"></i>Connecter
+                            </button>
+                        </div>
+                    </div>
+                    break;
+
+                case "history":
+                    <div class="glpi-fiche-block">
+                        <div class="glpi-fiche-block-title"><i class="ti ti-history"></i>Historique (@_peripheral.HistoryEntries.Count)</div>
+                        @if (_peripheral.HistoryEntries.Count == 0)
+                        {
+                            <div class="glpi-config-placeholder">
+                                <i class="ti ti-history"></i>
+                                <p class="mb-0">Aucune modification enregistrée.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-vcenter card-table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Date</th>
+                                            <th>Utilisateur</th>
+                                            <th>Champ</th>
+                                            <th>Mise à jour</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (PeripheralHistoryEntry entry in _peripheral.HistoryEntries.OrderByDescending(e => e.OccurredAt).ThenByDescending(e => e.Id))
+                                        {
+                                            <tr>
+                                                <td>@entry.Id</td>
+                                                <td>@entry.OccurredAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                                <td>@entry.User</td>
+                                                <td>@entry.Field</td>
+                                                <td>@entry.Description</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </div>
+                    break;
+
+                case "all":
+                    <div class="glpi-fiche-block">
+                        <div class="glpi-fiche-block-title"><i class="ti ti-mouse"></i>Périphérique</div>
+                        <p class="mb-1"><strong>Nom :</strong> @_peripheral.Name</p>
+                        <p class="mb-1"><strong>Statut :</strong> @StatusLabel(_peripheral.Status)</p>
+                        <p class="mb-1"><strong>Type :</strong> @(_peripheral.Type ?? "—")</p>
+                        <p class="mb-1"><strong>Fabricant :</strong> @(_peripheral.Manufacturer ?? "—")</p>
+                        <p class="mb-1"><strong>Modèle :</strong> @(_peripheral.Model ?? "—")</p>
+                        <p class="mb-1"><strong>Numéro de série :</strong> @(_peripheral.SerialNumber ?? "—")</p>
+                        <p class="mb-0"><strong>Commentaires :</strong> @(_peripheral.Comment ?? "—")</p>
+                    </div>
+                    <div class="glpi-fiche-block">
+                        <div class="glpi-fiche-block-title"><i class="ti ti-plug-connected"></i>Connexions</div>
+                        <p class="mb-0">@(_peripheral.Computer?.Name ?? "Aucune connexion")</p>
+                    </div>
+                    <div class="glpi-fiche-block">
+                        <div class="glpi-fiche-block-title"><i class="ti ti-history"></i>Historique (@_peripheral.HistoryEntries.Count)</div>
+                        @foreach (PeripheralHistoryEntry entry in _peripheral.HistoryEntries.OrderByDescending(e => e.OccurredAt))
+                        {
+                            <p class="mb-1">@entry.OccurredAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm") — @entry.User — @entry.Field : @entry.Description</p>
+                        }
+                    </div>
+                    break;
+
+                default:
+                    var current = _tabs.First(t => t.Key == _activeTabKey);
+                    <div class="glpi-config-placeholder">
+                        <i class="ti @current.Icon"></i>
+                        <p class="mb-0">L'onglet « @current.Label » n'est pas encore disponible.</p>
+                    </div>
+                    break;
+            }
+        </div>
+    </div>
+}

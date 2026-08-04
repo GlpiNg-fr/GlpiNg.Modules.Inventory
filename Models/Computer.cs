@@ -38,6 +38,9 @@ public class Computer
 
     public ComputerStatus Status { get; set; } = ComputerStatus.InStock;
 
+    /// <summary>Poste mis à la corbeille (suppression logique) : masqué de la liste par défaut, visible via le filtre "Corbeille".</summary>
+    public bool IsDeleted { get; set; }
+
     public string? Site { get; set; }
     public string? Building { get; set; }
     public string? Room { get; set; }

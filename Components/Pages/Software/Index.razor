@@ -1,0 +1,93 @@
+@page "/parc/software"
+@rendermode InteractiveServer
+
+<PageTitle>GlpiNg — Logiciels</PageTitle>
+
+<div class="page-header d-flex align-items-center justify-content-between mb-3">
+    <h2 class="page-title mb-0">Logiciels</h2>
+    <div class="text-secondary">@_filteredGroups.Count résultat(s)</div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <div class="input-icon" style="max-width: 320px;">
+            <span class="input-icon-addon">
+                <i class="ti ti-search"></i>
+            </span>
+            <input type="text" class="form-control" placeholder="Rechercher un logiciel..."
+                   @bind="_searchTerm" @bind:event="oninput" @onkeyup="OnSearchChanged" />
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Nom</th>
+                    <th>Éditeur</th>
+                    <th>Versions</th>
+                    <th>Installations</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (_filteredGroups.Count == 0)
+                {
+                    <tr>
+                        <td colspan="5" class="text-center text-secondary py-4">Aucun logiciel trouvé.</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (SoftwareGroup group in _filteredGroups)
+                    {
+                        var key = GroupKey(group);
+                        var isExpanded = _expandedKeys.Contains(key);
+                        <tr class="cursor-pointer" @onclick="() => ToggleGroup(key)">
+                            <td>
+                                <i class="ti @(isExpanded ? "ti-chevron-down" : "ti-chevron-right") text-secondary"></i>
+                            </td>
+                            <td class="fw-semibold">
+                                <i class="ti ti-apps me-1 text-secondary"></i>@group.Name
+                            </td>
+                            <td>@(group.Publisher ?? "—")</td>
+                            <td>@group.VersionCount</td>
+                            <td>@group.InstallCount</td>
+                        </tr>
+                        @if (isExpanded)
+                        {
+                            <tr>
+                                <td></td>
+                                <td colspan="4" class="pb-3">
+                                    <table class="table table-sm table-vcenter mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Poste</th>
+                                                <th>Version</th>
+                                                <th>Date d'installation</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (SoftwareInstall install in group.Installs)
+                                            {
+                                                <tr>
+                                                    <td>
+                                                        <a href="@($"/parc/computer/{install.ComputerId}")" class="text-reset">
+                                                            <i class="ti ti-device-desktop me-1 text-secondary"></i>@install.ComputerName
+                                                        </a>
+                                                    </td>
+                                                    <td>@(install.Version ?? "—")</td>
+                                                    <td>@(install.InstallDate ?? "—")</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr>
+                        }
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -3,8 +3,9 @@ using GlpiNg.Modules.Abstractions.Menu;
 namespace GlpiNg.Modules.Inventory;
 
 /// <summary>
-/// Contribue le groupe "Parc" (tout le parc matériel/logiciel) ainsi que les entrées
-/// Agents/Déploiements du groupe "Outils", qui relèvent toutes du domaine Inventory
+/// Contribue le groupe "Parc" (tout le parc matériel/logiciel), les entrées
+/// Recherches sauvegardées/Agents/Déploiements du groupe "Outils", ainsi que l'entrée
+/// "Inventaire" du groupe "Administration" — qui relèvent toutes du domaine Inventory
 /// (voir Models/GlpiAgent.cs et le protocole GLPI-Agent exposé par ce module).
 /// </summary>
 public sealed class InventoryMenuProvider : IMenuProvider
@@ -14,11 +15,11 @@ public sealed class InventoryMenuProvider : IMenuProvider
         new("parc", "ti-box", "Parc",
         [
             new("Tableau de bord", "/", "ti-layout-dashboard"),
-            new("Ordinateurs", "/computers", "ti-device-desktop"),
-            new("Moniteurs", "/monitors", "ti-device-tv"),
-            new("Logiciels", "/software", "ti-apps"),
+            new("Ordinateurs", "/parc/computer", "ti-device-desktop"),
+            new("Moniteurs", "/parc/monitors", "ti-device-tv"),
+            new("Logiciels", "/parc/software", "ti-apps"),
             new("Matériels réseau", Icon: "ti-router"),
-            new("Périphériques", Icon: "ti-mouse"),
+            new("Périphériques", "/parc/peripherals", "ti-mouse"),
             new("Imprimantes", Icon: "ti-printer"),
             new("Cartouches", Icon: "ti-droplet"),
             new("Consommables", Icon: "ti-package"),
@@ -34,8 +35,13 @@ public sealed class InventoryMenuProvider : IMenuProvider
         ]),
         new("outils", "ti-briefcase", "Outils",
         [
-            new("Agents", "/agents", "ti-cpu"),
+            new("Recherches sauvegardées", "/tools/saved-searches", "ti-bookmarks"),
+            new("Agents", "/tools/agents", "ti-cpu"),
             new("Déploiements", "/deployments", "ti-rocket"),
+        ]),
+        new("administration", "ti-shield", "Administration",
+        [
+            new("Inventaire", "/admin/inventory", "ti-clipboard-list"),
         ]),
     ];
 }

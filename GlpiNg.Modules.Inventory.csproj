@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk.Razor">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -11,11 +11,8 @@
 
   <ItemGroup>
     <!--
-      Permet d'utiliser les types ASP.NET Core (ControllerBase, ApiController...)
-      dans cette bibliothèque de classes sans dépendre du projet hôte GlpiNg.Web.
-      Si ce module gagne des pages/composants Razor plus tard, remplacer le Sdk
-      ci-dessus par "Microsoft.NET.Sdk.Razor" (qui reste compatible avec cette
-      FrameworkReference).
+      Permet d'utiliser les types ASP.NET Core (ControllerBase, ApiController, composants
+      Razor...) dans cette bibliothèque de classes sans dépendre du projet hôte GlpiNg.Web.
     -->
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
@@ -26,8 +23,13 @@
       connaît pas le fournisseur (Sqlite/SqlServer) ni le DbContext concret, qui
       restent la responsabilité du projet hôte. Voir Import/GlpiMySqlImportService.cs.
     -->
+    <PackageReference Include="ClosedXML" Version="0.105.1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.8" />
+    <!-- AsSplitQuery() (Components/Pages/Computers/Detail.razor.cs) vit dans le provider
+         relationnel plutôt que dans le paquet EF Core de base. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.8" />
     <PackageReference Include="MySqlConnector" Version="2.6.1" />
+    <PackageReference Include="QuestPDF" Version="2026.7.2" />
   </ItemGroup>
 
   <ItemGroup>

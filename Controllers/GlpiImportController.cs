@@ -12,7 +12,7 @@ namespace GlpiNg.Modules.Inventory.Controllers;
 /// "OAuthApiAccess" définie dans Program.cs) plutôt que par le FallbackPolicy global
 /// (RequireAuthenticatedUser, cookie de session) : un appelant machine-à-machine (script,
 /// intégration CI) n'a pas de session applicative, seulement un client OAuth enregistré via
-/// /oauth-clients — voir Controllers.OAuthController pour l'émission du jeton
+/// /config/oauth-clients — voir Controllers.OAuthController pour l'émission du jeton
 /// (POST /oauth2/token, grant client_credentials).
 /// </summary>
 [ApiController]
