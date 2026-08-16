@@ -101,6 +101,7 @@ public partial class Index : ComponentBase
         new("assigneduser", "Usager", SearchFieldType.Text),
         new("lastloggeduser", "Dernier utilisateur connecté", SearchFieldType.Text),
         new("memory", "Mémoire (Mo)", SearchFieldType.Number),
+        new("battery", "Batterie (%)", SearchFieldType.Number),
         new("lastinventory", "Dernière remontée", SearchFieldType.Date),
         new("createdat", "Date de création", SearchFieldType.Date)
     ];
@@ -202,6 +203,7 @@ public partial class Index : ComponentBase
         await using DbContext db = await DbFactory.CreateDbContextAsync();
         _computers = await db.Set<Computer>()
             .AsNoTracking()
+            .Include(computer => computer.Batteries)
             .Where(computer => computer.IsDeleted == _showTrash)
             .OrderBy(computer => computer.Name)
             .ToListAsync();
@@ -823,8 +825,19 @@ public partial class Index : ComponentBase
     private static double? GetFieldNumber(Computer computer, string key) => key switch
     {
         "memory" => computer.TotalMemoryMb,
+        "battery" => GetBatteryPercent(computer),
         _ => null
     };
+
+    /// <summary>Pourcentage d'usure de la batterie (capacité réelle / capacité constructeur), moyenné si plusieurs batteries. Null si aucune batterie exploitable.</summary>
+    private static double? GetBatteryPercent(Computer computer)
+    {
+        List<double> percents = [.. computer.Batteries
+            .Where(battery => battery.CapacityMwh is > 0 && battery.RealCapacityMwh is not null)
+            .Select(battery => battery.RealCapacityMwh!.Value * 100.0 / battery.CapacityMwh!.Value)];
+
+        return percents.Count > 0 ? percents.Average() : null;
+    }
 
     private static DateTime? GetFieldDate(Computer computer, string key) => key switch
     {
@@ -843,7 +856,9 @@ public partial class Index : ComponentBase
             SearchFieldType.Date => GetFieldDate(computer, key) is { } date
                 ? date.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
                 : (key == "lastinventory" ? "Jamais" : "—"),
-            SearchFieldType.Number => GetFieldNumber(computer, key) is { } number ? number.ToString("0.##") : "—",
+            SearchFieldType.Number => GetFieldNumber(computer, key) is { } number
+                ? number.ToString("0.##") + (key == "battery" ? "%" : string.Empty)
+                : "—",
             _ => GetFieldText(computer, key) is { Length: > 0 } text ? text : "—"
         };
     }

@@ -54,7 +54,10 @@ public partial class Detail : ComponentBase, IDisposable
     private bool _agentStatusLoading;
     private string? _inventoryRequestResult;
     private bool _inventoryRequestLoading;
+    private string? _hostTasksRequestResult;
+    private bool _hostTasksRequestLoading;
     private CancellationTokenSource? _agentStatusPollCts;
+    private CancellationTokenSource? _deploymentAssignmentsPollCts;
     private bool _isReloading;
     private ComputerDeploymentTasksInfo? _deploymentTasksInfo;
     private List<DeploymentPackageOption> _availablePackages = [];
@@ -67,10 +70,12 @@ public partial class Detail : ComponentBase, IDisposable
     private enum DeploymentWakeMode
     {
         None,
-        Local
+        Local,
+        Remote
     }
 
     private static readonly TimeSpan AgentStatusPollInterval = TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan DeploymentAssignmentsPollInterval = TimeSpan.FromSeconds(5);
     private int SoftwareTotalPages => _softwareSorted.Count == 0 ? 1 : (int)Math.Ceiling(_softwareSorted.Count / (double)_softwarePageSize);
 
     // OnParametersSetAsync (pas OnInitializedAsync) : en navigation via les boutons
@@ -88,6 +93,7 @@ public partial class Detail : ComponentBase, IDisposable
         _softwarePage = 1;
         _agentStatus = null;
         _inventoryRequestResult = null;
+        _hostTasksRequestResult = null;
         _selectedPackagesToAssign = [];
         _wakeMode = DeploymentWakeMode.None;
         _prepareInstallError = null;
@@ -103,6 +109,10 @@ public partial class Detail : ComponentBase, IDisposable
 
         _softwareSorted = _computer.Softwares.OrderBy(s => s.Name).ToList();
         ApplySoftwarePaging();
+
+        _deploymentAssignmentsPollCts?.Cancel();
+        _deploymentAssignmentsPollCts?.Dispose();
+        _deploymentAssignmentsPollCts = null;
 
         _deploymentTasksInfo = DeploymentTasksProvider is null
             ? null
@@ -203,6 +213,58 @@ public partial class Detail : ComponentBase, IDisposable
 
         _availablePackages = await DeploymentAssignmentService.GetAvailablePackagesAsync();
         _deploymentAssignments = await DeploymentAssignmentService.GetAssignmentsAsync(ComputerId);
+
+        EnsureDeploymentAssignmentsPollingIfNeeded();
+    }
+
+    // Tant qu'au moins une assignation de paquet n'est pas terminée (statut différent de
+    // Réussi/En erreur, i.e. CompletedAtUtc null), interroge la base toutes les
+    // DeploymentAssignmentsPollInterval pour refléter la progression rapportée par l'agent via
+    // setStatus (voir AgentController.HandleSetStatusAsync) sans que l'admin ait à recharger la
+    // page. Idempotente : appelée après chaque LoadDeploymentAssignmentsAsync (y compris depuis
+    // la boucle de poll elle-même), elle ne relance pas de boucle si une tourne déjà
+    // (_deploymentAssignmentsPollCts non nul) — la boucle en cours s'arrête d'elle-même (voir
+    // PollDeploymentAssignmentsAsync) une fois qu'aucune assignation n'est plus en attente.
+    private void EnsureDeploymentAssignmentsPollingIfNeeded()
+    {
+        if (_deploymentAssignmentsPollCts is not null || !_deploymentAssignments.Exists(a => a.CompletedAtUtc is null))
+        {
+            return;
+        }
+
+        _deploymentAssignmentsPollCts = new CancellationTokenSource();
+        _ = PollDeploymentAssignmentsAsync(_deploymentAssignmentsPollCts.Token);
+    }
+
+    private async Task PollDeploymentAssignmentsAsync(CancellationToken token)
+    {
+        try
+        {
+            using PeriodicTimer timer = new(DeploymentAssignmentsPollInterval);
+            while (await timer.WaitForNextTickAsync(token))
+            {
+                await InvokeAsync(async () =>
+                {
+                    await LoadDeploymentAssignmentsAsync();
+                    _tabs = BuildTabs(_computer!, _deploymentTasksInfo, _deploymentAssignments.Count);
+                    StateHasChanged();
+                });
+
+                if (!_deploymentAssignments.Exists(a => a.CompletedAtUtc is null))
+                {
+                    break;
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        finally
+        {
+            _deploymentAssignmentsPollCts?.Cancel();
+            _deploymentAssignmentsPollCts?.Dispose();
+            _deploymentAssignmentsPollCts = null;
+        }
     }
 
     private void AddPackageToAssign(ChangeEventArgs e)
@@ -227,9 +289,10 @@ public partial class Detail : ComponentBase, IDisposable
 
     // Reproduit le split-bouton "Préparer l'installation" / mode de réveil de la fiche
     // Ordinateur de GLPI. Contrairement à GLPI, GlpiNg n'a pas de mécanisme de Wake-on-LAN (voir
-    // DeploymentGeneralSettings.MaxAgentsToWakePerTask) : seul le "réveil local" a un équivalent
-    // réel ici (l'appel à l'interface web locale de l'agent, comme RequestInventoryAsync), le
-    // "réveil à distance" reste donc désactivé dans le menu plutôt que simulé.
+    // DeploymentGeneralSettings.MaxAgentsToWakePerTask) : les deux modes de réveil s'appuient donc
+    // sur l'interface web locale de l'agent (httpd-trust) plutôt que sur un vrai WOL — le "réveil
+    // local" y accède via le hostname/HTTP (comme RequestInventoryAsync), le "réveil à distance" via
+    // la dernière IP de contact connue/HTTPS, avec ?task=deploy pour ne déclencher que le déploiement.
     private async Task PrepareInstallationAsync()
     {
         if (_prepareInstallLoading || DeploymentAssignmentService is null || _selectedPackagesToAssign.Count == 0)
@@ -252,10 +315,12 @@ public partial class Detail : ComponentBase, IDisposable
                 await LoadDeploymentAssignmentsAsync();
                 _tabs = BuildTabs(_computer!, _deploymentTasksInfo, _deploymentAssignments.Count);
 
-                if (_wakeMode == DeploymentWakeMode.Local)
+                _prepareInstallError = _wakeMode switch
                 {
-                    _prepareInstallError = await TriggerLocalAgentWakeAsync();
-                }
+                    DeploymentWakeMode.Local => await TriggerLocalAgentWakeAsync(),
+                    DeploymentWakeMode.Remote => await TriggerRemoteAgentWakeAsync(),
+                    _ => null
+                };
             }
             else
             {
@@ -293,6 +358,38 @@ public partial class Detail : ComponentBase, IDisposable
         catch (Exception ex)
         {
             return $"Les paquets ont été assignés, mais l'agent est injoignable pour le réveil local ({ex.Message}).";
+        }
+    }
+
+    // Variante "réveil à distance" : on n'est pas sur le poste, donc pas de hostname fiable à
+    // résoudre depuis le navigateur/réseau de l'admin — on cible plutôt la dernière IP de contact
+    // connue de l'agent, en HTTPS (voir agent.LastContactIp, déjà affiché sous "Adresse publique de
+    // contact"), et ?task=deploy pour ne déclencher que la tâche de déploiement plutôt qu'un
+    // inventaire complet.
+    private async Task<string?> TriggerRemoteAgentWakeAsync()
+    {
+        if (_computer?.Agent is not { } agent)
+        {
+            return "Aucun agent associé à ce poste.";
+        }
+
+        string? url = AgentRemoteWebUrl(agent);
+        if (url is null)
+        {
+            return "L'adresse IP de contact de l'agent est inconnue, impossible de le réveiller à distance.";
+        }
+
+        try
+        {
+            using HttpClient client = HttpClientFactory.CreateClient("GlpiAgent");
+            using HttpResponseMessage response = await client.GetAsync($"{url}/now?task=deploy");
+            return response.IsSuccessStatusCode
+                ? null
+                : $"Les paquets ont été assignés, mais le réveil à distance de l'agent a échoué ({(int)response.StatusCode}).";
+        }
+        catch (Exception ex)
+        {
+            return $"Les paquets ont été assignés, mais l'agent est injoignable pour le réveil à distance ({ex.Message}).";
         }
     }
 
@@ -401,6 +498,9 @@ public partial class Detail : ComponentBase, IDisposable
         return string.IsNullOrWhiteSpace(hostname) ? null : $"http://{hostname}:{AgentWebPort}";
     }
 
+    private static string? AgentRemoteWebUrl(GlpiAgent agent) =>
+        string.IsNullOrWhiteSpace(agent.LastContactIp) ? null : $"https://{agent.LastContactIp}:{AgentWebPort}";
+
     // Interroge automatiquement /status à l'ouverture de la fiche, puis toutes les
     // AgentStatusPollInterval tant que le composant reste affiché (annulé par Dispose ou par le
     // changement de poste dans OnParametersSetAsync). InvokeAsync est nécessaire : ce code tourne
@@ -427,6 +527,8 @@ public partial class Detail : ComponentBase, IDisposable
     {
         _agentStatusPollCts?.Cancel();
         _agentStatusPollCts?.Dispose();
+        _deploymentAssignmentsPollCts?.Cancel();
+        _deploymentAssignmentsPollCts?.Dispose();
     }
 
     // Interroge l'interface web locale de l'agent (httpd-trust) sur /status, comme le fait GLPI.
@@ -498,7 +600,7 @@ public partial class Detail : ComponentBase, IDisposable
         try
         {
             using HttpClient client = HttpClientFactory.CreateClient("GlpiAgent");
-            using HttpResponseMessage response = await client.GetAsync($"{url}/now");
+            using HttpResponseMessage response = await client.GetAsync($"{url}/now?task=inventory");
             _inventoryRequestResult = response.IsSuccessStatusCode
                 ? DateTime.Now.ToString("dd/MM/yyyy HH:mm")
                 : $"Erreur ({(int)response.StatusCode})";
@@ -510,6 +612,42 @@ public partial class Detail : ComponentBase, IDisposable
         finally
         {
             _inventoryRequestLoading = false;
+        }
+    }
+
+    // Déclenche l'ensemble des tâches planifiées de l'agent (httpd-trust /now, sans filtre "task"),
+    // à la différence de RequestInventoryAsync qui ne cible que la tâche d'inventaire.
+    private async Task RequestHostTasksAsync()
+    {
+        if (_hostTasksRequestLoading || _computer?.Agent is not { } agent)
+        {
+            return;
+        }
+
+        string? url = AgentWebUrl(agent, _computer);
+        if (url is null)
+        {
+            return;
+        }
+
+        _hostTasksRequestLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            using HttpClient client = HttpClientFactory.CreateClient("GlpiAgent");
+            using HttpResponseMessage response = await client.GetAsync($"{url}/now");
+            _hostTasksRequestResult = response.IsSuccessStatusCode
+                ? DateTime.Now.ToString("dd/MM/yyyy HH:mm")
+                : $"Erreur ({(int)response.StatusCode})";
+        }
+        catch (Exception ex)
+        {
+            _hostTasksRequestResult = $"Injoignable ({ex.Message})";
+        }
+        finally
+        {
+            _hostTasksRequestLoading = false;
         }
     }
 

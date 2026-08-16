@@ -178,6 +178,13 @@ else
                                     </div>
                                     <div>@(_inventoryRequestResult ?? "Inconnu")</div>
                                 </div>
+                                <div class="col-md-4">
+                                    <div class="glpi-fiche-inventory-label">
+                                        Lancer les tâches de l'hôte
+                                        <i class="ti ti-refresh @(_hostTasksRequestLoading ? "glpi-spin" : "")" role="button" title="Lancer les tâches de l'hôte" @onclick="RequestHostTasksAsync"></i>
+                                    </div>
+                                    <div>@(_hostTasksRequestResult ?? "Inconnu")</div>
+                                </div>
                             </div>
                             <div class="glpi-fiche-inventory-footer">
                                 <span>Créé le @_computer.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
@@ -896,7 +903,12 @@ else
                                         </button>
                                         <div class="dropdown">
                                             <button type="button" class="btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                                                @(_wakeMode == DeploymentWakeMode.Local ? "Je suis sur cet ordinateur, faire un réveil local de l'agent" : "Ne pas réveiller l'agent")
+                                                @(_wakeMode switch
+                                                {
+                                                    DeploymentWakeMode.Local => "Je suis sur cet ordinateur, faire un réveil local de l'agent",
+                                                    DeploymentWakeMode.Remote => "Je ne suis pas sur cet ordinateur, faire un réveil de l'agent à distance",
+                                                    _ => "Ne pas réveiller l'agent"
+                                                })
                                             </button>
                                             <ul class="dropdown-menu">
                                                 <li>
@@ -905,7 +917,7 @@ else
                                                     </button>
                                                 </li>
                                                 <li>
-                                                    <button type="button" class="dropdown-item disabled" disabled title="Wake-on-LAN non disponible dans GlpiNg" aria-disabled="true">
+                                                    <button type="button" class="dropdown-item @(_wakeMode == DeploymentWakeMode.Remote ? "active" : "")" @onclick="() => _wakeMode = DeploymentWakeMode.Remote">
                                                         Je ne suis pas sur cet ordinateur, faire un réveil de l'agent à distance
                                                     </button>
                                                 </li>
