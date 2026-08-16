@@ -3,11 +3,7 @@
 
 <PageTitle>GlpiNg — Ordinateurs</PageTitle>
 
-<div class="page-header d-flex align-items-center justify-content-between mb-3">
-    <h2 class="page-title mb-0">Ordinateurs</h2>
-    <div class="text-secondary">@_filteredComputers.Count résultat(s)</div>
-</div>
-
+<div class="glpi-list-page">
 <div class="d-flex align-items-start gap-3 glpi-computers-layout">
     @if (_savedSearchesOpen)
     {
@@ -189,6 +185,17 @@
                                     {
                                         <input type="date" class="form-control form-control-sm" value="@criterion.Value"
                                                @onchange="@((ChangeEventArgs e) => criterion.Value = (string)(e.Value ?? string.Empty))" />
+                                    }
+                                    else if (field?.Type == SearchFieldType.Text && (criterion.Operator == "equals" || criterion.Operator == "notequals"))
+                                    {
+                                        <select class="form-select form-select-sm" value="@criterion.Value"
+                                                @onchange="@((ChangeEventArgs e) => criterion.Value = (string)e.Value!)">
+                                            <option value="">—</option>
+                                            @foreach (string distinctValue in GetDistinctTextValues(field.Key))
+                                            {
+                                                <option value="@distinctValue">@distinctValue</option>
+                                            }
+                                        </select>
                                     }
                                     else
                                     {
@@ -493,6 +500,7 @@
         }
     </div>
     </div>
+</div>
 </div>
 
 @if (_showSaveSearchModal)

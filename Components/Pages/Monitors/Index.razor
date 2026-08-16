@@ -3,19 +3,284 @@
 
 <PageTitle>GlpiNg — Moniteurs</PageTitle>
 
-<div class="page-header d-flex align-items-center justify-content-between mb-3">
-    <h2 class="page-title mb-0">Moniteurs</h2>
-    <div class="text-secondary">@_filteredMonitors.Count résultat(s)</div>
-</div>
+<div class="glpi-list-page">
+<div class="d-flex align-items-start gap-3 glpi-computers-layout">
+    @if (_savedSearchesOpen)
+    {
+        <div class="glpi-saved-searches-panel @(_savedSearchesPinned ? "pinned" : "")">
+            <div class="glpi-saved-searches-heading d-flex align-items-center justify-content-between">
+                <span class="d-flex align-items-center gap-2">
+                    <i class="ti ti-bookmarks"></i>Recherches sauvegardées
+                </span>
+                <div class="d-flex align-items-center gap-1">
+                    <a class="btn btn-icon btn-sm btn-ghost-secondary" href="/tools/saved-searches" title="Gérer toutes les recherches sauvegardées">
+                        <i class="ti ti-settings"></i>
+                    </a>
+                    <button type="button" class="btn btn-icon btn-sm btn-ghost-secondary @(_savedSearchesPinned ? "active" : "")"
+                            title="@(_savedSearchesPinned ? "Détacher ce panneau" : "Épingler ce panneau pour cette page")"
+                            @onclick="() => _savedSearchesPinned = !_savedSearchesPinned">
+                        <i class="ti ti-pinned"></i>
+                    </button>
+                    @if (!_savedSearchesPinned)
+                    {
+                        <button type="button" class="btn btn-icon btn-sm btn-ghost-secondary" title="Fermer le panneau"
+                                @onclick="() => _savedSearchesOpen = false">
+                            <i class="ti ti-x"></i>
+                        </button>
+                    }
+                </div>
+            </div>
+            <ul class="nav nav-tabs glpi-saved-searches-tabs">
+                <li class="nav-item">
+                    <button type="button" class="nav-link @(_savedSearchesTab == SavedSearchesTab.Monitor ? "active" : "")"
+                            @onclick="() => _savedSearchesTab = SavedSearchesTab.Monitor">
+                        Moniteur
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button type="button" class="nav-link @(_savedSearchesTab == SavedSearchesTab.Other ? "active" : "")"
+                            @onclick="() => _savedSearchesTab = SavedSearchesTab.Other">
+                        Autres
+                    </button>
+                </li>
+            </ul>
+            <div class="list-group list-group-flush glpi-saved-searches-list">
+                @if (_savedSearchesTab == SavedSearchesTab.Other)
+                {
+                    @if (FilteredOtherSavedSearches.Count == 0)
+                    {
+                        <p class="px-3 py-2 text-secondary mb-0">Aucune recherche enregistrée sur les autres types d'éléments.</p>
+                    }
+                    else
+                    {
+                        @foreach (SavedSearch saved in FilteredOtherSavedSearches)
+                        {
+                            <a class="list-group-item d-flex align-items-center gap-2 text-reset"
+                               href="@SavedSearchItemTypes.RouteFor(saved.ItemType)"
+                               title="Aller à la liste « @SavedSearchItemTypes.LabelFor(saved.ItemType) »">
+                                <i class="ti @SavedSearchItemTypes.IconFor(saved.ItemType) text-secondary"></i>
+                                <span class="text-truncate flex-grow-1">@saved.Name</span>
+                                <span class="badge bg-secondary-lt ms-auto">@saved.ResultCount</span>
+                            </a>
+                        }
+                    }
+                }
+                else if (FilteredSavedSearches.Count == 0)
+                {
+                    <p class="px-3 py-2 text-secondary mb-0">
+                        @(_savedSearches.Count == 0 ? "Aucune recherche enregistrée." : "Aucun résultat pour ce filtre.")
+                    </p>
+                }
+                else
+                {
+                    @foreach (SavedSearch saved in FilteredSavedSearches)
+                    {
+                        <div class="list-group-item d-flex align-items-center gap-1 glpi-draggable-row"
+                             draggable="true"
+                             @ondragstart="() => OnSavedSearchDragStart(saved)"
+                             @ondragover:preventDefault="true"
+                             @ondrop="() => OnSavedSearchDropAsync(saved)" @ondrop:preventDefault="true">
+                            <i class="ti ti-grip-vertical glpi-drag-handle" title="Glisser pour réordonner"></i>
+                            <button type="button" class="btn btn-link text-reset text-truncate flex-grow-1 justify-content-start p-0"
+                                    title="Appliquer cette recherche" @onclick="() => ApplySavedSearch(saved)">
+                                <span class="text-truncate">@saved.Name</span>
+                            </button>
+                            @if (saved.OwnerUserId == _currentUserId)
+                            {
+                                <button type="button" class="btn btn-icon btn-sm btn-ghost-secondary" title="Définir par défaut"
+                                        @onclick="() => SetDefaultSavedSearchAsync(saved)">
+                                    <i class="ti @(saved.IsDefault ? "ti-star-filled text-warning" : "ti-star")"></i>
+                                </button>
+                            }
+                            <span class="badge bg-secondary-lt ms-auto">@saved.ResultCount</span>
+                        </div>
+                    }
+                }
+            </div>
+            <div class="glpi-saved-searches-filter">
+                <div class="input-icon">
+                    <input type="text" class="form-control form-control-sm" placeholder="Filtrer la liste" value="@_savedSearchFilter"
+                           @oninput="@((ChangeEventArgs e) => _savedSearchFilter = (string)(e.Value ?? string.Empty))" />
+                    @if (_savedSearchFilter.Length > 0)
+                    {
+                        <span class="input-icon-addon" role="button" title="Effacer le filtre" @onclick="() => _savedSearchFilter = string.Empty">
+                            <i class="ti ti-x"></i>
+                        </span>
+                    }
+                </div>
+            </div>
+        </div>
+    }
 
-<div class="card">
-    <div class="card-header">
-        <div class="input-icon" style="max-width: 320px;">
-            <span class="input-icon-addon">
-                <i class="ti ti-search"></i>
-            </span>
-            <input type="text" class="form-control" placeholder="Rechercher un écran..."
-                   @bind="_searchTerm" @bind:event="oninput" @onkeyup="OnSearchChanged" />
+    <div class="card flex-fill" style="min-width: 0;">
+    <div class="card-header d-flex align-items-center justify-content-between glpi-list-toolbar">
+        <div class="btn-list">
+            <button type="button" class="btn btn-icon @(_savedSearchesOpen ? "active" : "")" title="Afficher les recherches sauvegardées"
+                    @onclick="() => _savedSearchesOpen = !_savedSearchesOpen">
+                <i class="ti ti-bookmarks"></i>
+            </button>
+
+            <div class="dropdown">
+                <button type="button" class="btn dropdown-toggle" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                    <i class="ti ti-search me-1"></i>Rechercher
+                    @if (ActiveCriteriaCount > 0)
+                    {
+                        <span class="badge bg-blue-lt ms-1">@ActiveCriteriaCount</span>
+                    }
+                </button>
+                <div class="dropdown-menu p-3" style="min-width: 640px;">
+                    @for (int criterionIndex = 0; criterionIndex < _criteria.Count; criterionIndex++)
+                    {
+                        SearchCriterion criterion = _criteria[criterionIndex];
+                        SearchFieldDefinition? field = FindField(criterion.FieldKey);
+
+                        <div class="row g-2 align-items-center mb-2">
+                            <div class="col-auto" style="width: 5.5rem;">
+                                @if (criterionIndex == 0)
+                                {
+                                    <span class="text-secondary">PAS</span>
+                                }
+                                else
+                                {
+                                    <select class="form-select form-select-sm" value="@criterion.Link"
+                                            @onchange="@((ChangeEventArgs e) => criterion.Link = (string)e.Value!)">
+                                        <option value="AND">ET</option>
+                                        <option value="OR">OU</option>
+                                    </select>
+                                }
+                            </div>
+                            <div class="col">
+                                <select class="form-select form-select-sm" value="@criterion.FieldKey"
+                                        @onchange="@((ChangeEventArgs e) => OnCriterionFieldChanged(criterion, (string)e.Value!))">
+                                    @foreach (SearchFieldDefinition option in SearchFields)
+                                    {
+                                        <option value="@option.Key">@option.Label</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-auto" style="width: 10rem;">
+                                <select class="form-select form-select-sm" value="@criterion.Operator"
+                                        @onchange="@((ChangeEventArgs e) => criterion.Operator = (string)e.Value!)">
+                                    @foreach ((string opValue, string opLabel) in GetOperators(field))
+                                    {
+                                        <option value="@opValue">@opLabel</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col">
+                                @if (criterion.Operator != "empty")
+                                {
+                                    @if (field is not null && field.Key != "all" && (criterion.Operator == "equals" || criterion.Operator == "notequals"))
+                                    {
+                                        <select class="form-select form-select-sm" value="@criterion.Value"
+                                                @onchange="@((ChangeEventArgs e) => criterion.Value = (string)e.Value!)">
+                                            <option value="">—</option>
+                                            @foreach (string distinctValue in GetDistinctTextValues(field.Key))
+                                            {
+                                                <option value="@distinctValue">@distinctValue</option>
+                                            }
+                                        </select>
+                                    }
+                                    else
+                                    {
+                                        <input type="text" class="form-control form-control-sm"
+                                               value="@criterion.Value"
+                                               @onchange="@((ChangeEventArgs e) => criterion.Value = (string)(e.Value ?? string.Empty))" />
+                                    }
+                                }
+                            </div>
+                            <div class="col-auto">
+                                <button type="button" class="btn btn-icon btn-sm" title="Supprimer ce critère"
+                                        disabled="@(_criteria.Count <= 1)" @onclick="() => RemoveCriterion(criterion)">
+                                    <i class="ti ti-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    }
+
+                    <div class="d-flex align-items-center justify-content-between mt-3">
+                        <button type="button" class="btn btn-sm" @onclick="AddCriterion">
+                            <i class="ti ti-circle-plus me-1"></i>Ajouter un critère
+                        </button>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-icon btn-sm" title="Sauvegarder la recherche courante"
+                                    @onclick="() => _showSaveSearchModal = true">
+                                <i class="ti ti-bookmark-plus"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm" @onclick="ResetSearch">Réinitialiser</button>
+                            <button type="button" class="btn btn-sm btn-primary" @onclick="ApplySearch">
+                                <i class="ti ti-search me-1"></i>Rechercher
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <button type="button" class="btn dropdown-toggle" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" title="Depuis les en-têtes de colonnes : clic pour trier, Ctrl+clic pour un tri secondaire">
+                    <i class="ti ti-arrows-sort me-1"></i>Trier
+                    @if (_sortCriteria.Count > 0)
+                    {
+                        <span class="badge bg-blue-lt ms-1">@_sortCriteria.Count</span>
+                    }
+                </button>
+                <div class="dropdown-menu p-3" style="min-width: 420px;">
+                    @if (_sortCriteria.Count == 0)
+                    {
+                        <p class="text-secondary mb-2">Aucun tri actif.</p>
+                    }
+                    @for (int sortIndex = 0; sortIndex < _sortCriteria.Count; sortIndex++)
+                    {
+                        SortCriterion sortCriterion = _sortCriteria[sortIndex];
+                        <div class="row g-2 align-items-center mb-2">
+                            <div class="col">
+                                <select class="form-select form-select-sm" value="@sortCriterion.Field"
+                                        @onchange="@((ChangeEventArgs e) => sortCriterion.Field = (string)e.Value!)">
+                                    @foreach (SearchFieldDefinition field in SearchFields.Where(f => f.Key != "all"))
+                                    {
+                                        <option value="@field.Key">@field.Label</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-auto" style="width: 9.5rem;">
+                                <select class="form-select form-select-sm" value="@(sortCriterion.Descending ? "desc" : "asc")"
+                                        @onchange="@((ChangeEventArgs e) => sortCriterion.Descending = (string)e.Value! == "desc")">
+                                    <option value="asc">Croissant</option>
+                                    <option value="desc">Décroissant</option>
+                                </select>
+                            </div>
+                            <div class="col-auto">
+                                <button type="button" class="btn btn-icon btn-sm" title="Supprimer ce tri"
+                                        @onclick="() => RemoveSortCriterion(sortCriterion)">
+                                    <i class="ti ti-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    }
+
+                    <div class="d-flex align-items-center justify-content-between mt-3">
+                        <button type="button" class="btn btn-sm" disabled="@(_sortCriteria.Count >= SearchFields.Count(f => f.Key != "all"))" @onclick="AddSortCriterion">
+                            <i class="ti ti-circle-plus me-1"></i>Ajouter un autre tri
+                        </button>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-sm" @onclick="ResetSort">Réinitialiser le tri</button>
+                            <button type="button" class="btn btn-sm btn-primary" @onclick="ApplySort">
+                                <i class="ti ti-arrows-sort me-1"></i>Trier
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="btn-list align-items-center">
+            <button type="button" class="btn btn-icon" @onclick="() => _showColumnsModal = true" title="Sélectionner les colonnes à afficher">
+                <i class="ti ti-columns-3"></i>
+            </button>
+
+            <button type="button" class="btn btn-icon" @onclick="OnRefreshAsync" disabled="@_isRefreshing" title="Rafraîchir">
+                <i class="ti ti-refresh @(_isRefreshing ? "glpi-spin" : "")"></i>
+            </button>
         </div>
     </div>
 
@@ -23,38 +288,203 @@
         <table class="table table-vcenter card-table">
             <thead>
                 <tr>
-                    <th>Désignation</th>
-                    <th>Fabricant</th>
-                    <th>N° de série</th>
-                    <th>Poste associé</th>
+                    <th class="glpi-sortable-th" title="Ctrl+clic pour ajouter un tri secondaire"
+                        @onclick="@((MouseEventArgs e) => SetSort("designation", e.CtrlKey))">
+                        <span class="d-flex align-items-center gap-1">
+                            Désignation
+                            @if (GetSortCriterion("designation") is { } designationActive)
+                            {
+                                <span class="glpi-sort-indicator">
+                                    <i class="ti @(designationActive.Descending ? "ti-caret-up-filled" : "ti-caret-down-filled")"></i>
+                                    @if (_sortCriteria.Count > 1)
+                                    {
+                                        <span class="glpi-sort-num">@(_sortCriteria.IndexOf(designationActive) + 1)</span>
+                                    }
+                                </span>
+                            }
+                        </span>
+                    </th>
+                    @foreach (string columnKey in _columns)
+                    {
+                        SearchFieldDefinition? columnField = FindField(columnKey);
+                        SortCriterion? active = GetSortCriterion(columnKey);
+                        <th class="glpi-sortable-th" title="Ctrl+clic pour ajouter un tri secondaire"
+                            @onclick="@((MouseEventArgs e) => SetSort(columnKey, e.CtrlKey))">
+                            <span class="d-flex align-items-center gap-1">
+                                @(columnField?.Label ?? columnKey)
+                                @if (active is not null)
+                                {
+                                    <span class="glpi-sort-indicator">
+                                        <i class="ti @(active.Descending ? "ti-caret-up-filled" : "ti-caret-down-filled")"></i>
+                                        @if (_sortCriteria.Count > 1)
+                                        {
+                                            <span class="glpi-sort-num">@(_sortCriteria.IndexOf(active) + 1)</span>
+                                        }
+                                    </span>
+                                }
+                            </span>
+                        </th>
+                    }
                 </tr>
             </thead>
             <tbody>
                 @if (_filteredMonitors.Count == 0)
                 {
                     <tr>
-                        <td colspan="4" class="text-center text-secondary py-4">Aucun moniteur trouvé.</td>
+                        <td colspan="@(1 + _columns.Count)" class="text-center text-secondary py-4">Aucun moniteur trouvé.</td>
                     </tr>
                 }
                 else
                 {
-                    @foreach (MonitorRow monitor in _filteredMonitors)
+                    @foreach (MonitorRow monitor in _pagedMonitors)
                     {
                         <tr>
                             <td class="fw-semibold">
-                                <i class="ti ti-device-tv me-1 text-secondary"></i>@monitor.Designation
-                            </td>
-                            <td>@(monitor.Manufacturer ?? "—")</td>
-                            <td>@(monitor.Serial ?? "—")</td>
-                            <td>
-                                <a href="@($"/parc/computer/{monitor.ComputerId}")" class="text-reset">
-                                    <i class="ti ti-device-desktop me-1 text-secondary"></i>@monitor.ComputerName
+                                <a href="@($"/parc/monitors/{monitor.Id}")" class="text-reset">
+                                    <i class="ti ti-device-tv me-1 text-secondary"></i>@monitor.Designation
                                 </a>
                             </td>
+                            @foreach (string columnKey in _columns)
+                            {
+                                <td>
+                                    @if (columnKey == "computername")
+                                    {
+                                        <a href="@($"/parc/computer/{monitor.ComputerId}")" class="text-reset">
+                                            <i class="ti ti-device-desktop me-1 text-secondary"></i>@monitor.ComputerName
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        @CellText(monitor, columnKey)
+                                    }
+                                </td>
+                            }
                         </tr>
                     }
                 }
             </tbody>
         </table>
     </div>
+
+    <div class="card-footer d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2 text-secondary">
+            <span>Éléments par page</span>
+            <select class="form-select form-select-sm w-auto" value="@_pageSize"
+                    @onchange="@((ChangeEventArgs e) => SetPageSize(int.Parse((string)e.Value!)))">
+                @foreach (int size in PageSizeOptions)
+                {
+                    <option value="@size">@size</option>
+                }
+            </select>
+        </div>
+
+        @if (_filteredMonitors.Count > 0)
+        {
+            <div class="d-flex align-items-center gap-3">
+                <span class="text-secondary">
+                    @(((_currentPage - 1) * _pageSize) + 1)–@(Math.Min(_currentPage * _pageSize, _filteredMonitors.Count)) sur @_filteredMonitors.Count
+                </span>
+                <ul class="pagination pagination-sm m-0">
+                    <li class="page-item @(_currentPage <= 1 ? "disabled" : "")">
+                        <button type="button" class="page-link" @onclick="() => GoToPage(_currentPage - 1)" disabled="@(_currentPage <= 1)">
+                            <i class="ti ti-chevron-left"></i>
+                        </button>
+                    </li>
+                    <li class="page-item disabled">
+                        <span class="page-link">Page @_currentPage / @TotalPages</span>
+                    </li>
+                    <li class="page-item @(_currentPage >= TotalPages ? "disabled" : "")">
+                        <button type="button" class="page-link" @onclick="() => GoToPage(_currentPage + 1)" disabled="@(_currentPage >= TotalPages)">
+                            <i class="ti ti-chevron-right"></i>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        }
+    </div>
+    </div>
 </div>
+</div>
+
+@if (_showSaveSearchModal)
+{
+    <div class="modal show" style="display: block;" tabindex="-1" role="dialog" aria-modal="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="ti ti-bookmark me-2"></i>Sauvegarder la recherche courante</h5>
+                    <button type="button" class="btn-close" aria-label="Fermer" @onclick="() => _showSaveSearchModal = false"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nom</label>
+                        <input type="text" class="form-control" placeholder="Nom de la recherche" value="@_newSavedSearchName"
+                               @onchange="@((ChangeEventArgs e) => _newSavedSearchName = (string)(e.Value ?? string.Empty))" />
+                    </div>
+                    <div>
+                        <label class="form-label">Visibilité</label>
+                        <select class="form-select" value="@(_newSavedSearchIsPublic ? "public" : "private")"
+                                @onchange="@((ChangeEventArgs e) => _newSavedSearchIsPublic = (string)e.Value! == "public")">
+                            <option value="private">Privé</option>
+                            <option value="public">Public</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" disabled="@(_newSavedSearchName.Trim().Length == 0)" @onclick="SaveCurrentSearchAsync">
+                        <i class="ti ti-plus me-1"></i>Ajouter
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop show"></div>
+}
+
+@if (_showColumnsModal)
+{
+    <div class="modal show" style="display: block;" tabindex="-1" role="dialog" aria-modal="true">
+        <div class="modal-lg modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="ti ti-columns-3 me-2"></i>Sélectionner les colonnes à afficher — Moniteur</h5>
+                    <button type="button" class="btn-close" aria-label="Fermer" @onclick="() => _showColumnsModal = false"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="d-flex gap-2 mb-3">
+                        <select class="form-select" value="@_columnToAdd" @onchange="@((ChangeEventArgs e) => _columnToAdd = (string)e.Value!)">
+                            <option value="">—</option>
+                            @foreach (SearchFieldDefinition field in AvailableColumnsToAdd)
+                            {
+                                <option value="@field.Key">@field.Label</option>
+                            }
+                        </select>
+                        <button type="button" class="btn btn-primary text-nowrap" disabled="@string.IsNullOrEmpty(_columnToAdd)" @onclick="AddColumnAsync">
+                            <i class="ti ti-plus me-1"></i>Ajouter
+                        </button>
+                    </div>
+                    <div class="list-group list-group-flush glpi-columns-list">
+                        <div class="list-group-item text-secondary">Désignation</div>
+                        @foreach (string columnKey in _columns)
+                        {
+                            SearchFieldDefinition? field = FindField(columnKey);
+                            <div class="list-group-item d-flex align-items-center gap-2 glpi-draggable-row"
+                                 draggable="true"
+                                 @ondragstart="() => OnColumnDragStart(columnKey)"
+                                 @ondragover:preventDefault="true"
+                                 @ondrop="() => OnColumnDropAsync(columnKey)" @ondrop:preventDefault="true">
+                                <i class="ti ti-grip-vertical glpi-drag-handle"></i>
+                                <span class="flex-grow-1">@(field?.Label ?? columnKey)</span>
+                                <button type="button" class="btn btn-icon btn-sm text-danger" title="Retirer cette colonne"
+                                        @onclick="() => RemoveColumnAsync(columnKey)">
+                                    <i class="ti ti-x"></i>
+                                </button>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop show"></div>
+}

@@ -1,4 +1,5 @@
 @page "/parc/computer/{ComputerId:int}"
+@using GlpiNg.Modules.Abstractions.Deployment
 @using GlpiNg.Modules.Inventory.Models
 @rendermode InteractiveServer
 
@@ -14,6 +15,9 @@
 else
 {
     <div class="glpi-fiche-topbar">
+        <a class="glpi-fiche-pager-btn" href="@_listUrl" title="Retour à la liste">
+            <i class="ti ti-list"></i>
+        </a>
         <div class="glpi-fiche-crumb">
             <i class="ti ti-device-desktop"></i>
             <span>Ordinateur - @_computer.Name - ID @_computer.Id</span>
@@ -22,6 +26,9 @@ else
             </button>
         </div>
         <div class="glpi-fiche-toolbar">
+            <button type="button" class="glpi-fiche-pager-btn" title="Recharger les données" disabled="@_isReloading" @onclick="ReloadComputerAsync">
+                <i class="ti ti-refresh @(_isReloading ? "glpi-spin" : "")"></i>
+            </button>
             <div class="dropdown">
                 <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="ti ti-dots-vertical me-1"></i>Actions
@@ -127,7 +134,27 @@ else
                             <div class="row">
                                 <div class="col-md-4">
                                     <div class="glpi-fiche-inventory-label">Agent</div>
-                                    <div>@(agent.AgentName ?? agent.Hostname ?? agent.DeviceId ?? "—")</div>
+                                    <div>
+                                        @(agent.AgentName ?? agent.Hostname ?? agent.DeviceId ?? "—")
+                                        @if (AgentWebUrl(agent, _computer) is { } agentWebUrl)
+                                        {
+                                            <a href="@agentWebUrl" target="_blank" rel="noopener noreferrer" title="Ouvrir la page web de l'agent" class="glpi-fiche-inventory-agent-link">
+                                                <i class="ti ti-external-link"></i>
+                                            </a>
+                                        }
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="glpi-fiche-inventory-label">UserAgent</div>
+                                    <div>@(agent.LastUserAgent ?? "—")</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="glpi-fiche-inventory-label">Tag d'inventaire</div>
+                                    <div>@(agent.Tag ?? "—")</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="glpi-fiche-inventory-label">Adresse publique de contact</div>
+                                    <div>@(agent.LastContactIp ?? "—")</div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="glpi-fiche-inventory-label">Dernier contact</div>
@@ -137,6 +164,24 @@ else
                                     <div class="glpi-fiche-inventory-label">Dernière mise à jour de l'inventaire</div>
                                     <div>@LastInventoryLabel(_computer)</div>
                                 </div>
+                                <div class="col-md-4">
+                                    <div class="glpi-fiche-inventory-label">
+                                        Statut de l'agent
+                                        <i class="ti ti-refresh @(_agentStatusLoading ? "glpi-spin" : "")" role="button" title="Interroger l'agent" @onclick="RefreshAgentStatusAsync"></i>
+                                    </div>
+                                    <div>@(_agentStatus ?? "Inconnu")</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="glpi-fiche-inventory-label">
+                                        Demander un inventaire
+                                        <i class="ti ti-refresh @(_inventoryRequestLoading ? "glpi-spin" : "")" role="button" title="Demander un inventaire immédiat" @onclick="RequestInventoryAsync"></i>
+                                    </div>
+                                    <div>@(_inventoryRequestResult ?? "Inconnu")</div>
+                                </div>
+                            </div>
+                            <div class="glpi-fiche-inventory-footer">
+                                <span>Créé le @_computer.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
+                                <span>Dernière mise à jour le @LastInventoryLabel(_computer)</span>
                             </div>
                         </div>
                     }
@@ -236,6 +281,7 @@ else
                                             <th>Type</th>
                                             <th>Tension</th>
                                             <th>Capacité</th>
+                                            <th>Capacité réelle</th>
                                             <th>Numéro de série</th>
                                             <th>Date de fabrication</th>
                                         </tr>
@@ -243,12 +289,25 @@ else
                                     <tbody>
                                         @foreach (ComputerBattery battery in _computer.Batteries)
                                         {
+                                            int? wearPercent = WearPercent(battery.CapacityMwh, battery.RealCapacityMwh);
                                             <tr>
                                                 <td>@battery.Name</td>
                                                 <td>@(battery.Manufacturer ?? "—")</td>
                                                 <td>@(battery.Chemistry ?? "—")</td>
                                                 <td>@VoltageLabel(battery.VoltageMv)</td>
                                                 <td>@CapacityLabel(battery.CapacityMwh)</td>
+                                                <td>
+                                                    @if (battery.RealCapacityMwh is null)
+                                                    {
+                                                        @:—
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge @WearBadgeCss(wearPercent)">
+                                                            @RealCapacityLabel(battery.RealCapacityMwh)@(wearPercent is { } p ? $" ({p}%)" : "")
+                                                        </span>
+                                                    }
+                                                </td>
                                                 <td>@(battery.Serial ?? "—")</td>
                                                 <td>@(battery.ManufactureDate ?? "—")</td>
                                             </tr>
@@ -271,7 +330,7 @@ else
                     else
                     {
                         <div class="glpi-fiche-block">
-                            <div class="glpi-fiche-block-title"><i class="ti ti-apps"></i>Logiciels installés (@_computer.Softwares.Count)</div>
+                            <div class="glpi-fiche-block-title"><i class="ti ti-apps"></i>Logiciels installés (@_softwareSorted.Count)</div>
                             <div class="table-responsive">
                                 <table class="table table-vcenter card-table mb-0">
                                     <thead>
@@ -283,7 +342,7 @@ else
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach (ComputerSoftware software in _computer.Softwares.OrderBy(s => s.Name))
+                                        @foreach (ComputerSoftware software in _softwarePaged)
                                         {
                                             <tr>
                                                 <td>@software.Name</td>
@@ -295,6 +354,41 @@ else
                                     </tbody>
                                 </table>
                             </div>
+                            @if (_softwareSorted.Count > SoftwarePageSizeOptions[0])
+                            {
+                                <div class="card-footer d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                    <div class="d-flex align-items-center gap-2 text-secondary">
+                                        <span>Éléments par page</span>
+                                        <select class="form-select form-select-sm w-auto" value="@_softwarePageSize"
+                                                @onchange="@((ChangeEventArgs e) => SetSoftwarePageSize(int.Parse((string)e.Value!)))">
+                                            @foreach (int size in SoftwarePageSizeOptions)
+                                            {
+                                                <option value="@size">@size</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <span class="text-secondary">
+                                            @((_softwarePage - 1) * _softwarePageSize + 1)–@(Math.Min(_softwarePage * _softwarePageSize, _softwareSorted.Count)) sur @_softwareSorted.Count
+                                        </span>
+                                        <ul class="pagination pagination-sm m-0">
+                                            <li class="page-item @(_softwarePage <= 1 ? "disabled" : "")">
+                                                <button type="button" class="page-link" @onclick="() => GoToSoftwarePage(_softwarePage - 1)" disabled="@(_softwarePage <= 1)">
+                                                    <i class="ti ti-chevron-left"></i>
+                                                </button>
+                                            </li>
+                                            <li class="page-item disabled">
+                                                <span class="page-link">Page @_softwarePage / @SoftwareTotalPages</span>
+                                            </li>
+                                            <li class="page-item @(_softwarePage >= SoftwareTotalPages ? "disabled" : "")">
+                                                <button type="button" class="page-link" @onclick="() => GoToSoftwarePage(_softwarePage + 1)" disabled="@(_softwarePage >= SoftwareTotalPages)">
+                                                    <i class="ti ti-chevron-right"></i>
+                                                </button>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            }
                         </div>
                     }
                     break;
@@ -389,7 +483,16 @@ else
                                             @foreach (ComputerPeripheral peripheral in group)
                                             {
                                                 <tr>
-                                                    <td>@peripheral.Designation</td>
+                                                    <td>
+                                                        @if (peripheral.Kind == PeripheralKind.Monitor)
+                                                        {
+                                                            <a href="@($"/parc/monitors/{peripheral.Id}")" class="text-reset">@peripheral.Designation</a>
+                                                        }
+                                                        else
+                                                        {
+                                                            @peripheral.Designation
+                                                        }
+                                                    </td>
                                                     <td>@(peripheral.Manufacturer ?? "—")</td>
                                                     <td>@(peripheral.Serial ?? "—")</td>
                                                 </tr>
@@ -438,7 +541,7 @@ else
                                             <tr>
                                                 <td>@port.Designation</td>
                                                 <td>@(port.Type ?? "—")</td>
-                                                <td>@(port.MacAddress ?? "—")</td>
+                                                <td>@FormatMac(port.MacAddress)</td>
                                                 <td>@(port.IpAddress ?? "—")</td>
                                                 <td>@(port.IpMask ?? "—")</td>
                                                 <td>@(port.IpGateway ?? "—")</td>
@@ -450,6 +553,83 @@ else
                                                 <td>@(port.IsVirtual ? "Oui" : "Non")</td>
                                             </tr>
                                         }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    }
+                    break;
+
+                case "antivirus":
+                    @if (_computer.Antiviruses.Count == 0)
+                    {
+                        <div class="glpi-config-placeholder">
+                            <i class="ti ti-shield-off"></i>
+                            <p class="mb-0">Aucun antivirus remonté.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="glpi-fiche-block">
+                            <div class="glpi-fiche-block-title"><i class="ti ti-shield-check"></i>Antivirus (@_computer.Antiviruses.Count)</div>
+                            <div class="table-responsive">
+                                <table class="table table-vcenter card-table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Nom</th>
+                                            <th>Éditeur</th>
+                                            <th>Version</th>
+                                            <th>Actif</th>
+                                            <th>À jour</th>
+                                            <th>Version de la base</th>
+                                            <th>Date de la base</th>
+                                            <th>Expiration</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (ComputerAntivirus antivirus in _computer.Antiviruses)
+                                        {
+                                            <tr>
+                                                <td>@antivirus.Name</td>
+                                                <td>@(antivirus.Company ?? "—")</td>
+                                                <td>@(antivirus.Version ?? "—")</td>
+                                                <td><span class="badge @BoolBadgeCss(antivirus.Enabled)">@BoolLabel(antivirus.Enabled)</span></td>
+                                                <td><span class="badge @BoolBadgeCss(antivirus.UpToDate)">@BoolLabel(antivirus.UpToDate)</span></td>
+                                                <td>@(antivirus.BaseVersion ?? "—")</td>
+                                                <td>@(antivirus.BaseCreationDate ?? "—")</td>
+                                                <td>@(antivirus.Expiration ?? "—")</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    }
+                    break;
+
+                case "domains":
+                    @if (_computer.Domain is null)
+                    {
+                        <div class="glpi-config-placeholder">
+                            <i class="ti ti-world-www"></i>
+                            <p class="mb-0">Aucun domaine remonté.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="glpi-fiche-block">
+                            <div class="glpi-fiche-block-title"><i class="ti ti-world-www"></i>Domaines (1)</div>
+                            <div class="table-responsive">
+                                <table class="table table-vcenter card-table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Nom</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>@_computer.Domain</td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -534,6 +714,219 @@ else
                                         }
                                     </tbody>
                                 </table>
+                            </div>
+                        </div>
+                    }
+                    break;
+
+                case "tasks":
+                    @if (_deploymentTasksInfo is null)
+                    {
+                        <div class="glpi-config-placeholder">
+                            <i class="ti ti-checklist"></i>
+                            <p class="mb-0">Module de déploiement non disponible.</p>
+                        </div>
+                    }
+                    else if (_deploymentTasksInfo.Tasks.Count == 0 && _deploymentTasksInfo.Groups.Count == 0)
+                    {
+                        <div class="glpi-config-placeholder">
+                            <i class="ti ti-checklist"></i>
+                            <p class="mb-0">Aucune tâche de déploiement ni groupe pour ce poste.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        @if (_deploymentTasksInfo.Tasks.Count > 0)
+                        {
+                            <div class="glpi-fiche-block">
+                                <div class="glpi-fiche-block-title"><i class="ti ti-checklist"></i>Tâches (@_deploymentTasksInfo.Tasks.Count)</div>
+                                <div class="table-responsive">
+                                    <table class="table table-vcenter card-table mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Tâche</th>
+                                                <th>Activé</th>
+                                                <th>Module method</th>
+                                                <th>Date</th>
+                                                <th>Statut</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (ComputerDeploymentTask task in _deploymentTasksInfo.Tasks)
+                                            {
+                                                <tr>
+                                                    <td><a href="/tools/deployments/package/@task.PackageId">@task.Name</a></td>
+                                                    <td><span class="badge @BoolBadgeCss(task.Active)">@BoolLabel(task.Active)</span></td>
+                                                    <td>@task.MethodLabel</td>
+                                                    <td colspan="2"></td>
+                                                </tr>
+                                                @foreach (ComputerDeploymentTaskExecution execution in task.Executions)
+                                                {
+                                                    <tr>
+                                                        <td colspan="3"></td>
+                                                        <td>@(execution.DateUtc is { } date ? date.ToLocalTime().ToString("dd/MM/yyyy HH:mm") : "—")</td>
+                                                        <td><span class="badge @execution.StatusBadgeCssClass">@execution.StatusLabel</span></td>
+                                                    </tr>
+                                                }
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        }
+                        @if (_deploymentTasksInfo.Groups.Count > 0)
+                        {
+                            <div class="glpi-fiche-block">
+                                <div class="glpi-fiche-block-title"><i class="ti ti-users-group"></i>Groupes (@_deploymentTasksInfo.Groups.Count)</div>
+                                <div class="table-responsive">
+                                    <table class="table table-vcenter card-table mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Groupe</th>
+                                                <th>Type</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (ComputerDeploymentGroup group in _deploymentTasksInfo.Groups)
+                                            {
+                                                <tr>
+                                                    <td><a href="/tools/deployments/computer-groups/@group.GroupId">@group.Name</a></td>
+                                                    <td>@group.TypeLabel</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        }
+                    }
+                    break;
+
+                case "deploy":
+                    @if (DeploymentAssignmentService is null)
+                    {
+                        <div class="glpi-config-placeholder">
+                            <i class="ti ti-package"></i>
+                            <p class="mb-0">Module de déploiement non disponible.</p>
+                        </div>
+                    }
+                    else if (_computer.Agent is null)
+                    {
+                        <div class="glpi-config-placeholder">
+                            <i class="ti ti-package-off"></i>
+                            <p class="mb-0">Ce poste n'est associé à aucun agent GLPI-Agent : le déploiement de package n'est pas disponible.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="glpi-fiche-block">
+                            <div class="glpi-fiche-block-title"><i class="ti ti-package"></i>Paquets assignés (@_deploymentAssignments.Count)</div>
+
+                            <div class="glpi-fiche-block-body">
+                                @if (_deploymentAssignments.Count > 0)
+                                {
+                                    <div class="table-responsive mb-3">
+                                        <table class="table table-vcenter card-table mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>Paquet</th>
+                                                    <th>Statut</th>
+                                                    <th>Créé le</th>
+                                                    <th>Démarré le</th>
+                                                    <th>Terminé le</th>
+                                                    <th></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (ComputerDeploymentAssignment assignment in _deploymentAssignments)
+                                                {
+                                                    <tr>
+                                                        <td><a href="/tools/deployments/package/@assignment.PackageId">@assignment.PackageName</a></td>
+                                                        <td><span class="badge @assignment.StatusBadgeCssClass">@assignment.StatusLabel</span></td>
+                                                        <td>@assignment.CreatedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                                        <td>@(assignment.StartedAtUtc is { } started ? started.ToLocalTime().ToString("dd/MM/yyyy HH:mm") : "—")</td>
+                                                        <td>@(assignment.CompletedAtUtc is { } completed ? completed.ToLocalTime().ToString("dd/MM/yyyy HH:mm") : "—")</td>
+                                                        <td class="text-end">
+                                                            @if (assignment.CanCancel)
+                                                            {
+                                                                <button type="button" class="btn btn-sm btn-icon text-danger" title="Annuler cette assignation" @onclick="() => CancelAssignmentAsync(assignment.JobId)">
+                                                                    <i class="ti ti-x"></i>
+                                                                </button>
+                                                            }
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <p class="text-secondary small mb-3">Aucun paquet assigné à ce poste pour le moment.</p>
+                                }
+
+                                <div class="glpi-fiche-add-row">
+                                    <label class="form-label">Sélectionner les paquets à installer</label>
+                                    <div class="glpi-tag-select">
+                                        @foreach (DeploymentPackageOption package in _selectedPackagesToAssign)
+                                        {
+                                            <span class="glpi-tag">
+                                                <button type="button" class="glpi-tag-remove" title="Retirer" @onclick="() => RemovePackageToAssign(package.Id)">
+                                                    <i class="ti ti-x"></i>
+                                                </button>
+                                                @package.Name
+                                            </span>
+                                        }
+                                        @{
+                                            var packagesLeftToAdd = _availablePackages.Where(p => !_selectedPackagesToAssign.Any(s => s.Id == p.Id)).ToList();
+                                        }
+                                        <select class="glpi-tag-select-input" @key="_selectedPackagesToAssign.Count" disabled="@(packagesLeftToAdd.Count == 0)" @onchange="AddPackageToAssign">
+                                            <option value="">@(packagesLeftToAdd.Count == 0 ? "Aucun autre paquet disponible" : "+ Ajouter un paquet…")</option>
+                                            @foreach (DeploymentPackageOption package in packagesLeftToAdd)
+                                            {
+                                                <option value="@package.Id">@package.Name</option>
+                                            }
+                                        </select>
+                                    </div>
+
+                                    <div class="d-flex gap-2 mt-3">
+                                        <button type="button" class="btn" disabled="@(_prepareInstallLoading || _selectedPackagesToAssign.Count == 0)" @onclick="PrepareInstallationAsync">
+                                            <i class="ti ti-player-play @(_prepareInstallLoading ? "glpi-spin" : "")"></i>
+                                            Préparer l'installation
+                                        </button>
+                                        <div class="dropdown">
+                                            <button type="button" class="btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                                @(_wakeMode == DeploymentWakeMode.Local ? "Je suis sur cet ordinateur, faire un réveil local de l'agent" : "Ne pas réveiller l'agent")
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li>
+                                                    <button type="button" class="dropdown-item @(_wakeMode == DeploymentWakeMode.Local ? "active" : "")" @onclick="() => _wakeMode = DeploymentWakeMode.Local">
+                                                        Je suis sur cet ordinateur, faire un réveil local de l'agent
+                                                    </button>
+                                                </li>
+                                                <li>
+                                                    <button type="button" class="dropdown-item disabled" disabled title="Wake-on-LAN non disponible dans GlpiNg" aria-disabled="true">
+                                                        Je ne suis pas sur cet ordinateur, faire un réveil de l'agent à distance
+                                                    </button>
+                                                </li>
+                                                <li>
+                                                    <button type="button" class="dropdown-item @(_wakeMode == DeploymentWakeMode.None ? "active" : "")" @onclick="() => _wakeMode = DeploymentWakeMode.None">
+                                                        Ne pas réveiller l'agent
+                                                    </button>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                    @if (_prepareInstallError is { } error)
+                                    {
+                                        <div class="text-danger small mt-2"><i class="ti ti-alert-triangle me-1"></i>@error</div>
+                                    }
+                                    else if (_availablePackages.Count == 0)
+                                    {
+                                        <div class="text-secondary small mt-2">Aucun paquet de déploiement disponible. <a href="/tools/deployments/packages">Créer un paquet</a>.</div>
+                                    }
+                                </div>
                             </div>
                         </div>
                     }

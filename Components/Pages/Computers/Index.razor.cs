@@ -114,6 +114,9 @@ public partial class Index : ComponentBase
     [Inject]
     private IJSRuntime JS { get; set; } = null!;
 
+    [Inject]
+    private ComputerListStateService ListState { get; set; } = null!;
+
     [CascadingParameter]
     private Task<AuthenticationState>? AuthStateTask { get; set; }
 
@@ -164,7 +167,7 @@ public partial class Index : ComponentBase
         : _otherSavedSearches.Where(saved => saved.Name.Contains(_savedSearchFilter, StringComparison.OrdinalIgnoreCase)).ToList();
 
     private IEnumerable<SearchFieldDefinition> AvailableColumnsToAdd =>
-        SearchFields.Where(field => field.Key != "all" && field.Key != "name" && !_columns.Contains(field.Key));
+        SearchFields.Where(f => f.Key != "all" && f.Key != "name" && !_columns.Contains(f.Key));
 
     protected override async Task OnInitializedAsync()
     {
@@ -187,6 +190,10 @@ public partial class Index : ComponentBase
         if (searchToApply is not null)
         {
             ApplySavedSearch(searchToApply);
+        }
+        else if (SavedSearchId is null && ListState.HasState)
+        {
+            RestoreListState();
         }
     }
 
@@ -261,6 +268,14 @@ public partial class Index : ComponentBase
     {
         return SearchFields.FirstOrDefault(field => field.Key == key);
     }
+
+    private List<string> GetDistinctTextValues(string fieldKey) =>
+        _computers.Select(computer => GetFieldText(computer, fieldKey))
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Select(value => value!)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
+            .ToList();
 
     private static (string Value, string Label)[] GetOperators(SearchFieldDefinition? field)
     {
@@ -625,6 +640,7 @@ public partial class Index : ComponentBase
         _filteredComputers = (ordered ?? matched.AsEnumerable()).ToList();
         _selectedIds.IntersectWith(_filteredComputers.Select(computer => computer.Id));
         ApplyPaging();
+        SaveListState();
     }
 
     private void ApplyPaging()
@@ -849,4 +865,35 @@ public partial class Index : ComponentBase
         ComputerStatus.Retired => "glpi-status-retired",
         _ => "bg-secondary"
     };
+
+    private void SaveListState()
+    {
+        ListState.CriteriaJson = JsonSerializer.Serialize(_criteria);
+        ListState.SortJson = JsonSerializer.Serialize(_sortCriteria);
+        ListState.CurrentPage = _currentPage;
+        ListState.PageSize = _pageSize;
+        ListState.FilteredIds = _filteredComputers.Select(c => c.Id).ToList();
+        ListState.HasState = true;
+    }
+
+    private void RestoreListState()
+    {
+        if (ListState.CriteriaJson is not null)
+        {
+            List<SearchCriterion>? criteria = JsonSerializer.Deserialize<List<SearchCriterion>>(ListState.CriteriaJson);
+            _criteria.Clear();
+            _criteria.AddRange(criteria is { Count: > 0 } ? criteria : [new SearchCriterion()]);
+        }
+
+        if (ListState.SortJson is not null)
+        {
+            List<SortCriterion>? sort = JsonSerializer.Deserialize<List<SortCriterion>>(ListState.SortJson);
+            _sortCriteria.Clear();
+            _sortCriteria.AddRange(sort is { Count: > 0 } ? sort : [new SortCriterion { Field = "name", Descending = false }]);
+        }
+
+        _pageSize = ListState.PageSize;
+        _currentPage = ListState.CurrentPage;
+        ApplyFilterAndSort();
+    }
 }

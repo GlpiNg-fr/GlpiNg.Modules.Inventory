@@ -13,7 +13,7 @@ public static class SavedSearchItemTypes
         ("Monitor", "Moniteur", "ti-device-tv", "/parc/monitors"),
         ("Software", "Logiciel", "ti-apps", "/parc/software"),
         ("Peripheral", "Périphérique", "ti-mouse", "/parc/peripherals"),
-        ("Agent", "Agent", "ti-cpu", "/tools/agents"),
+        ("Agent", "Agent", "ti-cpu", "/tools/deployments/agent"),
     ];
 
     public static string LabelFor(string itemType) =>

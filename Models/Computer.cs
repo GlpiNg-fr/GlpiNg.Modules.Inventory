@@ -33,6 +33,9 @@ public class Computer
     /// <summary>content.hardware.vmsystem — technologie de virtualisation ("Physical" si machine physique).</summary>
     public string? VmSystem { get; set; }
 
+    /// <summary>content.hardware.workgroup — domaine Active Directory ou groupe de travail Windows du poste.</summary>
+    public string? Domain { get; set; }
+
     /// <summary>content.operatingsystem.kernel_version.</summary>
     public string? OsKernelVersion { get; set; }
 
@@ -56,6 +59,7 @@ public class Computer
     public List<ComputerVolume> Volumes { get; set; } = [];
     public List<ComputerBattery> Batteries { get; set; } = [];
     public List<ComputerNetworkPort> NetworkPorts { get; set; } = [];
+    public List<ComputerAntivirus> Antiviruses { get; set; } = [];
     public List<ComputerImportHistory> ImportHistories { get; set; } = [];
     public List<ComputerHistoryEntry> HistoryEntries { get; set; } = [];
 
@@ -129,8 +133,31 @@ public class ComputerBattery
     /// <summary>Capacité (constructeur) en mWh.</summary>
     public int? CapacityMwh { get; set; }
 
+    /// <summary>Capacité réelle actuelle (diminue avec l'usure de la batterie), en mWh.</summary>
+    public int? RealCapacityMwh { get; set; }
+
     /// <summary>Date de fabrication, telle que remontée par l'agent (format libre).</summary>
     public string? ManufactureDate { get; set; }
+}
+
+/// <summary>Logiciel antivirus détecté remonté par content.antivirus.</summary>
+public class ComputerAntivirus
+{
+    public int Id { get; set; }
+    public int ComputerId { get; set; }
+    public required string Name { get; set; }
+    public string? Company { get; set; }
+    public string? Guid { get; set; }
+    public string? Version { get; set; }
+    public bool? Enabled { get; set; }
+    public bool? UpToDate { get; set; }
+
+    /// <summary>Date d'expiration de la licence, telle que remontée par l'agent (format libre).</summary>
+    public string? Expiration { get; set; }
+
+    /// <summary>Date de création de la base de signatures, telle que remontée par l'agent (format libre).</summary>
+    public string? BaseCreationDate { get; set; }
+    public string? BaseVersion { get; set; }
 }
 
 /// <summary>Port/interface réseau (configuration IP) remonté par content.networks.</summary>

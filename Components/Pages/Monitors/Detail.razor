@@ -1,0 +1,154 @@
+@page "/parc/monitors/{MonitorId:int}"
+@using GlpiNg.Modules.Inventory.Models
+@rendermode InteractiveServer
+
+<PageTitle>GlpiNg — @(_monitor?.Designation ?? "Écran")</PageTitle>
+
+@if (_monitor is null)
+{
+    <div class="text-center text-secondary py-5">
+        <i class="ti ti-device-tv-off fs-1"></i>
+        <p class="mt-2">Cet écran est introuvable.</p>
+    </div>
+}
+else
+{
+    <div class="glpi-fiche-topbar">
+        <a class="glpi-fiche-pager-btn" href="/parc/monitors" title="Retour à la liste">
+            <i class="ti ti-list"></i>
+        </a>
+        <div class="glpi-fiche-crumb">
+            <i class="ti ti-device-tv"></i>
+            <span>Écran - @_monitor.Designation - ID @_monitor.Id</span>
+            <button type="button" class="glpi-fiche-favorite" title="Ajouter aux favoris">
+                <i class="ti ti-star"></i>
+            </button>
+        </div>
+        <div class="glpi-fiche-toolbar">
+            @if (_total > 0)
+            {
+                <span class="glpi-fiche-pager-count">@_position/@_total</span>
+                <a class="glpi-fiche-pager-btn @(_previousId is null ? "disabled" : "")" href="@(_previousId is { } prevId ? $"/parc/monitors/{prevId}" : "#")">
+                    <i class="ti ti-chevron-left"></i>
+                </a>
+                <a class="glpi-fiche-pager-btn @(_nextId is null ? "disabled" : "")" href="@(_nextId is { } nextId ? $"/parc/monitors/{nextId}" : "#")">
+                    <i class="ti ti-chevron-right"></i>
+                </a>
+            }
+        </div>
+    </div>
+
+    <div class="glpi-fiche-layout">
+        <aside class="glpi-fiche-sidebar">
+            @foreach (var tab in _tabs)
+            {
+                <button type="button" class="glpi-fiche-tab-item @(_activeTabKey == tab.Key ? "active" : "")" @onclick="() => SetTab(tab.Key)">
+                    <i class="ti @tab.Icon"></i>
+                    <span>@tab.Label</span>
+                    @if (tab.Count is { } count)
+                    {
+                        <span class="glpi-fiche-tab-count">@count</span>
+                    }
+                </button>
+            }
+        </aside>
+
+        <div class="glpi-fiche-panel">
+            @switch (_activeTabKey)
+            {
+                case "monitor":
+                    <div class="glpi-fiche-form">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="glpi-fiche-field">
+                                    <label>Désignation</label>
+                                    <div class="glpi-fiche-value-box">@_monitor.Designation</div>
+                                </div>
+                                <div class="glpi-fiche-field">
+                                    <label>Fabricant</label>
+                                    <div class="glpi-fiche-value-box">@(_monitor.Manufacturer ?? "—")</div>
+                                </div>
+                                <div class="glpi-fiche-field">
+                                    <label>Numéro de série</label>
+                                    <div class="glpi-fiche-value-box">@(_monitor.Serial ?? "—")</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="glpi-fiche-field">
+                                    <label>Ordinateur associé</label>
+                                    <div class="glpi-fiche-value-box">
+                                        @if (_computer is { } computer)
+                                        {
+                                            <a href="@($"/parc/computer/{computer.Id}")" class="text-reset">
+                                                <i class="ti ti-device-desktop me-1 text-secondary"></i>@computer.Name
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            @:—
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    break;
+
+                case "connections":
+                    <div class="glpi-fiche-block">
+                        <div class="glpi-fiche-block-title"><i class="ti ti-plug-connected"></i>Connexions (@(_computer is null ? 0 : 1))</div>
+                        @if (_computer is { } linkedComputer)
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-vcenter card-table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Type d'élément</th>
+                                            <th>Nom</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><i class="ti ti-device-desktop me-1 text-secondary"></i>Ordinateur</td>
+                                            <td>
+                                                <a href="@($"/parc/computer/{linkedComputer.Id}")" class="text-reset">@linkedComputer.Name</a>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="glpi-config-placeholder">
+                                <i class="ti ti-plug-connected-x"></i>
+                                <p class="mb-0">Cet écran n'est connecté à aucun ordinateur.</p>
+                            </div>
+                        }
+                    </div>
+                    break;
+
+                case "all":
+                    <div class="glpi-fiche-block">
+                        <div class="glpi-fiche-block-title"><i class="ti ti-device-tv"></i>Écran</div>
+                        <p class="mb-1"><strong>Désignation :</strong> @_monitor.Designation</p>
+                        <p class="mb-1"><strong>Fabricant :</strong> @(_monitor.Manufacturer ?? "—")</p>
+                        <p class="mb-0"><strong>Numéro de série :</strong> @(_monitor.Serial ?? "—")</p>
+                    </div>
+                    <div class="glpi-fiche-block">
+                        <div class="glpi-fiche-block-title"><i class="ti ti-plug-connected"></i>Connexions</div>
+                        <p class="mb-0">@(_computer?.Name ?? "Aucune connexion")</p>
+                    </div>
+                    break;
+
+                default:
+                    var current = _tabs.First(t => t.Key == _activeTabKey);
+                    <div class="glpi-config-placeholder">
+                        <i class="ti @current.Icon"></i>
+                        <p class="mb-0">L'onglet « @current.Label » n'est pas encore disponible.</p>
+                    </div>
+                    break;
+            }
+        </div>
+    </div>
+}

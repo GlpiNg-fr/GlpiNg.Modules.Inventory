@@ -35,6 +35,8 @@ public static class InventoryModuleServiceCollectionExtensions
         // Agents/Déploiements dans "Outils") — voir InventoryMenuProvider.
         services.AddSingleton<IMenuProvider, InventoryMenuProvider>();
 
+        services.AddScoped<ComputerListStateService>();
+
         // Permet à ASP.NET Core de découvrir les contrôleurs de ce module (assembly
         // distincte de celle du projet hôte).
         services.AddControllers()

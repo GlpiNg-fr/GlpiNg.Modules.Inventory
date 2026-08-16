@@ -44,9 +44,18 @@ public partial class Detail : ComponentBase, IAsyncDisposable
     private int? _previousId;
     private int? _nextId;
     private int _computerIdToLink;
+    private int _loadedPeripheralId;
 
-    protected override async Task OnInitializedAsync()
+    // OnParametersSetAsync (pas OnInitializedAsync) : en navigation via les boutons
+    // précédent/suivant, le routeur Blazor réutilise la même instance de composant et ne fait
+    // que changer PeripheralId — OnInitializedAsync ne se redéclencherait donc jamais.
+    protected override async Task OnParametersSetAsync()
     {
+        if (_peripheral is not null && _loadedPeripheralId == PeripheralId)
+        {
+            return;
+        }
+
         if (AuthStateTask is not null)
         {
             var authState = await AuthStateTask;
@@ -55,6 +64,14 @@ public partial class Detail : ComponentBase, IAsyncDisposable
             {
                 _currentUserName = name;
             }
+        }
+
+        _loadedPeripheralId = PeripheralId;
+        _activeTabKey = "peripheral";
+
+        if (_db is not null)
+        {
+            await _db.DisposeAsync();
         }
 
         _db = await DbFactory.CreateDbContextAsync();

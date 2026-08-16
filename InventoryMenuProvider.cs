@@ -3,10 +3,13 @@ using GlpiNg.Modules.Abstractions.Menu;
 namespace GlpiNg.Modules.Inventory;
 
 /// <summary>
-/// Contribue le groupe "Parc" (tout le parc matériel/logiciel), les entrées
-/// Recherches sauvegardées/Agents/Déploiements du groupe "Outils", ainsi que l'entrée
-/// "Inventaire" du groupe "Administration" — qui relèvent toutes du domaine Inventory
-/// (voir Models/GlpiAgent.cs et le protocole GLPI-Agent exposé par ce module).
+/// Contribue le groupe "Parc" (tout le parc matériel/logiciel), l'entrée "Recherches
+/// sauvegardées" du groupe "Outils", ainsi que l'entrée "Inventaire" du groupe
+/// "Administration" — qui relèvent toutes du domaine Inventory (voir Models/GlpiAgent.cs
+/// et le protocole GLPI-Agent exposé par ce module). L'entrée "Déploiements" du même
+/// groupe "Outils" est contribuée séparément par DeploymentMenuProvider (module
+/// Déploiement, GlpiNg.Modules.Deployment) : les entrées de plusieurs IMenuProvider
+/// partageant une clé de groupe sont fusionnées par l'hôte.
 /// </summary>
 public sealed class InventoryMenuProvider : IMenuProvider
 {
@@ -36,8 +39,6 @@ public sealed class InventoryMenuProvider : IMenuProvider
         new("outils", "ti-briefcase", "Outils",
         [
             new("Recherches sauvegardées", "/tools/saved-searches", "ti-bookmarks"),
-            new("Agents", "/tools/agents", "ti-cpu"),
-            new("Déploiements", "/deployments", "ti-rocket"),
         ]),
         new("administration", "ti-shield", "Administration",
         [

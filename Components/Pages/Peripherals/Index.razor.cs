@@ -159,6 +159,14 @@ public partial class Index : ComponentBase
         return SearchFields.FirstOrDefault(field => field.Key == key);
     }
 
+    private List<string> GetDistinctTextValues(string fieldKey) =>
+        _peripherals.Select(peripheral => GetFieldText(peripheral, fieldKey))
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Select(value => value!)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
     private static (string Value, string Label)[] GetOperators(SearchFieldDefinition? field)
     {
         if (field is null) return [];

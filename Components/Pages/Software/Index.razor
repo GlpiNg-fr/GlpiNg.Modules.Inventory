@@ -3,19 +3,157 @@
 
 <PageTitle>GlpiNg — Logiciels</PageTitle>
 
-<div class="page-header d-flex align-items-center justify-content-between mb-3">
-    <h2 class="page-title mb-0">Logiciels</h2>
-    <div class="text-secondary">@_filteredGroups.Count résultat(s)</div>
-</div>
-
+<div class="glpi-list-page">
 <div class="card">
-    <div class="card-header">
-        <div class="input-icon" style="max-width: 320px;">
-            <span class="input-icon-addon">
-                <i class="ti ti-search"></i>
-            </span>
-            <input type="text" class="form-control" placeholder="Rechercher un logiciel..."
-                   @bind="_searchTerm" @bind:event="oninput" @onkeyup="OnSearchChanged" />
+    <div class="card-header d-flex align-items-center justify-content-between glpi-list-toolbar">
+        <div class="btn-list">
+            <div class="dropdown">
+                <button type="button" class="btn dropdown-toggle" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                    <i class="ti ti-search me-1"></i>Rechercher
+                    @if (ActiveCriteriaCount > 0)
+                    {
+                        <span class="badge bg-blue-lt ms-1">@ActiveCriteriaCount</span>
+                    }
+                </button>
+                <div class="dropdown-menu p-3" style="min-width: 640px;">
+                    @for (int criterionIndex = 0; criterionIndex < _criteria.Count; criterionIndex++)
+                    {
+                        SearchCriterion criterion = _criteria[criterionIndex];
+                        SearchFieldDefinition? field = FindField(criterion.FieldKey);
+
+                        <div class="row g-2 align-items-center mb-2">
+                            <div class="col-auto" style="width: 5.5rem;">
+                                @if (criterionIndex == 0)
+                                {
+                                    <span class="text-secondary">PAS</span>
+                                }
+                                else
+                                {
+                                    <select class="form-select form-select-sm" value="@criterion.Link"
+                                            @onchange="@((ChangeEventArgs e) => criterion.Link = (string)e.Value!)">
+                                        <option value="AND">ET</option>
+                                        <option value="OR">OU</option>
+                                    </select>
+                                }
+                            </div>
+                            <div class="col">
+                                <select class="form-select form-select-sm" value="@criterion.FieldKey"
+                                        @onchange="@((ChangeEventArgs e) => OnCriterionFieldChanged(criterion, (string)e.Value!))">
+                                    @foreach (SearchFieldDefinition option in SearchFields)
+                                    {
+                                        <option value="@option.Key">@option.Label</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-auto" style="width: 10rem;">
+                                <select class="form-select form-select-sm" value="@criterion.Operator"
+                                        @onchange="@((ChangeEventArgs e) => criterion.Operator = (string)e.Value!)">
+                                    @foreach ((string opValue, string opLabel) in GetOperators(field))
+                                    {
+                                        <option value="@opValue">@opLabel</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col">
+                                @if (criterion.Operator != "empty")
+                                {
+                                    @if (field?.Type == SearchFieldType.Text && (criterion.Operator == "equals" || criterion.Operator == "notequals"))
+                                    {
+                                        <select class="form-select form-select-sm" value="@criterion.Value"
+                                                @onchange="@((ChangeEventArgs e) => criterion.Value = (string)e.Value!)">
+                                            <option value="">—</option>
+                                            @foreach (string distinctValue in GetDistinctTextValues(field.Key))
+                                            {
+                                                <option value="@distinctValue">@distinctValue</option>
+                                            }
+                                        </select>
+                                    }
+                                    else
+                                    {
+                                        <input type="@(field?.Type == SearchFieldType.Number ? "number" : "text")" class="form-control form-control-sm"
+                                               value="@criterion.Value"
+                                               @onchange="@((ChangeEventArgs e) => criterion.Value = (string)(e.Value ?? string.Empty))" />
+                                    }
+                                }
+                            </div>
+                            <div class="col-auto">
+                                <button type="button" class="btn btn-icon btn-sm" title="Supprimer ce critère"
+                                        disabled="@(_criteria.Count <= 1)" @onclick="() => RemoveCriterion(criterion)">
+                                    <i class="ti ti-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    }
+
+                    <div class="d-flex align-items-center justify-content-between mt-3">
+                        <button type="button" class="btn btn-sm" @onclick="AddCriterion">
+                            <i class="ti ti-circle-plus me-1"></i>Ajouter un critère
+                        </button>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-sm" @onclick="ResetSearch">Réinitialiser</button>
+                            <button type="button" class="btn btn-sm btn-primary" @onclick="ApplySearch">
+                                <i class="ti ti-search me-1"></i>Rechercher
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <button type="button" class="btn dropdown-toggle" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" title="Depuis les en-têtes de colonnes : clic pour trier, Ctrl+clic pour un tri secondaire">
+                    <i class="ti ti-arrows-sort me-1"></i>Trier
+                    @if (_sortCriteria.Count > 0)
+                    {
+                        <span class="badge bg-blue-lt ms-1">@_sortCriteria.Count</span>
+                    }
+                </button>
+                <div class="dropdown-menu p-3" style="min-width: 420px;">
+                    @if (_sortCriteria.Count == 0)
+                    {
+                        <p class="text-secondary mb-2">Aucun tri actif.</p>
+                    }
+                    @for (int sortIndex = 0; sortIndex < _sortCriteria.Count; sortIndex++)
+                    {
+                        SortCriterion sortCriterion = _sortCriteria[sortIndex];
+                        <div class="row g-2 align-items-center mb-2">
+                            <div class="col">
+                                <select class="form-select form-select-sm" value="@sortCriterion.Field"
+                                        @onchange="@((ChangeEventArgs e) => sortCriterion.Field = (string)e.Value!)">
+                                    @foreach (SearchFieldDefinition field in SearchFields.Where(f => f.Key != "all"))
+                                    {
+                                        <option value="@field.Key">@field.Label</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-auto" style="width: 9.5rem;">
+                                <select class="form-select form-select-sm" value="@(sortCriterion.Descending ? "desc" : "asc")"
+                                        @onchange="@((ChangeEventArgs e) => sortCriterion.Descending = (string)e.Value! == "desc")">
+                                    <option value="asc">Croissant</option>
+                                    <option value="desc">Décroissant</option>
+                                </select>
+                            </div>
+                            <div class="col-auto">
+                                <button type="button" class="btn btn-icon btn-sm" title="Supprimer ce tri"
+                                        @onclick="() => RemoveSortCriterion(sortCriterion)">
+                                    <i class="ti ti-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    }
+
+                    <div class="d-flex align-items-center justify-content-between mt-3">
+                        <button type="button" class="btn btn-sm" disabled="@(_sortCriteria.Count >= SearchFields.Count(f => f.Key != "all"))" @onclick="AddSortCriterion">
+                            <i class="ti ti-circle-plus me-1"></i>Ajouter un autre tri
+                        </button>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-sm" @onclick="ResetSort">Réinitialiser le tri</button>
+                            <button type="button" class="btn btn-sm btn-primary" @onclick="ApplySort">
+                                <i class="ti ti-arrows-sort me-1"></i>Trier
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -24,10 +162,32 @@
             <thead>
                 <tr>
                     <th></th>
-                    <th>Nom</th>
-                    <th>Éditeur</th>
-                    <th>Versions</th>
-                    <th>Installations</th>
+                    @{
+                        string[] sortableColumns = ["name", "publisher", "versioncount", "installcount"];
+                        string[] columnLabels = ["Nom", "Éditeur", "Versions", "Installations"];
+                    }
+                    @for (int i = 0; i < sortableColumns.Length; i++)
+                    {
+                        string colKey = sortableColumns[i];
+                        string colLabel = columnLabels[i];
+                        SortCriterion? active = GetSortCriterion(colKey);
+                        <th class="glpi-sortable-th" title="Ctrl+clic pour ajouter un tri secondaire"
+                            @onclick="@((MouseEventArgs e) => SetSort(colKey, e.CtrlKey))">
+                            <span class="d-flex align-items-center gap-1">
+                                @colLabel
+                                @if (active is not null)
+                                {
+                                    <span class="glpi-sort-indicator">
+                                        <i class="ti @(active.Descending ? "ti-caret-up-filled" : "ti-caret-down-filled")"></i>
+                                        @if (_sortCriteria.Count > 1)
+                                        {
+                                            <span class="glpi-sort-num">@(_sortCriteria.IndexOf(active) + 1)</span>
+                                        }
+                                    </span>
+                                }
+                            </span>
+                        </th>
+                    }
                 </tr>
             </thead>
             <tbody>
@@ -39,7 +199,7 @@
                 }
                 else
                 {
-                    @foreach (SoftwareGroup group in _filteredGroups)
+                    @foreach (SoftwareGroup group in _pagedGroups)
                     {
                         var key = GroupKey(group);
                         var isExpanded = _expandedKeys.Contains(key);
@@ -90,4 +250,42 @@
             </tbody>
         </table>
     </div>
+
+    <div class="card-footer d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2 text-secondary">
+            <span>Éléments par page</span>
+            <select class="form-select form-select-sm w-auto" value="@_pageSize"
+                    @onchange="@((ChangeEventArgs e) => SetPageSize(int.Parse((string)e.Value!)))">
+                @foreach (int size in PageSizeOptions)
+                {
+                    <option value="@size">@size</option>
+                }
+            </select>
+        </div>
+
+        @if (_filteredGroups.Count > 0)
+        {
+            <div class="d-flex align-items-center gap-3">
+                <span class="text-secondary">
+                    @(((_currentPage - 1) * _pageSize) + 1)–@(Math.Min(_currentPage * _pageSize, _filteredGroups.Count)) sur @_filteredGroups.Count
+                </span>
+                <ul class="pagination pagination-sm m-0">
+                    <li class="page-item @(_currentPage <= 1 ? "disabled" : "")">
+                        <button type="button" class="page-link" @onclick="() => GoToPage(_currentPage - 1)" disabled="@(_currentPage <= 1)">
+                            <i class="ti ti-chevron-left"></i>
+                        </button>
+                    </li>
+                    <li class="page-item disabled">
+                        <span class="page-link">Page @_currentPage / @TotalPages</span>
+                    </li>
+                    <li class="page-item @(_currentPage >= TotalPages ? "disabled" : "")">
+                        <button type="button" class="page-link" @onclick="() => GoToPage(_currentPage + 1)" disabled="@(_currentPage >= TotalPages)">
+                            <i class="ti ti-chevron-right"></i>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        }
+    </div>
+</div>
 </div>

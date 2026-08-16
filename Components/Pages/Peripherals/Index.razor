@@ -3,11 +3,7 @@
 
 <PageTitle>GlpiNg — Périphériques</PageTitle>
 
-<div class="page-header d-flex align-items-center justify-content-between mb-3">
-    <h2 class="page-title mb-0">Périphériques</h2>
-    <div class="text-secondary">@_filteredPeripherals.Count résultat(s)</div>
-</div>
-
+<div class="glpi-list-page">
 <div class="card">
     <div class="card-header d-flex align-items-center justify-content-between glpi-list-toolbar">
         <div class="btn-list">
@@ -80,6 +76,17 @@
                                     {
                                         <input type="date" class="form-control form-control-sm" value="@criterion.Value"
                                                @onchange="@((ChangeEventArgs e) => criterion.Value = (string)(e.Value ?? string.Empty))" />
+                                    }
+                                    else if (field?.Type == SearchFieldType.Text && (criterion.Operator == "equals" || criterion.Operator == "notequals"))
+                                    {
+                                        <select class="form-select form-select-sm" value="@criterion.Value"
+                                                @onchange="@((ChangeEventArgs e) => criterion.Value = (string)e.Value!)">
+                                            <option value="">—</option>
+                                            @foreach (string distinctValue in GetDistinctTextValues(field.Key))
+                                            {
+                                                <option value="@distinctValue">@distinctValue</option>
+                                            }
+                                        </select>
                                     }
                                     else
                                     {
@@ -271,6 +278,7 @@
             </div>
         }
     </div>
+</div>
 </div>
 
 <div class="modal fade" id="newPeripheralModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
