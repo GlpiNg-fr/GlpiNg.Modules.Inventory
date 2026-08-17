@@ -753,7 +753,7 @@ else
                                             <tr>
                                                 <th>Tâche</th>
                                                 <th>Activé</th>
-                                                <th>Module method</th>
+                                                <th>Méthode</th>
                                                 <th>Date</th>
                                                 <th>Statut</th>
                                             </tr>
@@ -762,7 +762,7 @@ else
                                             @foreach (ComputerDeploymentTask task in _deploymentTasksInfo.Tasks)
                                             {
                                                 <tr>
-                                                    <td><a href="/tools/deployments/package/@task.PackageId">@task.Name</a></td>
+                                                    <td><a href="/tools/deployments/tasks/@task.TaskId">@task.Name</a></td>
                                                     <td><span class="badge @BoolBadgeCss(task.Active)">@BoolLabel(task.Active)</span></td>
                                                     <td>@task.MethodLabel</td>
                                                     <td colspan="2"></td>
