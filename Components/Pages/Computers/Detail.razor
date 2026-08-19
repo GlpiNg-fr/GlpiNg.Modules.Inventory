@@ -34,7 +34,7 @@ else
                     <i class="ti ti-dots-vertical me-1"></i>Actions
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end">
-                    <li><a class="dropdown-item" href="#"><i class="ti ti-pencil me-1"></i>Modifier</a></li>
+                    <li><button type="button" class="dropdown-item" @onclick="EnterEditModeAsync"><i class="ti ti-pencil me-1"></i>Modifier</button></li>
                     <li><a class="dropdown-item" href="#"><i class="ti ti-copy me-1"></i>Dupliquer</a></li>
                     <li><hr class="dropdown-divider" /></li>
                     <li><a class="dropdown-item text-danger" href="#"><i class="ti ti-trash me-1"></i>Mettre à la corbeille</a></li>
@@ -68,10 +68,19 @@ else
             }
         </aside>
 
-        <div class="glpi-fiche-panel">
+        <div class="glpi-fiche-panel @(FillPanelTabKeys.Contains(_activeTabKey) ? "glpi-fiche-panel-fill" : "")">
             @switch (_activeTabKey)
             {
                 case "computer":
+                    @if (_editMode)
+                    {
+                        <div class="d-flex justify-content-end gap-2 mb-3">
+                            <button type="button" class="btn btn-sm" disabled="@_editSaving" @onclick="CancelEdit">Annuler</button>
+                            <button type="button" class="btn btn-sm btn-primary" disabled="@_editSaving" @onclick="SaveEditAsync">
+                                <i class="ti ti-device-floppy me-1 @(_editSaving ? "glpi-spin" : "")"></i>Enregistrer
+                            </button>
+                        </div>
+                    }
                     <div class="glpi-fiche-form">
                         <div class="row">
                             <div class="col-md-6">
@@ -105,15 +114,54 @@ else
                                 </div>
                                 <div class="glpi-fiche-field">
                                     <label>Type</label>
-                                    <div class="glpi-fiche-value-box">@(_computer.ChassisType ?? "—")</div>
+                                    @if (_editMode)
+                                    {
+                                        <input class="form-control" list="computerTypeOptions" @bind="_editChassisType" @bind:event="oninput" />
+                                        <datalist id="computerTypeOptions">
+                                            @foreach (string option in _computerTypeOptions)
+                                            {
+                                                <option value="@option"></option>
+                                            }
+                                        </datalist>
+                                    }
+                                    else
+                                    {
+                                        <div class="glpi-fiche-value-box">@(_computer.ChassisType ?? "—")</div>
+                                    }
                                 </div>
                                 <div class="glpi-fiche-field">
                                     <label>Fabricant</label>
-                                    <div class="glpi-fiche-value-box">@(_computer.Manufacturer ?? "—")</div>
+                                    @if (_editMode)
+                                    {
+                                        <input class="form-control" list="manufacturerOptions" @bind="_editManufacturer" @bind:event="oninput" />
+                                        <datalist id="manufacturerOptions">
+                                            @foreach (string option in _manufacturerOptions)
+                                            {
+                                                <option value="@option"></option>
+                                            }
+                                        </datalist>
+                                    }
+                                    else
+                                    {
+                                        <div class="glpi-fiche-value-box">@(_computer.Manufacturer ?? "—")</div>
+                                    }
                                 </div>
                                 <div class="glpi-fiche-field">
                                     <label>Modèle</label>
-                                    <div class="glpi-fiche-value-box">@(_computer.Model ?? "—")</div>
+                                    @if (_editMode)
+                                    {
+                                        <input class="form-control" list="computerModelOptions" @bind="_editModel" @bind:event="oninput" />
+                                        <datalist id="computerModelOptions">
+                                            @foreach (string option in _computerModelOptions)
+                                            {
+                                                <option value="@option"></option>
+                                            }
+                                        </datalist>
+                                    }
+                                    else
+                                    {
+                                        <div class="glpi-fiche-value-box">@(_computer.Model ?? "—")</div>
+                                    }
                                 </div>
                                 <div class="glpi-fiche-field">
                                     <label>N° de série</label>
@@ -195,16 +243,51 @@ else
                     break;
 
                 case "os":
+                    @if (_editMode)
+                    {
+                        <div class="d-flex justify-content-end gap-2 mb-3">
+                            <button type="button" class="btn btn-sm" disabled="@_editSaving" @onclick="CancelEdit">Annuler</button>
+                            <button type="button" class="btn btn-sm btn-primary" disabled="@_editSaving" @onclick="SaveEditAsync">
+                                <i class="ti ti-device-floppy me-1 @(_editSaving ? "glpi-spin" : "")"></i>Enregistrer
+                            </button>
+                        </div>
+                    }
                     <div class="glpi-fiche-form">
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="glpi-fiche-field">
                                     <label>Système d'exploitation</label>
-                                    <div class="glpi-fiche-value-box">@(_computer.OperatingSystem ?? "—")</div>
+                                    @if (_editMode)
+                                    {
+                                        <input class="form-control" list="operatingSystemOptions" @bind="_editOperatingSystem" @bind:event="oninput" />
+                                        <datalist id="operatingSystemOptions">
+                                            @foreach (string option in _operatingSystemOptions)
+                                            {
+                                                <option value="@option"></option>
+                                            }
+                                        </datalist>
+                                    }
+                                    else
+                                    {
+                                        <div class="glpi-fiche-value-box">@(_computer.OperatingSystem ?? "—")</div>
+                                    }
                                 </div>
                                 <div class="glpi-fiche-field">
                                     <label>Version</label>
-                                    <div class="glpi-fiche-value-box">@(_computer.OsVersion ?? "—")</div>
+                                    @if (_editMode)
+                                    {
+                                        <input class="form-control" list="operatingSystemVersionOptions" @bind="_editOsVersion" @bind:event="oninput" />
+                                        <datalist id="operatingSystemVersionOptions">
+                                            @foreach (string option in _operatingSystemVersionOptions)
+                                            {
+                                                <option value="@option"></option>
+                                            }
+                                        </datalist>
+                                    }
+                                    else
+                                    {
+                                        <div class="glpi-fiche-value-box">@(_computer.OsVersion ?? "—")</div>
+                                    }
                                 </div>
                                 <div class="glpi-fiche-field">
                                     <label>Version du noyau</label>
@@ -337,7 +420,13 @@ else
                     else
                     {
                         <div class="glpi-fiche-block">
-                            <div class="glpi-fiche-block-title"><i class="ti ti-apps"></i>Logiciels installés (@_softwareSorted.Count)</div>
+                            <div class="glpi-fiche-block-title">
+                                <i class="ti ti-apps"></i>Logiciels installés (@_softwareFiltered.Count)
+                                <div class="glpi-fiche-block-filter">
+                                    <i class="ti ti-search"></i>
+                                    <input type="text" placeholder="Filtrer..." value="@_softwareFilter" @oninput="OnSoftwareFilterInput" />
+                                </div>
+                            </div>
                             <div class="table-responsive">
                                 <table class="table table-vcenter card-table mb-0">
                                     <thead>
@@ -361,7 +450,7 @@ else
                                     </tbody>
                                 </table>
                             </div>
-                            @if (_softwareSorted.Count > SoftwarePageSizeOptions[0])
+                            @if (_softwareFiltered.Count > SoftwarePageSizeOptions[0])
                             {
                                 <div class="card-footer d-flex align-items-center justify-content-between flex-wrap gap-2">
                                     <div class="d-flex align-items-center gap-2 text-secondary">
@@ -376,7 +465,7 @@ else
                                     </div>
                                     <div class="d-flex align-items-center gap-3">
                                         <span class="text-secondary">
-                                            @((_softwarePage - 1) * _softwarePageSize + 1)–@(Math.Min(_softwarePage * _softwarePageSize, _softwareSorted.Count)) sur @_softwareSorted.Count
+                                            @((_softwarePage - 1) * _softwarePageSize + 1)–@(Math.Min(_softwarePage * _softwarePageSize, _softwareFiltered.Count)) sur @_softwareFiltered.Count
                                         </span>
                                         <ul class="pagination pagination-sm m-0">
                                             <li class="page-item @(_softwarePage <= 1 ? "disabled" : "")">
@@ -655,7 +744,13 @@ else
                     else
                     {
                         <div class="glpi-fiche-block">
-                            <div class="glpi-fiche-block-title"><i class="ti ti-history"></i>Historique des règles d'import</div>
+                            <div class="glpi-fiche-block-title">
+                                <i class="ti ti-history"></i>Historique des règles d'import (@_importHistoryFiltered.Count)
+                                <div class="glpi-fiche-block-filter">
+                                    <i class="ti ti-search"></i>
+                                    <input type="text" placeholder="Filtrer..." value="@_importHistoryFilter" @oninput="OnImportHistoryFilterInput" />
+                                </div>
+                            </div>
                             <div class="table-responsive">
                                 <table class="table table-vcenter card-table mb-0">
                                     <thead>
@@ -668,7 +763,7 @@ else
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach (ComputerImportHistory entry in _computer.ImportHistories.OrderByDescending(e => e.OccurredAt))
+                                        @foreach (ComputerImportHistory entry in _importHistoryFiltered)
                                         {
                                             <tr>
                                                 <td>@entry.OccurredAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
@@ -686,7 +781,7 @@ else
                     break;
 
                 case "history":
-                    @if (_computer.HistoryEntries.Count == 0)
+                    @if (_historySorted.Count == 0)
                     {
                         <div class="glpi-config-placeholder">
                             <i class="ti ti-history"></i>
@@ -696,7 +791,13 @@ else
                     else
                     {
                         <div class="glpi-fiche-block">
-                            <div class="glpi-fiche-block-title"><i class="ti ti-history"></i>Historique (@_computer.HistoryEntries.Count)</div>
+                            <div class="glpi-fiche-block-title">
+                                <i class="ti ti-history"></i>Historique (@_historyFiltered.Count)
+                                <div class="glpi-fiche-block-filter">
+                                    <i class="ti ti-search"></i>
+                                    <input type="text" placeholder="Filtrer..." value="@_historyFilter" @oninput="OnHistoryFilterInput" />
+                                </div>
+                            </div>
                             <div class="table-responsive">
                                 <table class="table table-vcenter card-table mb-0">
                                     <thead>
@@ -709,7 +810,7 @@ else
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach (ComputerHistoryEntry entry in _computer.HistoryEntries.OrderByDescending(e => e.OccurredAt).ThenByDescending(e => e.Id))
+                                        @foreach (ComputerHistoryEntry entry in _historyPaged)
                                         {
                                             <tr>
                                                 <td>@entry.Id</td>
@@ -722,6 +823,41 @@ else
                                     </tbody>
                                 </table>
                             </div>
+                            @if (_historyFiltered.Count > HistoryPageSizeOptions[0])
+                            {
+                                <div class="card-footer d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                    <div class="d-flex align-items-center gap-2 text-secondary">
+                                        <span>Éléments par page</span>
+                                        <select class="form-select form-select-sm w-auto" value="@_historyPageSize"
+                                                @onchange="@((ChangeEventArgs e) => SetHistoryPageSize(int.Parse((string)e.Value!)))">
+                                            @foreach (int size in HistoryPageSizeOptions)
+                                            {
+                                                <option value="@size">@size</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <span class="text-secondary">
+                                            @((_historyPage - 1) * _historyPageSize + 1)–@(Math.Min(_historyPage * _historyPageSize, _historyFiltered.Count)) sur @_historyFiltered.Count
+                                        </span>
+                                        <ul class="pagination pagination-sm m-0">
+                                            <li class="page-item @(_historyPage <= 1 ? "disabled" : "")">
+                                                <button type="button" class="page-link" @onclick="() => GoToHistoryPage(_historyPage - 1)" disabled="@(_historyPage <= 1)">
+                                                    <i class="ti ti-chevron-left"></i>
+                                                </button>
+                                            </li>
+                                            <li class="page-item disabled">
+                                                <span class="page-link">Page @_historyPage / @HistoryTotalPages</span>
+                                            </li>
+                                            <li class="page-item @(_historyPage >= HistoryTotalPages ? "disabled" : "")">
+                                                <button type="button" class="page-link" @onclick="() => GoToHistoryPage(_historyPage + 1)" disabled="@(_historyPage >= HistoryTotalPages)">
+                                                    <i class="ti ti-chevron-right"></i>
+                                                </button>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            }
                         </div>
                     }
                     break;
@@ -848,20 +984,51 @@ else
                                                 @foreach (ComputerDeploymentAssignment assignment in _deploymentAssignments)
                                                 {
                                                     <tr>
-                                                        <td><a href="/tools/deployments/package/@assignment.PackageId">@assignment.PackageName</a></td>
+                                                        <td>
+                                                            @if (assignment.TaskId is { } taskId)
+                                                            {
+                                                                <a href="/tools/deployments/tasks/@taskId">@assignment.PackageName</a>
+                                                            }
+                                                            else
+                                                            {
+                                                                @assignment.PackageName
+                                                            }
+                                                        </td>
                                                         <td><span class="badge @assignment.StatusBadgeCssClass">@assignment.StatusLabel</span></td>
                                                         <td>@assignment.CreatedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
                                                         <td>@(assignment.StartedAtUtc is { } started ? started.ToLocalTime().ToString("dd/MM/yyyy HH:mm") : "—")</td>
                                                         <td>@(assignment.CompletedAtUtc is { } completed ? completed.ToLocalTime().ToString("dd/MM/yyyy HH:mm") : "—")</td>
                                                         <td class="text-end">
-                                                            @if (assignment.CanCancel)
-                                                            {
-                                                                <button type="button" class="btn btn-sm btn-icon text-danger" title="Annuler cette assignation" @onclick="() => CancelAssignmentAsync(assignment.JobId)">
-                                                                    <i class="ti ti-x"></i>
-                                                                </button>
-                                                            }
+                                                            <div class="btn-list justify-content-end flex-nowrap">
+                                                                @if (!string.IsNullOrWhiteSpace(assignment.Log))
+                                                                {
+                                                                    <button type="button" class="btn btn-sm" @onclick="() => ToggleAssignmentLog(assignment.JobId)">
+                                                                        <i class="ti ti-file-text me-1"></i>Journal
+                                                                    </button>
+                                                                }
+                                                                @if (assignment.CanCancel)
+                                                                {
+                                                                    <button type="button" class="btn btn-sm btn-icon text-danger" title="Annuler cette assignation" @onclick="() => CancelAssignmentAsync(assignment.JobId)">
+                                                                        <i class="ti ti-x"></i>
+                                                                    </button>
+                                                                }
+                                                                @if (assignment.CanRetry)
+                                                                {
+                                                                    <button type="button" class="btn btn-sm px-3" title="Relancer cette assignation" disabled="@(_retryingJobId is not null)" @onclick="() => RetryAssignmentAsync(assignment.JobId)">
+                                                                        <i class="ti ti-bolt @(_retryingJobId == assignment.JobId ? "glpi-spin" : "")"></i>
+                                                                    </button>
+                                                                }
+                                                            </div>
                                                         </td>
                                                     </tr>
+                                                    @if (_expandedAssignmentJobId == assignment.JobId && !string.IsNullOrWhiteSpace(assignment.Log))
+                                                    {
+                                                        <tr>
+                                                            <td colspan="6">
+                                                                <div class="glpi-job-log">@RenderLog(assignment.Log)</div>
+                                                            </td>
+                                                        </tr>
+                                                    }
                                                 }
                                             </tbody>
                                         </table>

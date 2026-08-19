@@ -1,0 +1,137 @@
+@page "/config/dropdowns"
+@page "/config/dropdowns/{TypeSlug}"
+@rendermode InteractiveServer
+
+<PageTitle>GlpiNg — Intitulés</PageTitle>
+
+@if (!_typeResolved)
+{
+    <div class="text-center text-secondary py-5">
+        <i class="ti ti-list-off fs-1"></i>
+        <p class="mt-2">Cet Intitulé est introuvable.</p>
+    </div>
+}
+else
+{
+    <DropdownsTopMenu Current="@DropdownTypeCatalog.Slug(_type)" />
+
+    <div class="glpi-list-page">
+    <div class="card">
+        <div class="card-header d-flex align-items-center justify-content-between glpi-list-toolbar">
+            <p class="text-secondary mb-0"><i class="ti ti-info-circle me-1"></i>@DropdownTypeCatalog.Description(_type)</p>
+
+            <div class="btn-list align-items-center">
+                <div class="dropdown">
+                    <button type="button" class="btn btn-icon text-danger" data-bs-toggle="dropdown" aria-expanded="false"
+                            disabled="@(_selectedIds.Count == 0)" title="Supprimer la sélection">
+                        <i class="ti ti-trash"></i>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end p-3" style="min-width: 260px;">
+                        <p class="mb-2">Supprimer @_selectedIds.Count valeur(s) sélectionnée(s) ?</p>
+                        <div class="d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-sm">Annuler</button>
+                            <button type="button" class="btn btn-sm btn-danger" @onclick="DeleteSelectedAsync">Supprimer</button>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" class="btn btn-icon" @onclick="LoadAsync" title="Rafraîchir">
+                    <i class="ti ti-refresh"></i>
+                </button>
+
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newDropdownItemModal">
+                    <i class="ti ti-plus me-1"></i>Ajouter
+                </button>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-vcenter card-table">
+                <thead>
+                    <tr>
+                        <th style="width: 2.5rem;">
+                            <input class="form-check-input m-0" type="checkbox" checked="@AllSelected"
+                                   @onchange="@((ChangeEventArgs e) => ToggleSelectAll((bool)(e.Value ?? false)))" />
+                        </th>
+                        <th>Nom</th>
+                        <th>Commentaires</th>
+                        <th style="width: 5rem;"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (_items.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center text-secondary py-4">Aucune valeur pour cet Intitulé.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (DropdownItem item in _items)
+                        {
+                            <tr>
+                                <td>
+                                    <input class="form-check-input m-0" type="checkbox" checked="@_selectedIds.Contains(item.Id)"
+                                           @onchange="@((ChangeEventArgs e) => ToggleSelect(item.Id, (bool)(e.Value ?? false)))" />
+                                </td>
+                                @if (_editingId == item.Id)
+                                {
+                                    <td><input class="form-control form-control-sm" @bind="_editName" @bind:event="oninput" /></td>
+                                    <td><input class="form-control form-control-sm" @bind="_editComment" @bind:event="oninput" /></td>
+                                    <td class="text-nowrap">
+                                        <button type="button" class="btn btn-sm btn-icon text-success" title="Enregistrer" disabled="@string.IsNullOrWhiteSpace(_editName)" @onclick="SaveEditAsync">
+                                            <i class="ti ti-check"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-icon" title="Annuler" @onclick="CancelEdit">
+                                            <i class="ti ti-x"></i>
+                                        </button>
+                                    </td>
+                                }
+                                else
+                                {
+                                    <td><i class="ti @(DropdownTypeCatalog.Icon(_type)) me-1 text-secondary"></i>@item.Name</td>
+                                    <td class="text-secondary">@(item.Comment ?? "—")</td>
+                                    <td class="text-nowrap">
+                                        <button type="button" class="btn btn-sm btn-icon" title="Modifier" @onclick="() => StartEdit(item)">
+                                            <i class="ti ti-pencil"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-icon text-danger" title="Supprimer" @onclick="() => DeleteAsync(item.Id)">
+                                            <i class="ti ti-trash"></i>
+                                        </button>
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    </div>
+
+    <div class="modal fade" id="newDropdownItemModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="ti @(DropdownTypeCatalog.Icon(_type)) me-2"></i>Nouvelle valeur - @DropdownTypeCatalog.Label(_type)</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="glpi-fiche-field">
+                        <label>Nom</label>
+                        <input class="form-control" @bind="_newItem.Name" @bind:event="oninput" />
+                    </div>
+                    <div class="glpi-fiche-field">
+                        <label>Commentaires</label>
+                        <textarea class="form-control" rows="3" @bind="_newItem.Comment"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-warning" disabled="@string.IsNullOrWhiteSpace(_newItem.Name)" @onclick="CreateAsync">
+                        <i class="ti ti-plus me-1"></i>Ajouter
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}

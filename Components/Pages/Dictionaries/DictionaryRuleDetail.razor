@@ -1,0 +1,201 @@
+@page "/admin/dictionaries/{TypeSlug}/{RuleId:int}"
+@rendermode InteractiveServer
+
+<PageTitle>GlpiNg — @(_rule?.Name ?? "Règle de dictionnaire")</PageTitle>
+
+@if (!_typeResolved)
+{
+    <div class="text-center text-secondary py-5">
+        <i class="ti ti-book-off fs-1"></i>
+        <p class="mt-2">Ce dictionnaire est introuvable.</p>
+    </div>
+}
+else
+{
+    <DictionariesTopMenu Current="@DictionaryRuleTypeCatalog.Slug(_type)" />
+
+    @if (_rule is null)
+    {
+        <div class="text-center text-secondary py-5">
+            <i class="ti ti-book-off fs-1"></i>
+            <p class="mt-2">Cette règle est introuvable.</p>
+        </div>
+    }
+    else
+    {
+        <div class="glpi-fiche-layout">
+            <aside class="glpi-fiche-sidebar">
+                <button type="button" class="glpi-fiche-tab-item @(_activeTabKey == "main" ? "active" : "")" @onclick='() => SetTab("main")'>
+                    <i class="ti @(DictionaryRuleTypeCatalog.Icon(_type))"></i>
+                    <span>Règle</span>
+                </button>
+                <button type="button" class="glpi-fiche-tab-item @(_activeTabKey == "criteria" ? "active" : "")" @onclick='() => SetTab("criteria")'>
+                    <i class="ti ti-filter"></i>
+                    <span>Critères</span>
+                    <span class="glpi-fiche-tab-count">@_rule.Criteria.Count</span>
+                </button>
+            </aside>
+
+            <div class="glpi-fiche-panel">
+                @switch (_activeTabKey)
+                {
+                    case "main":
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="glpi-fiche-field">
+                                    <label>Nom</label>
+                                    <input class="form-control" @bind="_rule.Name" @bind:event="oninput" />
+                                </div>
+                                <div class="glpi-fiche-field">
+                                    <label>Opérateur logique</label>
+                                    <select class="form-select" @bind="_rule.LogicalOperator">
+                                        <option value="@DictionaryRuleLogicalOperator.And">ET</option>
+                                        <option value="@DictionaryRuleLogicalOperator.Or">OU</option>
+                                    </select>
+                                </div>
+                                <div class="glpi-fiche-field">
+                                    <label>Actif</label>
+                                    <select class="form-select" @bind="_rule.IsActive">
+                                        <option value="true">Oui</option>
+                                        <option value="false">Non</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="glpi-fiche-field">
+                                    <label>Commentaires</label>
+                                    <textarea class="form-control" rows="3" @bind="_rule.Comment"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="glpi-fiche-block">
+                            <div class="glpi-fiche-block-title"><i class="ti ti-bolt"></i>Action</div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="glpi-fiche-field">
+                                        <label>Type d'action</label>
+                                        <select class="form-select" @bind="_rule.ActionType">
+                                            <option value="@DictionaryActionType.Assign">Remplacer par</option>
+                                            <option value="@DictionaryActionType.Ignore">@IgnoreActionLabel(_type)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                @if (_rule.ActionType == DictionaryActionType.Assign)
+                                {
+                                    <div class="col-md-6">
+                                        <div class="glpi-fiche-field">
+                                            <label>Valeur</label>
+                                            <input class="form-control" @bind="_rule.ActionValue" @bind:event="oninput" />
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                            @if (_rule.ActionType == DictionaryActionType.Assign)
+                            {
+                                <p class="text-secondary mb-0">
+                                    <i class="ti ti-info-circle me-1"></i>Il est possible d'utiliser le résultat d'un critère « expression régulière » avec <code>#0</code> (correspondance entière), <code>#1</code>, <code>#2</code>...
+                                </p>
+                            }
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 mt-3">
+                            <button type="button" class="btn btn-outline-danger" @onclick="DeleteAsync">
+                                <i class="ti ti-trash me-1"></i>Supprimer définitivement
+                            </button>
+                            <button type="button" class="btn btn-primary" disabled="@_isSaving" @onclick="SaveAsync">
+                                <i class="ti ti-device-floppy me-1"></i>@(_isSaving ? "Enregistrement…" : "Sauvegarder")
+                            </button>
+                        </div>
+                        break;
+
+                    case "criteria":
+                        <div class="glpi-fiche-block">
+                            <div class="glpi-fiche-block-title"><i class="ti ti-filter"></i>Critères (@_rule.Criteria.Count)</div>
+                            <p class="text-secondary">
+                                Une règle s'applique si l'ensemble de ses critères, combinés par l'opérateur logique
+                                de l'onglet « Règle » (@(_rule.LogicalOperator == DictionaryRuleLogicalOperator.Or ? "OU" : "ET")), est vérifié.
+                            </p>
+
+                            @if (_rule.Criteria.Count > 0)
+                            {
+                                <div class="table-responsive mb-3">
+                                    <table class="table table-vcenter card-table mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Champ</th>
+                                                <th>Opérateur</th>
+                                                <th>Valeur</th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (DictionaryRuleCriterion criterion in _rule.Criteria)
+                                            {
+                                                <tr>
+                                                    <td>@CriterionFieldLabel(_type, criterion.Field)</td>
+                                                    <td>@OperatorLabel(criterion.Operator)</td>
+                                                    <td>@(IsValuelessOperator(criterion.Operator) ? "—" : criterion.Value)</td>
+                                                    <td class="text-end">
+                                                        <button type="button" class="btn btn-sm btn-icon text-danger" @onclick="() => RemoveCriterionAsync(criterion)">
+                                                            <i class="ti ti-trash"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+
+                            <div class="row g-2 align-items-end">
+                                @if (DictionaryRuleTypeCatalog.SupportsPublisherCriterion(_type))
+                                {
+                                    <div class="col-md-3">
+                                        <label class="form-label">Champ</label>
+                                        <select class="form-select" @bind="_newCriterion.Field">
+                                            <option value="@DictionaryCriterionField.Name">@CriterionFieldLabel(_type, DictionaryCriterionField.Name)</option>
+                                            <option value="@DictionaryCriterionField.Publisher">@CriterionFieldLabel(_type, DictionaryCriterionField.Publisher)</option>
+                                        </select>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="col-md-3">
+                                        <label class="form-label">Champ</label>
+                                        <input class="form-control" disabled value="@CriterionFieldLabel(_type, DictionaryCriterionField.Name)" />
+                                    </div>
+                                }
+                                <div class="col-md-3">
+                                    <label class="form-label">Opérateur</label>
+                                    <select class="form-select" @bind="_newCriterion.Operator">
+                                        @foreach (DictionaryCriterionOperator op in Enum.GetValues<DictionaryCriterionOperator>())
+                                        {
+                                            <option value="@op">@OperatorLabel(op)</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Valeur</label>
+                                    @if (IsValuelessOperator(_newCriterion.Operator))
+                                    {
+                                        <input class="form-control" disabled placeholder="—" />
+                                    }
+                                    else
+                                    {
+                                        <input class="form-control" @bind="_newCriterion.Value" />
+                                    }
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="button" class="btn btn-primary w-100" @onclick="AddCriterionAsync">
+                                        <i class="ti ti-plus me-1"></i>Ajouter
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        break;
+                }
+            </div>
+        </div>
+    }
+}

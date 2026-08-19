@@ -1,3 +1,6 @@
+using System.Net;
+using System.Text;
+using System.Text.RegularExpressions;
 using GlpiNg.Modules.Abstractions.Deployment;
 using GlpiNg.Modules.Inventory.Models;
 using Microsoft.AspNetCore.Components;
@@ -46,9 +49,27 @@ public partial class Detail : ComponentBase, IDisposable
 
     private static readonly int[] SoftwarePageSizeOptions = [25, 50, 100, 200];
     private List<ComputerSoftware> _softwareSorted = [];
+    private List<ComputerSoftware> _softwareFiltered = [];
     private List<ComputerSoftware> _softwarePaged = [];
+    private string _softwareFilter = "";
     private int _softwarePage = 1;
     private int _softwarePageSize = 25;
+
+    // Onglets dont le tableau doit occuper toute la hauteur du panneau (entête/pied fixes, seules
+    // les lignes défilent) — voir .glpi-fiche-panel-fill dans glpi-theme.css.
+    private static readonly HashSet<string> FillPanelTabKeys = ["software", "importinfo", "history"];
+
+    private static readonly int[] HistoryPageSizeOptions = [25, 50, 100, 200];
+    private List<ComputerHistoryEntry> _historySorted = [];
+    private List<ComputerHistoryEntry> _historyFiltered = [];
+    private List<ComputerHistoryEntry> _historyPaged = [];
+    private string _historyFilter = "";
+    private int _historyPage = 1;
+    private int _historyPageSize = 25;
+
+    private List<ComputerImportHistory> _importHistorySorted = [];
+    private List<ComputerImportHistory> _importHistoryFiltered = [];
+    private string _importHistoryFilter = "";
     private int _loadedComputerId;
     private string? _agentStatus;
     private bool _agentStatusLoading;
@@ -59,6 +80,24 @@ public partial class Detail : ComponentBase, IDisposable
     private CancellationTokenSource? _agentStatusPollCts;
     private CancellationTokenSource? _deploymentAssignmentsPollCts;
     private bool _isReloading;
+
+    // Édition des champs texte libre alimentés par les Intitulés (Manufacturer/ChassisType/Model/
+    // OperatingSystem/OsVersion — voir Models/DropdownItem.cs) : la fiche reste en lecture seule
+    // par défaut (comme le reste de Detail.razor), ce panneau de champs bascule seul en édition via
+    // le bouton "Modifier" du menu d'actions.
+    private bool _editMode;
+    private string? _editManufacturer;
+    private string? _editChassisType;
+    private string? _editModel;
+    private string? _editOperatingSystem;
+    private string? _editOsVersion;
+    private bool _editSaving;
+    private List<string> _manufacturerOptions = [];
+    private List<string> _computerTypeOptions = [];
+    private List<string> _computerModelOptions = [];
+    private List<string> _operatingSystemOptions = [];
+    private List<string> _operatingSystemVersionOptions = [];
+
     private ComputerDeploymentTasksInfo? _deploymentTasksInfo;
     private List<DeploymentPackageOption> _availablePackages = [];
     private List<ComputerDeploymentAssignment> _deploymentAssignments = [];
@@ -66,6 +105,8 @@ public partial class Detail : ComponentBase, IDisposable
     private DeploymentWakeMode _wakeMode = DeploymentWakeMode.None;
     private bool _prepareInstallLoading;
     private string? _prepareInstallError;
+    private int? _expandedAssignmentJobId;
+    private int? _retryingJobId;
 
     private enum DeploymentWakeMode
     {
@@ -76,7 +117,8 @@ public partial class Detail : ComponentBase, IDisposable
 
     private static readonly TimeSpan AgentStatusPollInterval = TimeSpan.FromSeconds(10);
     private static readonly TimeSpan DeploymentAssignmentsPollInterval = TimeSpan.FromSeconds(5);
-    private int SoftwareTotalPages => _softwareSorted.Count == 0 ? 1 : (int)Math.Ceiling(_softwareSorted.Count / (double)_softwarePageSize);
+    private int SoftwareTotalPages => _softwareFiltered.Count == 0 ? 1 : (int)Math.Ceiling(_softwareFiltered.Count / (double)_softwarePageSize);
+    private int HistoryTotalPages => _historyFiltered.Count == 0 ? 1 : (int)Math.Ceiling(_historyFiltered.Count / (double)_historyPageSize);
 
     // OnParametersSetAsync (pas OnInitializedAsync) : en navigation via les boutons
     // précédent/suivant, le routeur Blazor réutilise la même instance de composant et ne fait
@@ -90,7 +132,12 @@ public partial class Detail : ComponentBase, IDisposable
 
         _loadedComputerId = ComputerId;
         _activeTabKey = "computer";
+        _editMode = false;
         _softwarePage = 1;
+        _softwareFilter = "";
+        _historyPage = 1;
+        _historyFilter = "";
+        _importHistoryFilter = "";
         _agentStatus = null;
         _inventoryRequestResult = null;
         _hostTasksRequestResult = null;
@@ -108,7 +155,13 @@ public partial class Detail : ComponentBase, IDisposable
         }
 
         _softwareSorted = _computer.Softwares.OrderBy(s => s.Name).ToList();
-        ApplySoftwarePaging();
+        ApplySoftwareFilter();
+
+        _historySorted = _computer.HistoryEntries.OrderByDescending(e => e.OccurredAt).ThenByDescending(e => e.Id).ToList();
+        ApplyHistoryFilter();
+
+        _importHistorySorted = _computer.ImportHistories.OrderByDescending(e => e.OccurredAt).ToList();
+        ApplyImportHistoryFilter();
 
         _deploymentAssignmentsPollCts?.Cancel();
         _deploymentAssignmentsPollCts?.Dispose();
@@ -186,7 +239,13 @@ public partial class Detail : ComponentBase, IDisposable
             {
                 _computer = computer;
                 _softwareSorted = _computer.Softwares.OrderBy(s => s.Name).ToList();
-                ApplySoftwarePaging();
+                ApplySoftwareFilter();
+
+                _historySorted = _computer.HistoryEntries.OrderByDescending(e => e.OccurredAt).ThenByDescending(e => e.Id).ToList();
+                ApplyHistoryFilter();
+
+                _importHistorySorted = _computer.ImportHistories.OrderByDescending(e => e.OccurredAt).ToList();
+                ApplyImportHistoryFilter();
 
                 _deploymentTasksInfo = DeploymentTasksProvider is null
                     ? null
@@ -198,6 +257,101 @@ public partial class Detail : ComponentBase, IDisposable
         finally
         {
             _isReloading = false;
+            StateHasChanged();
+        }
+    }
+
+    // Bascule le panneau "Ordinateur"/"Systèmes d'exploitation" en édition : recopie les valeurs
+    // actuelles dans les champs d'édition et charge les valeurs déjà connues de chaque Intitulé
+    // pour l'autocomplétion (datalist), voir SaveEditAsync pour la création à la volée d'une
+    // valeur absente de la liste.
+    private async Task EnterEditModeAsync()
+    {
+        if (_computer is null) return;
+
+        _editManufacturer = _computer.Manufacturer;
+        _editChassisType = _computer.ChassisType;
+        _editModel = _computer.Model;
+        _editOperatingSystem = _computer.OperatingSystem;
+        _editOsVersion = _computer.OsVersion;
+
+        await using DbContext db = await DbFactory.CreateDbContextAsync();
+        List<DropdownItem> items = await db.Set<DropdownItem>()
+            .AsNoTracking()
+            .Where(i => i.Type == DropdownType.Manufacturer || i.Type == DropdownType.ComputerType
+                || i.Type == DropdownType.ComputerModel || i.Type == DropdownType.OperatingSystem
+                || i.Type == DropdownType.OperatingSystemVersion)
+            .OrderBy(i => i.Name)
+            .ToListAsync();
+
+        _manufacturerOptions = items.Where(i => i.Type == DropdownType.Manufacturer).Select(i => i.Name).ToList();
+        _computerTypeOptions = items.Where(i => i.Type == DropdownType.ComputerType).Select(i => i.Name).ToList();
+        _computerModelOptions = items.Where(i => i.Type == DropdownType.ComputerModel).Select(i => i.Name).ToList();
+        _operatingSystemOptions = items.Where(i => i.Type == DropdownType.OperatingSystem).Select(i => i.Name).ToList();
+        _operatingSystemVersionOptions = items.Where(i => i.Type == DropdownType.OperatingSystemVersion).Select(i => i.Name).ToList();
+
+        _editMode = true;
+    }
+
+    private void CancelEdit()
+    {
+        _editMode = false;
+    }
+
+    // Enregistre les champs édités et crée à la volée, dans la liste d'Intitulé correspondante,
+    // toute valeur saisie qui n'y figure pas encore (comparaison insensible à la casse — même
+    // contrainte que l'index unique (Type, Name) de DropdownItem, voir GlpiNgDbContext) : la
+    // prochaine édition (sur ce poste ou un autre) la retrouvera dans la liste de suggestions.
+    private async Task SaveEditAsync()
+    {
+        if (_computer is null || _editSaving) return;
+
+        _editSaving = true;
+        StateHasChanged();
+
+        try
+        {
+            await using DbContext db = await DbFactory.CreateDbContextAsync();
+
+            (DropdownType Type, string? Value)[] fields =
+            [
+                (DropdownType.Manufacturer, _editManufacturer),
+                (DropdownType.ComputerType, _editChassisType),
+                (DropdownType.ComputerModel, _editModel),
+                (DropdownType.OperatingSystem, _editOperatingSystem),
+                (DropdownType.OperatingSystemVersion, _editOsVersion),
+            ];
+
+            foreach ((DropdownType type, string? value) in fields)
+            {
+                if (string.IsNullOrWhiteSpace(value)) continue;
+
+                bool exists = await db.Set<DropdownItem>()
+                    .AnyAsync(i => i.Type == type && i.Name.ToLower() == value.ToLower());
+                if (!exists)
+                {
+                    db.Set<DropdownItem>().Add(new DropdownItem { Type = type, Name = value });
+                }
+            }
+
+            Computer? tracked = await db.Set<Computer>().FirstOrDefaultAsync(c => c.Id == ComputerId);
+            if (tracked is not null)
+            {
+                tracked.Manufacturer = _editManufacturer;
+                tracked.ChassisType = _editChassisType;
+                tracked.Model = _editModel;
+                tracked.OperatingSystem = _editOperatingSystem;
+                tracked.OsVersion = _editOsVersion;
+            }
+
+            await db.SaveChangesAsync();
+
+            _editMode = false;
+            await ReloadComputerAsync();
+        }
+        finally
+        {
+            _editSaving = false;
             StateHasChanged();
         }
     }
@@ -406,6 +560,105 @@ public partial class Detail : ComponentBase, IDisposable
         StateHasChanged();
     }
 
+    // Relance un job terminé (Réussi/En erreur) : le remet en attente puis réveille l'agent selon
+    // le mode actuellement sélectionné dans le panneau "Préparer l'installation" juste en dessous
+    // (_wakeMode — même dropdown, même logique que PrepareInstallationAsync), pour que l'agent
+    // vienne chercher ce job fraîchement remis en attente sans attendre son prochain contact
+    // périodique. Erreur affichée dans le même emplacement que celle du panneau d'installation.
+    private async Task RetryAssignmentAsync(int jobId)
+    {
+        if (DeploymentAssignmentService is null || _retryingJobId is not null)
+        {
+            return;
+        }
+
+        _retryingJobId = jobId;
+        _prepareInstallError = null;
+        StateHasChanged();
+
+        try
+        {
+            bool retried = await DeploymentAssignmentService.RetryAssignmentAsync(jobId);
+            if (!retried)
+            {
+                return;
+            }
+
+            await LoadDeploymentAssignmentsAsync();
+            _tabs = BuildTabs(_computer!, _deploymentTasksInfo, _deploymentAssignments.Count);
+
+            _prepareInstallError = _wakeMode switch
+            {
+                DeploymentWakeMode.Local => await TriggerLocalAgentWakeAsync(),
+                DeploymentWakeMode.Remote => await TriggerRemoteAgentWakeAsync(),
+                _ => null
+            };
+        }
+        finally
+        {
+            _retryingJobId = null;
+            StateHasChanged();
+        }
+    }
+
+    private void ToggleAssignmentLog(int jobId)
+    {
+        _expandedAssignmentJobId = _expandedAssignmentJobId == jobId ? null : jobId;
+    }
+
+    // Même mise en forme que TaskDetail.RenderLog (module Déploiement) : GlpiNg.Modules.Inventory
+    // ne référence jamais GlpiNg.Modules.Deployment (seulement son abstraction, voir
+    // IComputerDeploymentAssignmentService), le rendu est donc dupliqué ici plutôt que partagé.
+    // Journal ligne par ligne "[HH:mm:ss] [phase] message", horodatage/phase stylés à part et
+    // ligne entière colorée selon son issue (ok/succès en vert, ko/erreur en rouge, séparateurs
+    // "====" atténués) — voir les classes .glpi-log-* dans glpi-theme.css.
+    private static readonly Regex LogLinePrefixRegex = new(
+        @"^\[(?<time>\d{2}:\d{2}:\d{2})\]\s*(?:\[(?<tag>[a-zA-Z]+)\]\s*)?(?<rest>.*)$",
+        RegexOptions.Compiled);
+
+    private static MarkupString RenderLog(string log)
+    {
+        StringBuilder html = new();
+
+        foreach (string rawLine in log.Replace("\r\n", "\n").Split('\n'))
+        {
+            string line = rawLine.TrimEnd('\r');
+            string trimmed = line.Trim();
+
+            string lineClass = trimmed.Length > 0 && trimmed.All(c => c == '=')
+                ? "glpi-log-line glpi-log-sep"
+                : Regex.IsMatch(line, @"\(ok\)\s*$", RegexOptions.IgnoreCase) || line.Contains("success", StringComparison.OrdinalIgnoreCase)
+                    ? "glpi-log-line glpi-log-ok"
+                    : Regex.IsMatch(line, @"\(ko\)\s*$", RegexOptions.IgnoreCase)
+                      || line.Contains("error", StringComparison.OrdinalIgnoreCase)
+                      || line.Contains("failed", StringComparison.OrdinalIgnoreCase)
+                        ? "glpi-log-line glpi-log-error"
+                        : "glpi-log-line";
+
+            html.Append("<div class=\"").Append(lineClass).Append("\">");
+
+            Match match = LogLinePrefixRegex.Match(line);
+            if (match.Success)
+            {
+                html.Append("<span class=\"glpi-log-time\">[").Append(WebUtility.HtmlEncode(match.Groups["time"].Value)).Append("]</span> ");
+                if (match.Groups["tag"].Success)
+                {
+                    html.Append("<span class=\"glpi-log-tag\">[").Append(WebUtility.HtmlEncode(match.Groups["tag"].Value)).Append("]</span> ");
+                }
+
+                html.Append(WebUtility.HtmlEncode(match.Groups["rest"].Value));
+            }
+            else
+            {
+                html.Append(WebUtility.HtmlEncode(line));
+            }
+
+            html.Append("</div>");
+        }
+
+        return new MarkupString(html.ToString());
+    }
+
     private async Task LoadPaginationFromDbAsync(DbContext db)
     {
         _total = await db.Set<Computer>().AsNoTracking().CountAsync();
@@ -459,10 +712,33 @@ public partial class Detail : ComponentBase, IDisposable
     private void ApplySoftwarePaging()
     {
         _softwarePage = Math.Clamp(_softwarePage, 1, SoftwareTotalPages);
-        _softwarePaged = _softwareSorted
+        _softwarePaged = _softwareFiltered
             .Skip((_softwarePage - 1) * _softwarePageSize)
             .Take(_softwarePageSize)
             .ToList();
+    }
+
+    // Filtre par nom/version/éditeur (champ de recherche de l'entête du bloc "Logiciels").
+    // Séparé de ApplySoftwarePaging pour pouvoir être réappliqué après un rechargement des
+    // données (ReloadComputerAsync) sans perdre la page courante, contrairement à la saisie
+    // dans le champ (OnSoftwareFilterInput) qui revient toujours en page 1.
+    private void ApplySoftwareFilter()
+    {
+        _softwareFiltered = string.IsNullOrWhiteSpace(_softwareFilter)
+            ? _softwareSorted
+            : _softwareSorted.Where(s =>
+                (s.Name?.Contains(_softwareFilter, StringComparison.OrdinalIgnoreCase) ?? false)
+                || (s.Version?.Contains(_softwareFilter, StringComparison.OrdinalIgnoreCase) ?? false)
+                || (s.Publisher?.Contains(_softwareFilter, StringComparison.OrdinalIgnoreCase) ?? false))
+                .ToList();
+        ApplySoftwarePaging();
+    }
+
+    private void OnSoftwareFilterInput(ChangeEventArgs e)
+    {
+        _softwareFilter = (string?)e.Value ?? "";
+        _softwarePage = 1;
+        ApplySoftwareFilter();
     }
 
     private void SetSoftwarePageSize(int size)
@@ -479,6 +755,72 @@ public partial class Detail : ComponentBase, IDisposable
         if (target == _softwarePage) return;
         _softwarePage = target;
         ApplySoftwarePaging();
+    }
+
+    private void ApplyHistoryPaging()
+    {
+        _historyPage = Math.Clamp(_historyPage, 1, HistoryTotalPages);
+        _historyPaged = _historyFiltered
+            .Skip((_historyPage - 1) * _historyPageSize)
+            .Take(_historyPageSize)
+            .ToList();
+    }
+
+    // Filtre par utilisateur/champ/description (champ de recherche de l'entête du bloc
+    // "Historique"). Voir ApplySoftwareFilter pour le même principe côté onglet "Logiciels".
+    private void ApplyHistoryFilter()
+    {
+        _historyFiltered = string.IsNullOrWhiteSpace(_historyFilter)
+            ? _historySorted
+            : _historySorted.Where(e =>
+                e.User.Contains(_historyFilter, StringComparison.OrdinalIgnoreCase)
+                || e.Field.Contains(_historyFilter, StringComparison.OrdinalIgnoreCase)
+                || e.Description.Contains(_historyFilter, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        ApplyHistoryPaging();
+    }
+
+    private void OnHistoryFilterInput(ChangeEventArgs e)
+    {
+        _historyFilter = (string?)e.Value ?? "";
+        _historyPage = 1;
+        ApplyHistoryFilter();
+    }
+
+    // Onglet "Informations d'import" : pas de pagination (liste généralement courte), seulement
+    // un filtre — voir .glpi-fiche-panel-fill pour le remplissage en hauteur du bloc.
+    private void ApplyImportHistoryFilter()
+    {
+        _importHistoryFiltered = string.IsNullOrWhiteSpace(_importHistoryFilter)
+            ? _importHistorySorted
+            : _importHistorySorted.Where(e =>
+                e.RuleName.Contains(_importHistoryFilter, StringComparison.OrdinalIgnoreCase)
+                || e.Module.Contains(_importHistoryFilter, StringComparison.OrdinalIgnoreCase)
+                || (e.AgentIdentifier?.Contains(_importHistoryFilter, StringComparison.OrdinalIgnoreCase) ?? false)
+                || (e.InputValue?.Contains(_importHistoryFilter, StringComparison.OrdinalIgnoreCase) ?? false))
+                .ToList();
+    }
+
+    private void OnImportHistoryFilterInput(ChangeEventArgs e)
+    {
+        _importHistoryFilter = (string?)e.Value ?? "";
+        ApplyImportHistoryFilter();
+    }
+
+    private void SetHistoryPageSize(int size)
+    {
+        if (_historyPageSize == size) return;
+        _historyPageSize = size;
+        _historyPage = 1;
+        ApplyHistoryPaging();
+    }
+
+    private void GoToHistoryPage(int page)
+    {
+        int target = Math.Clamp(page, 1, HistoryTotalPages);
+        if (target == _historyPage) return;
+        _historyPage = target;
+        ApplyHistoryPaging();
     }
 
     private static string? LocationLabel(Computer computer)

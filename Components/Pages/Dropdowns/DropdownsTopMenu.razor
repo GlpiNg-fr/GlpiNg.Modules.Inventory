@@ -1,0 +1,21 @@
+<div class="card mb-3">
+    <div class="card-header">
+        <ul class="nav nav-tabs card-header-tabs" style="border-bottom: none;">
+            @foreach (DropdownType type in DropdownTypeCatalog.All)
+            {
+                string slug = DropdownTypeCatalog.Slug(type);
+                <li class="nav-item">
+                    <a href="@($"/config/dropdowns/{slug}")" class="nav-link @(Current == slug ? "active" : "")">
+                        <i class="ti @(DropdownTypeCatalog.Icon(type)) me-1"></i>@DropdownTypeCatalog.Label(type)
+                    </a>
+                </li>
+            }
+        </ul>
+    </div>
+</div>
+
+@code {
+    /// <summary>Slug (DropdownTypeCatalog.Slug) de l'Intitulé actuellement affiché, pour mettre en évidence l'onglet correspondant.</summary>
+    [Parameter, EditorRequired]
+    public string Current { get; set; } = string.Empty;
+}
