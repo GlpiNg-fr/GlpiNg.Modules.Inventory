@@ -14,7 +14,7 @@ public partial class Detail : ComponentBase, IAsyncDisposable
     // cliqué, ce diff générique retrouve les champs réellement modifiés sur le _peripheral
     // partagé en mémoire.
     private sealed record PeripheralSnapshot(
-        string Name, ComputerStatus Status, string? Type, string? Manufacturer, string? Model, string? Brand,
+        string Name, int? StatusId, string? Type, string? Manufacturer, string? Model, string? Brand,
         string? SerialNumber, string? InventoryNumber, string? Uuid, string? Site, string? Building, string? Room,
         string? TechnicianInCharge, string? AssignedUser, string? Contact, string? ContactNumber,
         bool IsGlobalManagement, string? Comment, int? ComputerId);
@@ -34,6 +34,7 @@ public partial class Detail : ComponentBase, IAsyncDisposable
     private DbContext? _db;
     private Peripheral? _peripheral;
     private List<Computer> _allComputers = [];
+    private List<DropdownItem> _statusOptions = [];
     private List<FicheTab> _tabs = [];
     private string _activeTabKey = "peripheral";
     private bool _isSaving;
@@ -79,6 +80,7 @@ public partial class Detail : ComponentBase, IAsyncDisposable
         _peripheral = await _db.Set<Peripheral>()
             .Include(peripheral => peripheral.Computer)
             .Include(peripheral => peripheral.HistoryEntries)
+            .Include(peripheral => peripheral.StatusItem)
             .FirstOrDefaultAsync(peripheral => peripheral.Id == PeripheralId);
 
         if (_peripheral is null)
@@ -87,6 +89,10 @@ public partial class Detail : ComponentBase, IAsyncDisposable
         }
 
         _allComputers = await _db.Set<Computer>().AsNoTracking().OrderBy(computer => computer.Name).ToListAsync();
+        _statusOptions = await _db.Set<DropdownItem>().AsNoTracking()
+            .Where(i => i.Type == DropdownType.Status)
+            .OrderBy(i => i.Name)
+            .ToListAsync();
         _computerIdToLink = _peripheral.ComputerId ?? 0;
         _beforeEdit = Snapshot(_peripheral);
         RebuildTabs();
@@ -155,7 +161,7 @@ public partial class Detail : ComponentBase, IAsyncDisposable
     }
 
     private static PeripheralSnapshot Snapshot(Peripheral p) => new(
-        p.Name, p.Status, p.Type, p.Manufacturer, p.Model, p.Brand,
+        p.Name, p.StatusId, p.Type, p.Manufacturer, p.Model, p.Brand,
         p.SerialNumber, p.InventoryNumber, p.Uuid, p.Site, p.Building, p.Room,
         p.TechnicianInCharge, p.AssignedUser, p.Contact, p.ContactNumber,
         p.IsGlobalManagement, p.Comment, p.ComputerId);
@@ -165,7 +171,7 @@ public partial class Detail : ComponentBase, IAsyncDisposable
     private IEnumerable<(string Field, string? Old, string? New)> DiffFields(PeripheralSnapshot before, PeripheralSnapshot after)
     {
         if (before.Name != after.Name) yield return ("Nom", before.Name, after.Name);
-        if (before.Status != after.Status) yield return ("Statut", StatusLabel(before.Status), StatusLabel(after.Status));
+        if (before.StatusId != after.StatusId) yield return ("Statut", StatusLabel(before.StatusId), StatusLabel(after.StatusId));
         if (before.Type != after.Type) yield return ("Type", before.Type, after.Type);
         if (before.Manufacturer != after.Manufacturer) yield return ("Fabricant", before.Manufacturer, after.Manufacturer);
         if (before.Model != after.Model) yield return ("Modèle", before.Model, after.Model);
@@ -222,6 +228,7 @@ public partial class Detail : ComponentBase, IAsyncDisposable
             await _db.SaveChangesAsync();
             _beforeEdit = after;
             await _db.Entry(_peripheral).Collection(p => p.HistoryEntries).LoadAsync();
+            await _db.Entry(_peripheral).Reference(p => p.StatusItem).LoadAsync();
             RebuildTabs();
         }
         finally
@@ -261,23 +268,8 @@ public partial class Detail : ComponentBase, IAsyncDisposable
         await LinkComputerAsync();
     }
 
-    private static string StatusLabel(ComputerStatus status) => status switch
-    {
-        ComputerStatus.InStock => "En stock",
-        ComputerStatus.InProduction => "En production",
-        ComputerStatus.Broken => "En panne",
-        ComputerStatus.Retired => "Réformé",
-        _ => status.ToString()
-    };
-
-    private static string StatusCssClass(ComputerStatus status) => status switch
-    {
-        ComputerStatus.InStock => "glpi-status-instock",
-        ComputerStatus.InProduction => "glpi-status-inproduction",
-        ComputerStatus.Broken => "glpi-status-broken",
-        ComputerStatus.Retired => "glpi-status-retired",
-        _ => "bg-secondary"
-    };
+    private string StatusLabel(int? statusId) =>
+        statusId is { } id ? _statusOptions.FirstOrDefault(s => s.Id == id)?.Name ?? "—" : "—";
 
     public async ValueTask DisposeAsync()
     {

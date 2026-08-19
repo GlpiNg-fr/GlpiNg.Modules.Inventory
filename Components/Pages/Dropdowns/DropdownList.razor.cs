@@ -25,8 +25,18 @@ public partial class DropdownList : ComponentBase
     private int? _editingId;
     private string _editName = string.Empty;
     private string? _editComment;
+    private string? _editColor;
+
+    /// <summary>Couleur par défaut proposée dans le sélecteur quand aucune couleur n'est encore définie (gris neutre Tabler, cohérent avec le badge de secours affiché tant que Color est null).</summary>
+    private const string DefaultColorHex = "#6c757d";
 
     private bool AllSelected => _items.Count > 0 && _selectedIds.Count == _items.Count;
+
+    /// <summary>Couleur affichée dans le sélecteur &lt;input type="color"&gt; : les navigateurs n'acceptent que des hex #rrggbb, jamais "transparent" ni null — d'où ce fallback purement visuel, sans effet sur la valeur enregistrée tant que "Transparent" n'est pas décoché.</summary>
+    private static string ColorPickerValue(string? color) =>
+        color is { Length: > 0 } c && c != "transparent" ? c : DefaultColorHex;
+
+    private static bool IsTransparent(string? color) => color == "transparent";
 
     protected override async Task OnParametersSetAsync()
     {
@@ -109,6 +119,7 @@ public partial class DropdownList : ComponentBase
         _editingId = item.Id;
         _editName = item.Name;
         _editComment = item.Comment;
+        _editColor = item.Color;
     }
 
     private void CancelEdit()
@@ -126,6 +137,7 @@ public partial class DropdownList : ComponentBase
 
         tracked.Name = _editName;
         tracked.Comment = _editComment;
+        tracked.Color = _editColor;
         await db.SaveChangesAsync();
 
         _editingId = null;

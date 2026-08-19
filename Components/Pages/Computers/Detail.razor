@@ -90,11 +90,38 @@ else
                                 </div>
                                 <div class="glpi-fiche-field">
                                     <label>Emplacement</label>
-                                    <div class="glpi-fiche-value-box">@(LocationLabel(_computer) ?? "—")</div>
+                                    @if (_editMode)
+                                    {
+                                        <select class="form-select" value="@(_editLocationId?.ToString() ?? "")"
+                                                @onchange="@((ChangeEventArgs e) => _editLocationId = string.IsNullOrEmpty((string?)e.Value) ? null : int.Parse((string)e.Value!))">
+                                            <option value="">—</option>
+                                            @foreach (DropdownItem location in _locationOptions)
+                                            {
+                                                <option value="@location.Id">@location.Name</option>
+                                            }
+                                        </select>
+                                    }
+                                    else
+                                    {
+                                        <div class="glpi-fiche-value-box">@(LocationLabel(_computer) ?? "—")</div>
+                                    }
                                 </div>
                                 <div class="glpi-fiche-field">
                                     <label>Utilisateur assigné</label>
-                                    <div class="glpi-fiche-value-box">@(_computer.AssignedUser ?? "—")</div>
+                                    @if (_editMode)
+                                    {
+                                        <input class="form-control" list="assignedUserOptions" @bind="_editAssignedUser" @bind:event="oninput" />
+                                        <datalist id="assignedUserOptions">
+                                            @foreach (string option in _userOptions)
+                                            {
+                                                <option value="@option"></option>
+                                            }
+                                        </datalist>
+                                    }
+                                    else
+                                    {
+                                        <div class="glpi-fiche-value-box">@(_computer.AssignedUser ?? "—")</div>
+                                    }
                                 </div>
                                 <div class="glpi-fiche-field">
                                     <label>Dernier utilisateur connecté</label>
@@ -108,9 +135,23 @@ else
                             <div class="col-md-6">
                                 <div class="glpi-fiche-field">
                                     <label>Statut</label>
-                                    <div class="glpi-fiche-value-box">
-                                        <span class="badge @StatusCssClass(_computer.Status)">@StatusLabel(_computer.Status)</span>
-                                    </div>
+                                    @if (_editMode)
+                                    {
+                                        <select class="form-select" value="@(_editStatusId?.ToString() ?? "")"
+                                                @onchange="@((ChangeEventArgs e) => _editStatusId = string.IsNullOrEmpty((string?)e.Value) ? null : int.Parse((string)e.Value!))">
+                                            <option value="">—</option>
+                                            @foreach (DropdownItem status in _statusOptions)
+                                            {
+                                                <option value="@status.Id">@status.Name</option>
+                                            }
+                                        </select>
+                                    }
+                                    else
+                                    {
+                                        <div class="glpi-fiche-value-box">
+                                            <StatusBadge Status="_computer.StatusItem" />
+                                        </div>
+                                    }
                                 </div>
                                 <div class="glpi-fiche-field">
                                     <label>Type</label>

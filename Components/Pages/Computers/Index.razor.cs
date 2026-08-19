@@ -14,7 +14,6 @@ public partial class Index : ComponentBase
     private enum SearchFieldType
     {
         Text,
-        Select,
         Number,
         Date
     }
@@ -25,7 +24,7 @@ public partial class Index : ComponentBase
         Other
     }
 
-    private sealed record SearchFieldDefinition(string Key, string Label, SearchFieldType Type, (string Value, string Label)[]? Options = null);
+    private sealed record SearchFieldDefinition(string Key, string Label, SearchFieldType Type);
 
     private sealed class SearchCriterion
     {
@@ -41,14 +40,6 @@ public partial class Index : ComponentBase
         public bool Descending { get; set; }
     }
 
-    private static readonly (string Value, string Label)[] StatusOptions =
-    [
-        (nameof(ComputerStatus.InStock), "En stock"),
-        (nameof(ComputerStatus.InProduction), "En production"),
-        (nameof(ComputerStatus.Broken), "En panne"),
-        (nameof(ComputerStatus.Retired), "Réformé")
-    ];
-
     private static readonly Dictionary<SearchFieldType, (string Value, string Label)[]> OperatorsByType = new()
     {
         [SearchFieldType.Text] =
@@ -58,11 +49,6 @@ public partial class Index : ComponentBase
             ("equals", "est"),
             ("notequals", "n'est pas"),
             ("empty", "est vide")
-        ],
-        [SearchFieldType.Select] =
-        [
-            ("equals", "est"),
-            ("notequals", "n'est pas")
         ],
         [SearchFieldType.Number] =
         [
@@ -85,7 +71,7 @@ public partial class Index : ComponentBase
     [
         new("all", "Tous les champs", SearchFieldType.Text),
         new("name", "Nom", SearchFieldType.Text),
-        new("status", "Statut", SearchFieldType.Select, StatusOptions),
+        new("status", "Statut", SearchFieldType.Text),
         new("manufacturer", "Fabricant", SearchFieldType.Text),
         new("model", "Modèle", SearchFieldType.Text),
         new("serial", "Numéro de série", SearchFieldType.Text),
@@ -204,6 +190,7 @@ public partial class Index : ComponentBase
         _computers = await db.Set<Computer>()
             .AsNoTracking()
             .Include(computer => computer.Batteries)
+            .Include(computer => computer.StatusItem)
             .Where(computer => computer.IsDeleted == _showTrash)
             .OrderBy(computer => computer.Name)
             .ToListAsync();
@@ -656,8 +643,6 @@ public partial class Index : ComponentBase
 
     private static IComparable GetSortKey(Computer computer, string key)
     {
-        if (key == "status") return (int)computer.Status;
-
         SearchFieldDefinition? field = FindField(key);
         if (field is null) return computer.Name;
 
@@ -665,7 +650,6 @@ public partial class Index : ComponentBase
         {
             SearchFieldType.Number => GetFieldNumber(computer, key) ?? double.MinValue,
             SearchFieldType.Date => GetFieldDate(computer, key) ?? DateTime.MinValue,
-            SearchFieldType.Select => GetFieldSelectValue(computer, key),
             _ => GetFieldText(computer, key) ?? string.Empty
         };
     }
@@ -725,7 +709,6 @@ public partial class Index : ComponentBase
         return field.Type switch
         {
             SearchFieldType.Text => EvaluateText(GetFieldText(computer, field.Key), criterion),
-            SearchFieldType.Select => EvaluateSelect(GetFieldSelectValue(computer, field.Key), criterion),
             SearchFieldType.Number => EvaluateNumber(GetFieldNumber(computer, field.Key), criterion),
             SearchFieldType.Date => EvaluateDate(GetFieldDate(computer, field.Key), criterion),
             _ => true
@@ -746,12 +729,6 @@ public partial class Index : ComponentBase
             "notequals" => !string.Equals(value, term, StringComparison.OrdinalIgnoreCase),
             _ => true
         };
-    }
-
-    private static bool EvaluateSelect(string current, SearchCriterion criterion)
-    {
-        bool isEqual = string.Equals(current, criterion.Value, StringComparison.Ordinal);
-        return criterion.Operator == "notequals" ? !isEqual : isEqual;
     }
 
     private static bool EvaluateNumber(double? raw, SearchCriterion criterion)
@@ -799,6 +776,7 @@ public partial class Index : ComponentBase
     private static string? GetFieldText(Computer computer, string key) => key switch
     {
         "name" => computer.Name,
+        "status" => computer.StatusItem?.Name,
         "manufacturer" => computer.Manufacturer,
         "model" => computer.Model,
         "serial" => computer.SerialNumber,
@@ -814,12 +792,6 @@ public partial class Index : ComponentBase
         "assigneduser" => computer.AssignedUser,
         "lastloggeduser" => computer.LastLoggedUser,
         _ => null
-    };
-
-    private static string GetFieldSelectValue(Computer computer, string key) => key switch
-    {
-        "status" => computer.Status.ToString(),
-        _ => string.Empty
     };
 
     private static double? GetFieldNumber(Computer computer, string key) => key switch
@@ -862,24 +834,6 @@ public partial class Index : ComponentBase
             _ => GetFieldText(computer, key) is { Length: > 0 } text ? text : "—"
         };
     }
-
-    private static string StatusLabel(ComputerStatus status) => status switch
-    {
-        ComputerStatus.InStock => "En stock",
-        ComputerStatus.InProduction => "En production",
-        ComputerStatus.Broken => "En panne",
-        ComputerStatus.Retired => "Réformé",
-        _ => status.ToString()
-    };
-
-    private static string StatusCssClass(ComputerStatus status) => status switch
-    {
-        ComputerStatus.InStock => "glpi-status-instock",
-        ComputerStatus.InProduction => "glpi-status-inproduction",
-        ComputerStatus.Broken => "glpi-status-broken",
-        ComputerStatus.Retired => "glpi-status-retired",
-        _ => "bg-secondary"
-    };
 
     private void SaveListState()
     {

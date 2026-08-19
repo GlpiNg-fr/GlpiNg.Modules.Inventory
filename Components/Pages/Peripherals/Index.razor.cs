@@ -23,11 +23,10 @@ public partial class Index : ComponentBase
     private enum SearchFieldType
     {
         Text,
-        Select,
         Date
     }
 
-    private sealed record SearchFieldDefinition(string Key, string Label, SearchFieldType Type, (string Value, string Label)[]? Options = null);
+    private sealed record SearchFieldDefinition(string Key, string Label, SearchFieldType Type);
 
     private sealed class SearchCriterion
     {
@@ -43,14 +42,6 @@ public partial class Index : ComponentBase
         public bool Descending { get; set; }
     }
 
-    private static readonly (string Value, string Label)[] StatusOptions =
-    [
-        (nameof(ComputerStatus.InStock), "En stock"),
-        (nameof(ComputerStatus.InProduction), "En production"),
-        (nameof(ComputerStatus.Broken), "En panne"),
-        (nameof(ComputerStatus.Retired), "Réformé")
-    ];
-
     private static readonly Dictionary<SearchFieldType, (string Value, string Label)[]> OperatorsByType = new()
     {
         [SearchFieldType.Text] =
@@ -60,11 +51,6 @@ public partial class Index : ComponentBase
             ("equals", "est"),
             ("notequals", "n'est pas"),
             ("empty", "est vide")
-        ],
-        [SearchFieldType.Select] =
-        [
-            ("equals", "est"),
-            ("notequals", "n'est pas")
         ],
         [SearchFieldType.Date] =
         [
@@ -79,7 +65,7 @@ public partial class Index : ComponentBase
     [
         new("all", "Tous les champs", SearchFieldType.Text),
         new("name", "Nom", SearchFieldType.Text),
-        new("status", "Statut", SearchFieldType.Select, StatusOptions),
+        new("status", "Statut", SearchFieldType.Text),
         new("type", "Type", SearchFieldType.Text),
         new("manufacturer", "Fabricant", SearchFieldType.Text),
         new("model", "Modèle", SearchFieldType.Text),
@@ -124,6 +110,7 @@ public partial class Index : ComponentBase
     private int _pageSize = 25;
     private int _currentPage = 1;
     private Peripheral _newPeripheral = NewBlankPeripheral();
+    private List<DropdownItem> _statusOptions = [];
 
     private bool AllSelected => _pagedPeripherals.Count > 0 && _selectedIds.IsSupersetOf(_pagedPeripherals.Select(peripheral => peripheral.Id));
 
@@ -141,7 +128,14 @@ public partial class Index : ComponentBase
         await using DbContext db = await DbFactory.CreateDbContextAsync();
         _peripherals = await db.Set<Peripheral>()
             .AsNoTracking()
+            .Include(peripheral => peripheral.StatusItem)
             .OrderBy(peripheral => peripheral.Name)
+            .ToListAsync();
+
+        _statusOptions = await db.Set<DropdownItem>()
+            .AsNoTracking()
+            .Where(i => i.Type == DropdownType.Status)
+            .OrderBy(i => i.Name)
             .ToListAsync();
 
         _selectedIds.Clear();
@@ -313,7 +307,7 @@ public partial class Index : ComponentBase
 
     private static IComparable GetSortKey(Peripheral peripheral, SortField field) => field switch
     {
-        SortField.Status => peripheral.Status,
+        SortField.Status => peripheral.StatusItem?.Name ?? string.Empty,
         SortField.Manufacturer => peripheral.Manufacturer ?? string.Empty,
         SortField.Location => LocationLabel(peripheral) ?? string.Empty,
         SortField.Type => peripheral.Type ?? string.Empty,
@@ -400,7 +394,6 @@ public partial class Index : ComponentBase
         return field.Type switch
         {
             SearchFieldType.Text => EvaluateText(GetFieldText(peripheral, field.Key), criterion),
-            SearchFieldType.Select => EvaluateSelect(GetFieldSelectValue(peripheral, field.Key), criterion),
             SearchFieldType.Date => EvaluateDate(GetFieldDate(peripheral, field.Key), criterion),
             _ => true
         };
@@ -420,12 +413,6 @@ public partial class Index : ComponentBase
             "notequals" => !string.Equals(value, term, StringComparison.OrdinalIgnoreCase),
             _ => true
         };
-    }
-
-    private static bool EvaluateSelect(string current, SearchCriterion criterion)
-    {
-        bool isEqual = string.Equals(current, criterion.Value, StringComparison.Ordinal);
-        return criterion.Operator == "notequals" ? !isEqual : isEqual;
     }
 
     private static bool EvaluateDate(DateTime? raw, SearchCriterion criterion)
@@ -458,6 +445,7 @@ public partial class Index : ComponentBase
     private static string? GetFieldText(Peripheral peripheral, string key) => key switch
     {
         "name" => peripheral.Name,
+        "status" => peripheral.StatusItem?.Name,
         "type" => peripheral.Type,
         "manufacturer" => peripheral.Manufacturer,
         "model" => peripheral.Model,
@@ -471,12 +459,6 @@ public partial class Index : ComponentBase
         "assigneduser" => peripheral.AssignedUser,
         "uuid" => peripheral.Uuid,
         _ => null
-    };
-
-    private static string GetFieldSelectValue(Peripheral peripheral, string key) => key switch
-    {
-        "status" => peripheral.Status.ToString(),
-        _ => string.Empty
     };
 
     private static DateTime? GetFieldDate(Peripheral peripheral, string key) => key switch
@@ -499,21 +481,4 @@ public partial class Index : ComponentBase
         return lastModified.ToLocalTime().ToString("dd/MM/yyyy HH:mm");
     }
 
-    private static string StatusLabel(ComputerStatus status) => status switch
-    {
-        ComputerStatus.InStock => "En stock",
-        ComputerStatus.InProduction => "En production",
-        ComputerStatus.Broken => "En panne",
-        ComputerStatus.Retired => "Réformé",
-        _ => status.ToString()
-    };
-
-    private static string StatusCssClass(ComputerStatus status) => status switch
-    {
-        ComputerStatus.InStock => "glpi-status-instock",
-        ComputerStatus.InProduction => "glpi-status-inproduction",
-        ComputerStatus.Broken => "glpi-status-broken",
-        ComputerStatus.Retired => "glpi-status-retired",
-        _ => "bg-secondary"
-    };
 }

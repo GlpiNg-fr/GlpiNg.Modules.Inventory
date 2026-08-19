@@ -8,10 +8,12 @@
         </div>
         <div class="glpi-fiche-field">
             <label>Statut</label>
-            <select class="form-select" @bind="Peripheral.Status">
-                @foreach (ComputerStatus status in Enum.GetValues<ComputerStatus>())
+            <select class="form-select" value="@(Peripheral.StatusId?.ToString() ?? "")"
+                    @onchange="@((ChangeEventArgs e) => Peripheral.StatusId = string.IsNullOrEmpty((string?)e.Value) ? null : int.Parse((string)e.Value!))">
+                <option value="">—</option>
+                @foreach (DropdownItem status in StatusOptions)
                 {
-                    <option value="@status">@StatusLabel(status)</option>
+                    <option value="@status.Id">@status.Name</option>
                 }
             </select>
         </div>
@@ -87,6 +89,10 @@
     [Parameter, EditorRequired]
     public Peripheral Peripheral { get; set; } = null!;
 
+    /// <summary>Valeurs de l'Intitulé Status (DropdownType.Status) à proposer dans le select — chargées par le parent (Index/Detail), pas ce composant, pour ne pas dupliquer la requête entre les deux usages.</summary>
+    [Parameter, EditorRequired]
+    public List<DropdownItem> StatusOptions { get; set; } = [];
+
     // Peripheral est muté directement (référence partagée avec le parent) : ça ne déclenche pas
     // le re-rendu du parent tout seul, d'où ce callback pour les cas où le parent affiche un état
     // dérivé de Peripheral (ex. le bouton "Ajouter" désactivé tant que Name est vide).
@@ -94,13 +100,4 @@
     public EventCallback OnChanged { get; set; }
 
     private Task NotifyChangedAsync() => OnChanged.InvokeAsync();
-
-    private static string StatusLabel(ComputerStatus status) => status switch
-    {
-        ComputerStatus.InStock => "En stock",
-        ComputerStatus.InProduction => "En production",
-        ComputerStatus.Broken => "En panne",
-        ComputerStatus.Retired => "Réformé",
-        _ => status.ToString()
-    };
 }

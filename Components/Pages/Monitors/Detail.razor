@@ -25,6 +25,9 @@ else
             </button>
         </div>
         <div class="glpi-fiche-toolbar">
+            <button type="button" class="btn btn-sm" @onclick="EnterEditModeAsync">
+                <i class="ti ti-pencil me-1"></i>Modifier
+            </button>
             @if (_total > 0)
             {
                 <span class="glpi-fiche-pager-count">@_position/@_total</span>
@@ -57,6 +60,15 @@ else
             @switch (_activeTabKey)
             {
                 case "monitor":
+                    @if (_editMode)
+                    {
+                        <div class="d-flex justify-content-end gap-2 mb-3">
+                            <button type="button" class="btn btn-sm" disabled="@_editSaving" @onclick="CancelEdit">Annuler</button>
+                            <button type="button" class="btn btn-sm btn-primary" disabled="@_editSaving" @onclick="SaveEditAsync">
+                                <i class="ti ti-device-floppy me-1 @(_editSaving ? "glpi-spin" : "")"></i>Enregistrer
+                            </button>
+                        </div>
+                    }
                     <div class="glpi-fiche-form">
                         <div class="row">
                             <div class="col-md-6">
@@ -71,6 +83,25 @@ else
                                 <div class="glpi-fiche-field">
                                     <label>Numéro de série</label>
                                     <div class="glpi-fiche-value-box">@(_monitor.Serial ?? "—")</div>
+                                </div>
+                                <div class="glpi-fiche-field">
+                                    <label>Statut</label>
+                                    @if (_editMode)
+                                    {
+                                        <input class="form-control" list="monitorStatusOptions" @bind="_editStatus" @bind:event="oninput" />
+                                        <datalist id="monitorStatusOptions">
+                                            @foreach (string option in _statusOptions)
+                                            {
+                                                <option value="@option"></option>
+                                            }
+                                        </datalist>
+                                    }
+                                    else
+                                    {
+                                        <div class="glpi-fiche-value-box">
+                                            <StatusBadge Status="_monitor.StatusItem" />
+                                        </div>
+                                    }
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -133,7 +164,8 @@ else
                         <div class="glpi-fiche-block-title"><i class="ti ti-device-tv"></i>Écran</div>
                         <p class="mb-1"><strong>Désignation :</strong> @_monitor.Designation</p>
                         <p class="mb-1"><strong>Fabricant :</strong> @(_monitor.Manufacturer ?? "—")</p>
-                        <p class="mb-0"><strong>Numéro de série :</strong> @(_monitor.Serial ?? "—")</p>
+                        <p class="mb-1"><strong>Numéro de série :</strong> @(_monitor.Serial ?? "—")</p>
+                        <p class="mb-0"><strong>Statut :</strong> @(_monitor.StatusItem?.Name ?? "—")</p>
                     </div>
                     <div class="glpi-fiche-block">
                         <div class="glpi-fiche-block-title"><i class="ti ti-plug-connected"></i>Connexions</div>

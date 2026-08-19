@@ -30,4 +30,12 @@ public class DropdownItem
     public DropdownType Type { get; set; }
     public required string Name { get; set; }
     public string? Comment { get; set; }
+
+    /// <summary>
+    /// Couleur d'affichage du badge associé à cette valeur — un hex "#rrggbb" ou le littéral
+    /// "transparent" ; null si non définie (badge de secours neutre, voir StatusBadge.razor).
+    /// Seul DropdownType.Status l'exploite pour l'instant (voir DropdownList.razor), mais le champ
+    /// reste générique sur DropdownItem plutôt que sur un sous-type dédié.
+    /// </summary>
+    public string? Color { get; set; }
 }

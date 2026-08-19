@@ -55,7 +55,7 @@ else
             {
                 case "peripheral":
                     <EditForm Model="_peripheral" OnValidSubmit="SaveAsync">
-                        <PeripheralFormFields Peripheral="_peripheral" />
+                        <PeripheralFormFields Peripheral="_peripheral" StatusOptions="_statusOptions" />
 
                         <div class="d-flex justify-content-end gap-2 mt-3">
                             <button type="button" class="btn btn-outline-danger" @onclick="DeleteAsync">
@@ -149,7 +149,7 @@ else
                     <div class="glpi-fiche-block">
                         <div class="glpi-fiche-block-title"><i class="ti ti-mouse"></i>Périphérique</div>
                         <p class="mb-1"><strong>Nom :</strong> @_peripheral.Name</p>
-                        <p class="mb-1"><strong>Statut :</strong> @StatusLabel(_peripheral.Status)</p>
+                        <p class="mb-1"><strong>Statut :</strong> @(_peripheral.StatusItem?.Name ?? "—")</p>
                         <p class="mb-1"><strong>Type :</strong> @(_peripheral.Type ?? "—")</p>
                         <p class="mb-1"><strong>Fabricant :</strong> @(_peripheral.Manufacturer ?? "—")</p>
                         <p class="mb-1"><strong>Modèle :</strong> @(_peripheral.Model ?? "—")</p>

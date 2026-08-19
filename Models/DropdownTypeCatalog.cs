@@ -65,7 +65,7 @@ public static class DropdownTypeCatalog
         DropdownType.OperatingSystem => "Systèmes d'exploitation proposés à la saisie sur la fiche Ordinateur.",
         DropdownType.OperatingSystemVersion => "Versions de système d'exploitation proposées à la saisie sur la fiche Ordinateur.",
         DropdownType.Location => "Lieux (sites, bâtiments, salles) de l'organisation.",
-        DropdownType.Status => "Statuts pouvant être affectés aux éléments du parc.",
+        DropdownType.Status => "Statuts proposés à la saisie sur les fiches Ordinateur, Écran et Périphérique.",
         _ => string.Empty
     };
 

@@ -29,6 +29,13 @@ public partial class Detail : ComponentBase, IDisposable
     [Inject]
     private IComputerDeploymentAssignmentService? DeploymentAssignmentService { get; set; }
 
+    // Optionnel pour la même raison que DeploymentTasksProvider ci-dessus. Réutilisé ici tel quel
+    // (nom "Deployment" trompeur pour cet usage, mais la forme — projection Id/Nom des comptes
+    // utilisateurs — est générique) plutôt que de dupliquer une seconde abstraction identique,
+    // juste pour l'autocomplétion du champ "Utilisateur assigné" (EnterEditModeAsync).
+    [Inject]
+    private IDeploymentTargetDirectory? UserDirectory { get; set; }
+
     [Inject]
     private ComputerListStateService ListState { get; set; } = null!;
 
@@ -91,12 +98,18 @@ public partial class Detail : ComponentBase, IDisposable
     private string? _editModel;
     private string? _editOperatingSystem;
     private string? _editOsVersion;
+    private int? _editStatusId;
+    private int? _editLocationId;
+    private string? _editAssignedUser;
     private bool _editSaving;
     private List<string> _manufacturerOptions = [];
     private List<string> _computerTypeOptions = [];
     private List<string> _computerModelOptions = [];
     private List<string> _operatingSystemOptions = [];
     private List<string> _operatingSystemVersionOptions = [];
+    private List<DropdownItem> _statusOptions = [];
+    private List<DropdownItem> _locationOptions = [];
+    private List<string> _userOptions = [];
 
     private ComputerDeploymentTasksInfo? _deploymentTasksInfo;
     private List<DeploymentPackageOption> _availablePackages = [];
@@ -218,6 +231,8 @@ public partial class Detail : ComponentBase, IDisposable
             .Include(computer => computer.ImportHistories)
             .Include(computer => computer.HistoryEntries)
             .Include(computer => computer.Agent)
+            .Include(computer => computer.StatusItem)
+            .Include(computer => computer.LocationItem)
             .FirstOrDefaultAsync(computer => computer.Id == ComputerId);
 
     // Recharge la fiche depuis la base sans réinitialiser l'onglet actif ni la pagination des
@@ -274,21 +289,31 @@ public partial class Detail : ComponentBase, IDisposable
         _editModel = _computer.Model;
         _editOperatingSystem = _computer.OperatingSystem;
         _editOsVersion = _computer.OsVersion;
+        _editStatusId = _computer.StatusId;
+        _editLocationId = _computer.LocationId;
+        _editAssignedUser = _computer.AssignedUser;
 
         await using DbContext db = await DbFactory.CreateDbContextAsync();
         List<DropdownItem> items = await db.Set<DropdownItem>()
             .AsNoTracking()
             .Where(i => i.Type == DropdownType.Manufacturer || i.Type == DropdownType.ComputerType
                 || i.Type == DropdownType.ComputerModel || i.Type == DropdownType.OperatingSystem
-                || i.Type == DropdownType.OperatingSystemVersion)
+                || i.Type == DropdownType.OperatingSystemVersion || i.Type == DropdownType.Status
+                || i.Type == DropdownType.Location)
             .OrderBy(i => i.Name)
             .ToListAsync();
+
+        _userOptions = UserDirectory is null
+            ? []
+            : (await UserDirectory.GetUsersAsync()).Select(u => u.Name).OrderBy(n => n, StringComparer.OrdinalIgnoreCase).ToList();
 
         _manufacturerOptions = items.Where(i => i.Type == DropdownType.Manufacturer).Select(i => i.Name).ToList();
         _computerTypeOptions = items.Where(i => i.Type == DropdownType.ComputerType).Select(i => i.Name).ToList();
         _computerModelOptions = items.Where(i => i.Type == DropdownType.ComputerModel).Select(i => i.Name).ToList();
         _operatingSystemOptions = items.Where(i => i.Type == DropdownType.OperatingSystem).Select(i => i.Name).ToList();
         _operatingSystemVersionOptions = items.Where(i => i.Type == DropdownType.OperatingSystemVersion).Select(i => i.Name).ToList();
+        _statusOptions = items.Where(i => i.Type == DropdownType.Status).ToList();
+        _locationOptions = items.Where(i => i.Type == DropdownType.Location).ToList();
 
         _editMode = true;
     }
@@ -334,6 +359,11 @@ public partial class Detail : ComponentBase, IDisposable
                 }
             }
 
+            // Utilisateur assigné : autocomplétion sur les comptes existants (voir UserDirectory,
+            // Detail.razor.cs.EnterEditModeAsync), mais champ texte libre comme Manufacturer/Model
+            // ci-dessus — pas de FK, pour ne pas toucher au matching par nom normalisé de
+            // SelfServiceDeploymentService (module Déploiement, hors de portée ici).
+
             Computer? tracked = await db.Set<Computer>().FirstOrDefaultAsync(c => c.Id == ComputerId);
             if (tracked is not null)
             {
@@ -342,6 +372,9 @@ public partial class Detail : ComponentBase, IDisposable
                 tracked.Model = _editModel;
                 tracked.OperatingSystem = _editOperatingSystem;
                 tracked.OsVersion = _editOsVersion;
+                tracked.StatusId = _editStatusId;
+                tracked.LocationId = _editLocationId;
+                tracked.AssignedUser = _editAssignedUser;
             }
 
             await db.SaveChangesAsync();
@@ -823,8 +856,12 @@ public partial class Detail : ComponentBase, IDisposable
         ApplyHistoryPaging();
     }
 
+    // Priorité à l'Emplacement choisi manuellement (LocationItem, Intitulé) sur Site/Building/Room
+    // (renseignés par l'inventaire automatique) : voir Computer.LocationId.
     private static string? LocationLabel(Computer computer)
     {
+        if (computer.LocationItem is { } location) return location.Name;
+
         var parts = new[] { computer.Site, computer.Building, computer.Room }
             .Where(part => !string.IsNullOrWhiteSpace(part));
         var label = string.Join(" > ", parts);
@@ -999,24 +1036,6 @@ public partial class Detail : ComponentBase, IDisposable
             ? lastInventory.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
             : "Jamais";
     }
-
-    private static string StatusLabel(ComputerStatus status) => status switch
-    {
-        ComputerStatus.InStock => "En stock",
-        ComputerStatus.InProduction => "En production",
-        ComputerStatus.Broken => "En panne",
-        ComputerStatus.Retired => "Réformé",
-        _ => status.ToString()
-    };
-
-    private static string StatusCssClass(ComputerStatus status) => status switch
-    {
-        ComputerStatus.InStock => "glpi-status-instock",
-        ComputerStatus.InProduction => "glpi-status-inproduction",
-        ComputerStatus.Broken => "glpi-status-broken",
-        ComputerStatus.Retired => "glpi-status-retired",
-        _ => "bg-secondary"
-    };
 
     private static IEnumerable<IGrouping<ComponentType, ComputerComponent>> ComponentGroups(Computer computer)
     {

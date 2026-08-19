@@ -63,6 +63,7 @@ public class GlpiMySqlImportService(DbContext db, IOptions<GlpiImportOptions> op
         }
 
         Dictionary<int, int> glpiComputerIdToLocalId = [];
+        Dictionary<string, int> statusCache = [];
 
         await foreach (GlpiComputerRow row in ReadComputersAsync(connection, cancellationToken))
         {
@@ -95,9 +96,10 @@ public class GlpiMySqlImportService(DbContext db, IOptions<GlpiImportOptions> op
                 ? locationName
                 : computer.Site;
 
-            computer.Status = row.StatesId.HasValue && states.TryGetValue(row.StatesId.Value, out string? stateName)
-                ? MapStatus(stateName)
-                : computer.Status;
+            if (row.StatesId.HasValue && states.TryGetValue(row.StatesId.Value, out string? stateName) && !string.IsNullOrWhiteSpace(stateName))
+            {
+                computer.StatusId = await ResolveStatusIdAsync(stateName, statusCache, cancellationToken);
+            }
 
             computer.LastInventoryAt = row.DateMod ?? computer.LastInventoryAt;
 
@@ -453,37 +455,31 @@ public class GlpiMySqlImportService(DbContext db, IOptions<GlpiImportOptions> op
     }
 
     /// <summary>
-    /// Correspondance heuristique nom d'état GLPI -&gt; <see cref="ComputerStatus"/>.
-    /// Les noms d'états sont libres dans GLPI (dictionnaire éditable par l'utilisateur) :
-    /// cette correspondance est une approximation par mots-clés, pas une donnée fiable —
-    /// à ajuster selon la nomenclature réelle de l'installation source.
+    /// Résout (ou crée à la volée) l'Id du DropdownItem de type Status (voir Models/DropdownItem.cs)
+    /// portant le nom d'état GLPI source — préserve la nomenclature exacte de l'installation
+    /// source plutôt que de la forcer dans un jeu de statuts fixe. <paramref name="cache"/> évite
+    /// une requête répétée pour un même nom d'état au sein d'un même import (states_id est déjà
+    /// dédupliqué par computer, mais partagé par de nombreux ordinateurs).
     /// </summary>
-    private static ComputerStatus MapStatus(string? stateName)
+    private async Task<int> ResolveStatusIdAsync(string stateName, Dictionary<string, int> cache, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(stateName))
+        if (cache.TryGetValue(stateName, out int cachedId))
         {
-            return ComputerStatus.InProduction;
+            return cachedId;
         }
 
-        string normalized = stateName.Trim().ToLowerInvariant();
+        DropdownItem? item = await db.Set<DropdownItem>()
+            .FirstOrDefaultAsync(i => i.Type == DropdownType.Status && i.Name == stateName, cancellationToken);
 
-        if (normalized.Contains("stock"))
+        if (item is null)
         {
-            return ComputerStatus.InStock;
+            item = new DropdownItem { Type = DropdownType.Status, Name = stateName };
+            db.Set<DropdownItem>().Add(item);
+            await db.SaveChangesAsync(cancellationToken);
         }
 
-        if (normalized.Contains("panne") || normalized.Contains("broken") || normalized.Contains("hs"))
-        {
-            return ComputerStatus.Broken;
-        }
-
-        if (normalized.Contains("retir") || normalized.Contains("réform") || normalized.Contains("reform")
-            || normalized.Contains("hors service") || normalized.Contains("retired"))
-        {
-            return ComputerStatus.Retired;
-        }
-
-        return ComputerStatus.InProduction;
+        cache[stateName] = item.Id;
+        return item.Id;
     }
 
     private sealed record GlpiComputerRow(

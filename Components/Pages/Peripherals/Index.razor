@@ -61,18 +61,7 @@
                             <div class="col">
                                 @if (criterion.Operator != "empty")
                                 {
-                                    @if (field?.Type == SearchFieldType.Select)
-                                    {
-                                        <select class="form-select form-select-sm" value="@criterion.Value"
-                                                @onchange="@((ChangeEventArgs e) => criterion.Value = (string)e.Value!)">
-                                            <option value="">—</option>
-                                            @foreach ((string optValue, string optLabel) in field.Options ?? [])
-                                            {
-                                                <option value="@optValue">@optLabel</option>
-                                            }
-                                        </select>
-                                    }
-                                    else if (field?.Type == SearchFieldType.Date)
+                                    @if (field?.Type == SearchFieldType.Date)
                                     {
                                         <input type="date" class="form-control form-control-sm" value="@criterion.Value"
                                                @onchange="@((ChangeEventArgs e) => criterion.Value = (string)(e.Value ?? string.Empty))" />
@@ -227,7 +216,7 @@
                                 </a>
                             </td>
                             <td>
-                                <span class="badge @StatusCssClass(peripheral.Status)">@StatusLabel(peripheral.Status)</span>
+                                <StatusBadge Status="peripheral.StatusItem" />
                             </td>
                             <td>@(peripheral.Manufacturer ?? "—")</td>
                             <td>@(LocationLabel(peripheral) ?? "—")</td>
@@ -289,7 +278,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
             </div>
             <div class="modal-body">
-                <PeripheralFormFields Peripheral="_newPeripheral" OnChanged="StateHasChanged" />
+                <PeripheralFormFields Peripheral="_newPeripheral" StatusOptions="_statusOptions" OnChanged="StateHasChanged" />
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary" disabled="@string.IsNullOrWhiteSpace(_newPeripheral.Name)" @onclick="CreatePeripheralAsync">

@@ -37,12 +37,13 @@ public partial class Index : ComponentBase
         public bool Descending { get; set; }
     }
 
-    private sealed record MonitorRow(int Id, int ComputerId, string ComputerName, string Designation, string? Manufacturer, string? Serial);
+    private sealed record MonitorRow(int Id, int ComputerId, string ComputerName, string Designation, string? Manufacturer, string? Serial, string? Status);
 
     private static readonly SearchFieldDefinition[] SearchFields =
     [
         new("all", "Tous les champs", SearchFieldType.Text),
         new("designation", "Désignation", SearchFieldType.Text),
+        new("status", "Statut", SearchFieldType.Text),
         new("manufacturer", "Fabricant", SearchFieldType.Text),
         new("serial", "Numéro de série", SearchFieldType.Text),
         new("computername", "Poste associé", SearchFieldType.Text)
@@ -139,7 +140,8 @@ public partial class Index : ComponentBase
                 computer => computer.Id,
                 (peripheral, computer) => new { peripheral, computer })
             .OrderBy(joined => joined.peripheral.Designation)
-            .Select(joined => new MonitorRow(joined.peripheral.Id, joined.computer.Id, joined.computer.Name, joined.peripheral.Designation, joined.peripheral.Manufacturer, joined.peripheral.Serial))
+            .Select(joined => new MonitorRow(joined.peripheral.Id, joined.computer.Id, joined.computer.Name, joined.peripheral.Designation, joined.peripheral.Manufacturer, joined.peripheral.Serial,
+                joined.peripheral.StatusItem != null ? joined.peripheral.StatusItem.Name : null))
             .ToListAsync();
 
         _currentPage = 1;
@@ -559,6 +561,7 @@ public partial class Index : ComponentBase
     private static IComparable GetSortKey(MonitorRow monitor, string key) => key switch
     {
         "designation" => monitor.Designation,
+        "status" => monitor.Status ?? string.Empty,
         "manufacturer" => monitor.Manufacturer ?? string.Empty,
         "serial" => monitor.Serial ?? string.Empty,
         "computername" => monitor.ComputerName,
@@ -609,6 +612,7 @@ public partial class Index : ComponentBase
     private static string? GetFieldText(MonitorRow monitor, string key) => key switch
     {
         "designation" => monitor.Designation,
+        "status" => monitor.Status,
         "manufacturer" => monitor.Manufacturer,
         "serial" => monitor.Serial,
         "computername" => monitor.ComputerName,

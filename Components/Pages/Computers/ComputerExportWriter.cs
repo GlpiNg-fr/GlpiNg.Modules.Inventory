@@ -199,7 +199,7 @@ internal static class ComputerExportWriter
     private static string[] Row(Computer computer) =>
     [
         computer.Name,
-        StatusLabel(computer.Status),
+        computer.StatusItem?.Name ?? "—",
         ManufacturerAndModel(computer),
         computer.OperatingSystem ?? "—",
         LastInventoryLabel(computer)
@@ -222,12 +222,4 @@ internal static class ComputerExportWriter
             : "Jamais";
     }
 
-    private static string StatusLabel(ComputerStatus status) => status switch
-    {
-        ComputerStatus.InStock => "En stock",
-        ComputerStatus.InProduction => "En production",
-        ComputerStatus.Broken => "En panne",
-        ComputerStatus.Retired => "Réformé",
-        _ => status.ToString()
-    };
 }

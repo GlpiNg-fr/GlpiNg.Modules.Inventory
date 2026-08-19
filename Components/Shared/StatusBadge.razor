@@ -1,0 +1,40 @@
+@* Badge d'affichage d'une valeur de l'Intitulé Status (voir Models/DropdownItem.cs, DropdownType.Status),
+   avec la couleur définie depuis /config/dropdowns/status quand elle existe — voir DropdownList.razor
+   pour le sélecteur de couleur. Réutilisé partout où un statut est affiché (Computers/Peripherals/
+   Monitors, Index et Detail) pour éviter de dupliquer cette logique de style à chaque endroit. *@
+
+@if (Status is null)
+{
+    @:—
+}
+else
+{
+    <span class="badge" style="@BadgeStyle">@Status.Name</span>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public DropdownItem? Status { get; set; }
+
+    private string BadgeStyle => Status?.Color switch
+    {
+        null => "background-color: var(--tblr-blue-lt, #ecf5fd); color: var(--tblr-blue, #206bc4);",
+        "transparent" => "background-color: transparent; border: 1px solid currentColor;",
+        { } hex => $"background-color: {hex}; color: {ContrastTextColor(hex)}; border: 1px solid {hex};"
+    };
+
+    /// <summary>Blanc ou noir selon la luminance relative de la couleur de fond, pour rester lisible quelle que soit la couleur choisie dans le sélecteur.</summary>
+    private static string ContrastTextColor(string hex)
+    {
+        if (hex.Length != 7 || hex[0] != '#'
+            || !int.TryParse(hex.AsSpan(1, 2), System.Globalization.NumberStyles.HexNumber, null, out int r)
+            || !int.TryParse(hex.AsSpan(3, 2), System.Globalization.NumberStyles.HexNumber, null, out int g)
+            || !int.TryParse(hex.AsSpan(5, 2), System.Globalization.NumberStyles.HexNumber, null, out int b))
+        {
+            return "#000";
+        }
+
+        double luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        return luminance > 0.6 ? "#000" : "#fff";
+    }
+}

@@ -24,6 +24,13 @@ public partial class Detail : ComponentBase
     private int? _nextId;
     private int _loadedMonitorId;
 
+    // Édition du statut (voir Models/DropdownItem.cs, DropdownType.Status) : seul champ éditable
+    // manuellement de cette fiche, le reste vient de l'inventaire automatique de l'agent.
+    private bool _editMode;
+    private string? _editStatus;
+    private bool _editSaving;
+    private List<string> _statusOptions = [];
+
     // OnParametersSetAsync (pas OnInitializedAsync) : en navigation via les boutons
     // précédent/suivant, le routeur Blazor réutilise la même instance de composant et ne fait
     // que changer MonitorId — OnInitializedAsync ne se redéclencherait donc jamais.
@@ -36,11 +43,13 @@ public partial class Detail : ComponentBase
 
         _loadedMonitorId = MonitorId;
         _activeTabKey = "monitor";
+        _editMode = false;
 
         await using DbContext db = await DbFactory.CreateDbContextAsync();
 
         _monitor = await db.Set<ComputerPeripheral>()
             .AsNoTracking()
+            .Include(peripheral => peripheral.StatusItem)
             .FirstOrDefaultAsync(peripheral => peripheral.Id == MonitorId && peripheral.Kind == PeripheralKind.Monitor);
 
         if (_monitor is null)
@@ -101,5 +110,75 @@ public partial class Detail : ComponentBase
     private void SetTab(string key)
     {
         _activeTabKey = key;
+    }
+
+    private async Task EnterEditModeAsync()
+    {
+        if (_monitor is null) return;
+
+        _editStatus = _monitor.StatusItem?.Name;
+
+        await using DbContext db = await DbFactory.CreateDbContextAsync();
+        _statusOptions = await db.Set<DropdownItem>()
+            .AsNoTracking()
+            .Where(i => i.Type == DropdownType.Status)
+            .OrderBy(i => i.Name)
+            .Select(i => i.Name)
+            .ToListAsync();
+
+        _editMode = true;
+    }
+
+    private void CancelEdit()
+    {
+        _editMode = false;
+    }
+
+    private async Task SaveEditAsync()
+    {
+        if (_monitor is null || _editSaving) return;
+
+        _editSaving = true;
+        StateHasChanged();
+
+        try
+        {
+            await using DbContext db = await DbFactory.CreateDbContextAsync();
+
+            int? statusId = null;
+            if (!string.IsNullOrWhiteSpace(_editStatus))
+            {
+                DropdownItem? statusItem = await db.Set<DropdownItem>()
+                    .FirstOrDefaultAsync(i => i.Type == DropdownType.Status && i.Name.ToLower() == _editStatus.ToLower());
+                if (statusItem is null)
+                {
+                    statusItem = new DropdownItem { Type = DropdownType.Status, Name = _editStatus };
+                    db.Set<DropdownItem>().Add(statusItem);
+                    await db.SaveChangesAsync();
+                }
+                statusId = statusItem.Id;
+            }
+
+            ComputerPeripheral? tracked = await db.Set<ComputerPeripheral>().FirstOrDefaultAsync(p => p.Id == MonitorId);
+            if (tracked is not null)
+            {
+                tracked.StatusId = statusId;
+            }
+
+            await db.SaveChangesAsync();
+
+            _editMode = false;
+
+            await using DbContext reloadDb = await DbFactory.CreateDbContextAsync();
+            _monitor = await reloadDb.Set<ComputerPeripheral>()
+                .AsNoTracking()
+                .Include(peripheral => peripheral.StatusItem)
+                .FirstOrDefaultAsync(peripheral => peripheral.Id == MonitorId);
+        }
+        finally
+        {
+            _editSaving = false;
+            StateHasChanged();
+        }
     }
 }

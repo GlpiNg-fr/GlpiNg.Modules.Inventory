@@ -170,18 +170,7 @@
                             <div class="col">
                                 @if (criterion.Operator != "empty")
                                 {
-                                    @if (field?.Type == SearchFieldType.Select)
-                                    {
-                                        <select class="form-select form-select-sm" value="@criterion.Value"
-                                                @onchange="@((ChangeEventArgs e) => criterion.Value = (string)e.Value!)">
-                                            <option value="">—</option>
-                                            @foreach ((string optValue, string optLabel) in field.Options ?? [])
-                                            {
-                                                <option value="@optValue">@optLabel</option>
-                                            }
-                                        </select>
-                                    }
-                                    else if (field?.Type == SearchFieldType.Date)
+                                    @if (field?.Type == SearchFieldType.Date)
                                     {
                                         <input type="date" class="form-control form-control-sm" value="@criterion.Value"
                                                @onchange="@((ChangeEventArgs e) => criterion.Value = (string)(e.Value ?? string.Empty))" />
@@ -448,7 +437,7 @@
                                 <td>
                                     @if (columnKey == "status")
                                     {
-                                        <span class="badge @StatusCssClass(computer.Status)">@StatusLabel(computer.Status)</span>
+                                        <StatusBadge Status="computer.StatusItem" />
                                     }
                                     else
                                     {

@@ -12,9 +12,9 @@ public class Peripheral
     public int Id { get; set; }
     public required string Name { get; set; }
 
-    /// <summary>Réutilise ComputerStatus : c'est le même concept générique d'état d'actif
-    /// ("État" dans GLPI, partagé entre types d'actifs) que pour un ordinateur.</summary>
-    public ComputerStatus Status { get; set; } = ComputerStatus.InStock;
+    /// <summary>Statut de l'élément (voir Models/DropdownItem.cs, DropdownType.Status) — même liste d'Intitulés que Computer.StatusId et ComputerPeripheral.StatusId ("État" dans GLPI, partagé entre types d'actifs).</summary>
+    public int? StatusId { get; set; }
+    public DropdownItem? StatusItem { get; set; }
 
     /// <summary>Type de périphérique (ex: "Souris", "Imprimante", "Casque"), texte libre.</summary>
     public string? Type { get; set; }

@@ -1,13 +1,5 @@
 namespace GlpiNg.Modules.Inventory.Models;
 
-public enum ComputerStatus
-{
-    InStock,
-    InProduction,
-    Broken,
-    Retired
-}
-
 public class Computer
 {
     public int Id { get; set; }
@@ -39,7 +31,9 @@ public class Computer
     /// <summary>content.operatingsystem.kernel_version.</summary>
     public string? OsKernelVersion { get; set; }
 
-    public ComputerStatus Status { get; set; } = ComputerStatus.InStock;
+    /// <summary>Statut de l'élément (voir Models/DropdownItem.cs, DropdownType.Status) — optionnel, résolu depuis les Intitulés plutôt qu'une énumération fixe.</summary>
+    public int? StatusId { get; set; }
+    public DropdownItem? StatusItem { get; set; }
 
     /// <summary>Poste mis à la corbeille (suppression logique) : masqué de la liste par défaut, visible via le filtre "Corbeille".</summary>
     public bool IsDeleted { get; set; }
@@ -47,6 +41,12 @@ public class Computer
     public string? Site { get; set; }
     public string? Building { get; set; }
     public string? Room { get; set; }
+
+    /// <summary>Emplacement choisi manuellement depuis les Intitulés (voir Models/DropdownItem.cs,
+    /// DropdownType.Location) — optionnel, prioritaire sur Site/Building/Room (renseignés par
+    /// l'inventaire automatique) pour l'affichage quand renseigné, voir Detail.razor.cs.LocationLabel.</summary>
+    public int? LocationId { get; set; }
+    public DropdownItem? LocationItem { get; set; }
 
     public string? AssignedUser { get; set; }
 
@@ -101,6 +101,10 @@ public class ComputerPeripheral
     public required string Designation { get; set; }
     public string? Manufacturer { get; set; }
     public string? Serial { get; set; }
+
+    /// <summary>Statut de l'élément (voir Models/DropdownItem.cs, DropdownType.Status), éditable manuellement — contrairement aux autres champs de cette entité, qui viennent tous de l'inventaire automatique.</summary>
+    public int? StatusId { get; set; }
+    public DropdownItem? StatusItem { get; set; }
 }
 
 /// <summary>Volume/partition de disque remonté par content.drives.</summary>
