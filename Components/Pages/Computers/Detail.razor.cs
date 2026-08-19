@@ -868,6 +868,25 @@ public partial class Detail : ComponentBase, IDisposable
         return label.Length > 0 ? label : null;
     }
 
+    // Chemin complet ("Site > Bâtiment > Salle") d'un Lieu dans le select d'édition, en remontant
+    // ParentId au sein de la liste déjà chargée (all) — jamais de requête supplémentaire, borné à
+    // 20 niveaux comme garde-fou contre un cycle accidentel (voir aussi DropdownList.razor.cs.Depth).
+    private static string LocationOptionLabel(DropdownItem item, List<DropdownItem> all)
+    {
+        Dictionary<int, DropdownItem> byId = all.ToDictionary(i => i.Id);
+        List<string> parts = [item.Name];
+        int? parentId = item.ParentId;
+        int guard = 0;
+
+        while (parentId is int pid && byId.TryGetValue(pid, out DropdownItem? parent) && guard++ < 20)
+        {
+            parts.Insert(0, parent.Name);
+            parentId = parent.ParentId;
+        }
+
+        return string.Join(" > ", parts);
+    }
+
     /// <summary>Port par défaut de l'interface web locale de GLPI-Agent (httpd-trust).</summary>
     private const int AgentWebPort = 62354;
 

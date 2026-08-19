@@ -97,7 +97,7 @@ else
                                             <option value="">—</option>
                                             @foreach (DropdownItem location in _locationOptions)
                                             {
-                                                <option value="@location.Id">@location.Name</option>
+                                                <option value="@location.Id">@LocationOptionLabel(location, _locationOptions)</option>
                                             }
                                         </select>
                                     }

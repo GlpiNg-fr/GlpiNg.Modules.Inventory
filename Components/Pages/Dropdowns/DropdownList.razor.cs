@@ -26,6 +26,7 @@ public partial class DropdownList : ComponentBase
     private string _editName = string.Empty;
     private string? _editComment;
     private string? _editColor;
+    private int? _editParentId;
 
     /// <summary>Couleur par défaut proposée dans le sélecteur quand aucune couleur n'est encore définie (gris neutre Tabler, cohérent avec le badge de secours affiché tant que Color est null).</summary>
     private const string DefaultColorHex = "#6c757d";
@@ -37,6 +38,86 @@ public partial class DropdownList : ComponentBase
         color is { Length: > 0 } c && c != "transparent" ? c : DefaultColorHex;
 
     private static bool IsTransparent(string? color) => color == "transparent";
+
+    /// <summary>Profondeur d'un Lieu dans l'arborescence (0 = racine), calculée en remontant ParentId au sein de _items — jamais persistée. Bornée à 20 niveaux comme garde-fou contre un cycle accidentel.</summary>
+    private int Depth(DropdownItem item)
+    {
+        Dictionary<int, DropdownItem> byId = _items.ToDictionary(i => i.Id);
+        int depth = 0;
+        int? parentId = item.ParentId;
+        while (parentId is int pid && byId.TryGetValue(pid, out DropdownItem? parent) && depth < 20)
+        {
+            depth++;
+            parentId = parent.ParentId;
+        }
+        return depth;
+    }
+
+    /// <summary>
+    /// Réordonne _items (déjà trié par nom) en ordre d'arborescence — chaque parent suivi
+    /// immédiatement de ses enfants — pour que l'indentation (Depth ci-dessus) forme une vraie
+    /// arborescence visuelle plutôt qu'une liste plate triée alphabétiquement.
+    /// </summary>
+    private static List<DropdownItem> SortHierarchically(List<DropdownItem> items)
+    {
+        // 0 comme clé "racine" : sans danger, les Id générés par la base démarrent à 1.
+        Dictionary<int, List<DropdownItem>> byParent = items
+            .GroupBy(i => i.ParentId ?? 0)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        List<DropdownItem> result = [];
+        void Walk(int parentId, int depthGuard)
+        {
+            if (depthGuard > 20 || !byParent.TryGetValue(parentId, out List<DropdownItem>? children)) return;
+            foreach (DropdownItem child in children)
+            {
+                result.Add(child);
+                Walk(child.Id, depthGuard + 1);
+            }
+        }
+        Walk(0, 0);
+
+        // Garde-fou : un ParentId invalide (cycle, ou pointant vers un Id absent) laisserait des
+        // éléments hors de l'arbre parcouru — on les rattache en fin de liste plutôt que de les perdre.
+        if (result.Count != items.Count)
+        {
+            result.AddRange(items.Except(result));
+        }
+
+        return result;
+    }
+
+    /// <summary>Libellé indenté d'un Lieu candidat comme parent — exclut l'élément lui-même (pas de cycle direct) dans le select "Lieu parent".</summary>
+    private static string ParentOptionLabel(DropdownItem item, int depth) =>
+        depth == 0 ? item.Name : new string(' ', depth * 4) + "— " + item.Name;
+
+    /// <summary>Descendants d'un Lieu (parcours en largeur sur _items), pour exclure du select "Lieu parent" les candidats qui créeraient un cycle — en plus de l'élément lui-même, exclu séparément.</summary>
+    private HashSet<int> DescendantIds(int rootId)
+    {
+        HashSet<int> result = [];
+        Queue<int> queue = new();
+        queue.Enqueue(rootId);
+
+        while (queue.Count > 0)
+        {
+            int current = queue.Dequeue();
+            foreach (DropdownItem child in _items.Where(i => i.ParentId == current))
+            {
+                if (result.Add(child.Id)) queue.Enqueue(child.Id);
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>Candidats valides comme parent pour l'élément en cours d'édition (ou null en création) : tous les Lieux sauf lui-même et ses descendants (cycle).</summary>
+    private IEnumerable<DropdownItem> ParentCandidates(int? excludingId)
+    {
+        HashSet<int> excluded = excludingId is int id ? DescendantIds(id) : [];
+        if (excludingId is int selfId) excluded.Add(selfId);
+
+        return _items.Where(i => !excluded.Contains(i.Id));
+    }
 
     protected override async Task OnParametersSetAsync()
     {
@@ -64,11 +145,14 @@ public partial class DropdownList : ComponentBase
     private async Task LoadAsync()
     {
         await using DbContext db = await DbFactory.CreateDbContextAsync();
-        _items = await db.Set<DropdownItem>()
+        List<DropdownItem> loaded = await db.Set<DropdownItem>()
             .AsNoTracking()
+            .Include(i => i.Parent)
             .Where(i => i.Type == _type)
             .OrderBy(i => i.Name)
             .ToListAsync();
+
+        _items = _type == DropdownType.Location ? SortHierarchically(loaded) : loaded;
         _selectedIds.Clear();
     }
 
@@ -120,6 +204,7 @@ public partial class DropdownList : ComponentBase
         _editName = item.Name;
         _editComment = item.Comment;
         _editColor = item.Color;
+        _editParentId = item.ParentId;
     }
 
     private void CancelEdit()
@@ -138,6 +223,7 @@ public partial class DropdownList : ComponentBase
         tracked.Name = _editName;
         tracked.Comment = _editComment;
         tracked.Color = _editColor;
+        tracked.ParentId = _editParentId;
         await db.SaveChangesAsync();
 
         _editingId = null;

@@ -38,4 +38,12 @@ public class DropdownItem
     /// reste générique sur DropdownItem plutôt que sur un sous-type dédié.
     /// </summary>
     public string? Color { get; set; }
+
+    /// <summary>
+    /// Lieu parent (arborescence Site &gt; Bâtiment &gt; Salle, comme dans GLPI) — seul
+    /// DropdownType.Location l'exploite pour l'instant (voir DropdownList.razor), même principe
+    /// que Color ci-dessus : champ générique sur DropdownItem plutôt qu'un sous-type dédié.
+    /// </summary>
+    public int? ParentId { get; set; }
+    public DropdownItem? Parent { get; set; }
 }

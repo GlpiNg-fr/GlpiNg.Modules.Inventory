@@ -64,7 +64,7 @@ public static class DropdownTypeCatalog
         DropdownType.ComputerModel => "Modèles proposés à la saisie sur la fiche Ordinateur (champ Modèle).",
         DropdownType.OperatingSystem => "Systèmes d'exploitation proposés à la saisie sur la fiche Ordinateur.",
         DropdownType.OperatingSystemVersion => "Versions de système d'exploitation proposées à la saisie sur la fiche Ordinateur.",
-        DropdownType.Location => "Lieux (sites, bâtiments, salles) de l'organisation.",
+        DropdownType.Location => "Lieux (sites, bâtiments, salles) de l'organisation, organisables en arborescence via un lieu parent.",
         DropdownType.Status => "Statuts proposés à la saisie sur les fiches Ordinateur, Écran et Périphérique.",
         _ => string.Empty
     };
