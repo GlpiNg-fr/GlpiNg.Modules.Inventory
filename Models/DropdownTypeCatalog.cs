@@ -1,13 +1,25 @@
 namespace GlpiNg.Modules.Inventory.Models;
 
 /// <summary>
+/// Regroupement d'un DropdownType : Intitulés (front/dropdown.php, valeurs de référence
+/// proposées à la saisie sur les fiches) ou Composants (front/devices.php, catalogue de modèles
+/// de matériel). Détermine quelle route/menu (/config/dropdowns vs /config/components) affiche
+/// la catégorie — voir DropdownList.razor.
+/// </summary>
+public enum DropdownGroup
+{
+    Labels,
+    Components
+}
+
+/// <summary>
 /// Libellés, slugs d'URL et icônes de DropdownType, centralisés pour rester cohérents entre le
-/// menu, le sous-menu d'onglets et les pages d'Intitulés (Components/Pages/Dropdowns) — même
-/// principe que DictionaryRuleTypeCatalog pour DictionaryRuleType.
+/// menu, le sous-menu d'onglets et les pages d'Intitulés/Composants (Components/Pages/Dropdowns)
+/// — même principe que DictionaryRuleTypeCatalog pour DictionaryRuleType.
 /// </summary>
 public static class DropdownTypeCatalog
 {
-    public static readonly IReadOnlyList<DropdownType> All =
+    public static readonly IReadOnlyList<DropdownType> Labels =
     [
         DropdownType.Manufacturer,
         DropdownType.ComputerType,
@@ -18,6 +30,48 @@ public static class DropdownTypeCatalog
         DropdownType.Status
     ];
 
+    /// <summary>Catégories de Composants (front/devices.php GLPI), dans le même ordre que le menu GLPI d'origine.</summary>
+    public static readonly IReadOnlyList<DropdownType> Components =
+    [
+        DropdownType.Processor,
+        DropdownType.Memory,
+        DropdownType.HardDrive,
+        DropdownType.NetworkCard,
+        DropdownType.GraphicCard,
+        DropdownType.SoundCard,
+        DropdownType.Motherboard,
+        DropdownType.PowerSupply,
+        DropdownType.Battery,
+        DropdownType.Drive,
+        DropdownType.PciDevice,
+        DropdownType.Camera,
+        DropdownType.Case,
+        DropdownType.Controller,
+        DropdownType.GenericDevice,
+        DropdownType.Firmware,
+        DropdownType.Sensor,
+        DropdownType.SimCard
+    ];
+
+    /// <summary>Toutes les catégories (Intitulés + Composants) — utilisé uniquement par TryParseSlug, qui doit résoudre un slug quel que soit son groupe.</summary>
+    private static readonly IReadOnlyList<DropdownType> All = [.. Labels, .. Components];
+
+    public static DropdownGroup Group(DropdownType type) =>
+        Labels.Contains(type) ? DropdownGroup.Labels : DropdownGroup.Components;
+
+    public static string GroupLabel(DropdownGroup group) => group switch
+    {
+        DropdownGroup.Labels => "Intitulés",
+        DropdownGroup.Components => "Composants",
+        _ => group.ToString()
+    };
+
+    public static string GroupBaseRoute(DropdownGroup group) => group switch
+    {
+        DropdownGroup.Components => "/config/components",
+        _ => "/config/dropdowns"
+    };
+
     public static string Slug(DropdownType type) => type switch
     {
         DropdownType.Manufacturer => "manufacturer",
@@ -27,6 +81,24 @@ public static class DropdownTypeCatalog
         DropdownType.OperatingSystemVersion => "operating-system-version",
         DropdownType.Location => "location",
         DropdownType.Status => "status",
+        DropdownType.Processor => "processor",
+        DropdownType.Memory => "memory",
+        DropdownType.HardDrive => "hard-drive",
+        DropdownType.NetworkCard => "network-card",
+        DropdownType.GraphicCard => "graphic-card",
+        DropdownType.SoundCard => "sound-card",
+        DropdownType.Drive => "drive",
+        DropdownType.PciDevice => "pci-device",
+        DropdownType.Camera => "camera",
+        DropdownType.PowerSupply => "power-supply",
+        DropdownType.Battery => "battery",
+        DropdownType.Case => "case",
+        DropdownType.Motherboard => "motherboard",
+        DropdownType.GenericDevice => "generic-device",
+        DropdownType.Controller => "controller",
+        DropdownType.Firmware => "firmware",
+        DropdownType.Sensor => "sensor",
+        DropdownType.SimCard => "sim-card",
         _ => type.ToString()
     };
 
@@ -54,6 +126,24 @@ public static class DropdownTypeCatalog
         DropdownType.OperatingSystemVersion => "Versions de système d'exploitation",
         DropdownType.Location => "Lieux",
         DropdownType.Status => "Statuts des éléments",
+        DropdownType.Processor => "Processeurs",
+        DropdownType.Memory => "Mémoires",
+        DropdownType.HardDrive => "Disques durs",
+        DropdownType.NetworkCard => "Cartes réseau",
+        DropdownType.GraphicCard => "Cartes graphiques",
+        DropdownType.SoundCard => "Cartes son",
+        DropdownType.Drive => "Lecteurs",
+        DropdownType.PciDevice => "Périphériques PCI",
+        DropdownType.Camera => "Caméras",
+        DropdownType.PowerSupply => "Alimentations",
+        DropdownType.Battery => "Batteries",
+        DropdownType.Case => "Boîtiers",
+        DropdownType.Motherboard => "Cartes mères",
+        DropdownType.GenericDevice => "Composants génériques",
+        DropdownType.Controller => "Contrôleurs",
+        DropdownType.Firmware => "Firmware",
+        DropdownType.Sensor => "Capteurs",
+        DropdownType.SimCard => "Cartes SIM",
         _ => type.ToString()
     };
 
@@ -66,6 +156,24 @@ public static class DropdownTypeCatalog
         DropdownType.OperatingSystemVersion => "Versions de système d'exploitation proposées à la saisie sur la fiche Ordinateur.",
         DropdownType.Location => "Lieux (sites, bâtiments, salles) de l'organisation, organisables en arborescence via un lieu parent.",
         DropdownType.Status => "Statuts proposés à la saisie sur les fiches Ordinateur, Écran et Périphérique.",
+        DropdownType.Processor => "Catalogue des modèles de processeurs connus (composants matériel).",
+        DropdownType.Memory => "Catalogue des modèles de barrettes mémoire connus (composants matériel).",
+        DropdownType.HardDrive => "Catalogue des modèles de disques durs connus (composants matériel).",
+        DropdownType.NetworkCard => "Catalogue des modèles de cartes réseau connus (composants matériel).",
+        DropdownType.GraphicCard => "Catalogue des modèles de cartes graphiques connus (composants matériel).",
+        DropdownType.SoundCard => "Catalogue des modèles de cartes son connus (composants matériel).",
+        DropdownType.Drive => "Catalogue des modèles de lecteurs (CD/DVD, bande, ...) connus (composants matériel).",
+        DropdownType.PciDevice => "Catalogue des modèles de périphériques PCI connus (composants matériel).",
+        DropdownType.Camera => "Catalogue des modèles de caméras connus (composants matériel).",
+        DropdownType.PowerSupply => "Catalogue des modèles d'alimentations connus (composants matériel).",
+        DropdownType.Battery => "Catalogue des modèles de batteries connus (composants matériel).",
+        DropdownType.Case => "Catalogue des modèles de boîtiers connus (composants matériel).",
+        DropdownType.Motherboard => "Catalogue des modèles de cartes mères connus (composants matériel).",
+        DropdownType.GenericDevice => "Catalogue des composants génériques ne rentrant dans aucune autre catégorie.",
+        DropdownType.Controller => "Catalogue des modèles de contrôleurs (RAID, USB, ...) connus (composants matériel).",
+        DropdownType.Firmware => "Catalogue des firmwares (BIOS, UEFI, ...) connus (composants matériel).",
+        DropdownType.Sensor => "Catalogue des modèles de capteurs connus (composants matériel).",
+        DropdownType.SimCard => "Catalogue des modèles de cartes SIM connus (composants matériel).",
         _ => string.Empty
     };
 
@@ -78,6 +186,26 @@ public static class DropdownTypeCatalog
         DropdownType.OperatingSystemVersion => "ti-versions",
         DropdownType.Location => "ti-map-pin",
         DropdownType.Status => "ti-flag",
+        // Icônes alignées sur celles déjà utilisées pour ComponentType dans Computers/Detail.razor.cs
+        // (Cpu/Ram/Disk/NetworkCard/Gpu/Motherboard) pour rester cohérent visuellement.
+        DropdownType.Processor => "ti-cpu",
+        DropdownType.Memory => "ti-dimensions",
+        DropdownType.HardDrive => "ti-device-floppy",
+        DropdownType.NetworkCard => "ti-network",
+        DropdownType.GraphicCard => "ti-device-gamepad",
+        DropdownType.SoundCard => "ti-volume",
+        DropdownType.Drive => "ti-disc",
+        DropdownType.PciDevice => "ti-plug-connected",
+        DropdownType.Camera => "ti-camera",
+        DropdownType.PowerSupply => "ti-plug",
+        DropdownType.Battery => "ti-battery",
+        DropdownType.Case => "ti-box",
+        DropdownType.Motherboard => "ti-circuit-board",
+        DropdownType.GenericDevice => "ti-puzzle",
+        DropdownType.Controller => "ti-adjustments",
+        DropdownType.Firmware => "ti-chip",
+        DropdownType.Sensor => "ti-antenna",
+        DropdownType.SimCard => "ti-sim-card",
         _ => "ti-list"
     };
 }

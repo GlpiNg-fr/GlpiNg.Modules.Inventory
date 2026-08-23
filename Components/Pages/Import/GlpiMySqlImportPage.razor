@@ -1,0 +1,309 @@
+@page "/admin/import/glpi"
+@rendermode InteractiveServer
+
+<PageTitle>GlpiNg — Import GLPI</PageTitle>
+
+<div class="page-header d-flex align-items-center justify-content-between mb-3">
+    <h2 class="page-title mb-0">Import depuis une base GLPI MySQL</h2>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header">
+        <h3 class="card-title"><i class="ti ti-plug-connected me-1"></i>Connexion à la base GLPI source</h3>
+    </div>
+    <div class="glpi-config">
+        <div class="glpi-config-body">
+            <EditForm Model="State" OnValidSubmit="AnalyzeAsync" class="glpi-config-form glpi-config-form-wide">
+                <div class="glpi-config-field">
+                    <label for="glpi-import-server">Adresse du serveur</label>
+                    <input id="glpi-import-server" type="text" placeholder="ex. glpi-mysql.exemple.local"
+                           @bind="State.Server" disabled="@(State.IsRunning || State.IsAnalyzing)" />
+                </div>
+
+                <div class="glpi-config-field">
+                    <label for="glpi-import-database">Base de données</label>
+                    <input id="glpi-import-database" type="text" placeholder="glpi"
+                           @bind="State.Database" disabled="@(State.IsRunning || State.IsAnalyzing)" />
+                </div>
+
+                <div class="glpi-config-field">
+                    <label for="glpi-import-username">Utilisateur</label>
+                    <input id="glpi-import-username" type="text" autocomplete="off"
+                           @bind="State.Username" disabled="@(State.IsRunning || State.IsAnalyzing)" />
+                </div>
+
+                <div class="glpi-config-field">
+                    <label for="glpi-import-password">Mot de passe</label>
+                    <input id="glpi-import-password" type="password" autocomplete="off"
+                           @bind="State.Password" disabled="@(State.IsRunning || State.IsAnalyzing)" />
+                </div>
+
+                <p class="hint">
+                    Un compte MySQL en lecture seule est recommandé : ni l'analyse ni l'import ne font
+                    d'écriture sur la base GLPI source.
+                </p>
+
+                <button type="submit" class="glpi-config-save" disabled="@(!State.CanAnalyze)">
+                    @if (State.IsAnalyzing)
+                    {
+                        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                        <span>Analyse en cours…</span>
+                    }
+                    else
+                    {
+                        <span>Analyser</span>
+                    }
+                </button>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@if (State.AnalysisError is not null)
+{
+    <div class="alert alert-danger">
+        <i class="ti ti-alert-circle me-1"></i>@State.AnalysisError
+    </div>
+}
+
+@if (State.Analysis is { } analysis)
+{
+    <div class="card mb-3">
+        <div class="card-header">
+            <h3 class="card-title"><i class="ti ti-list-check me-1"></i>Éléments trouvés — que faut-il importer ?</h3>
+        </div>
+        <div class="card-body">
+            <div class="glpi-config-field-grid">
+                <div class="glpi-config-field checkbox">
+                    <label for="glpi-import-sel-computers"><i class="ti ti-device-desktop me-2"></i>Ordinateurs (@analysis.ComputersCount)</label>
+                    <label class="glpi-switch">
+                        <input id="glpi-import-sel-computers" type="checkbox" @bind="State.Selection.ImportComputers"
+                               disabled="@(State.IsRunning || analysis.ComputersCount == 0)" />
+                        <span class="glpi-switch-slider"></span>
+                    </label>
+                </div>
+
+                <div class="glpi-config-field checkbox">
+                    <label for="glpi-import-sel-monitors"><i class="ti ti-device-tv me-2"></i>Moniteurs (@analysis.MonitorsCount)</label>
+                    <label class="glpi-switch">
+                        <input id="glpi-import-sel-monitors" type="checkbox" @bind="State.Selection.ImportMonitors"
+                               disabled="@(State.IsRunning || analysis.MonitorsCount == 0)" />
+                        <span class="glpi-switch-slider"></span>
+                    </label>
+                </div>
+
+                <div class="glpi-config-field checkbox">
+                    <label for="glpi-import-sel-agents"><i class="ti ti-robot me-2"></i>Agents (@analysis.AgentsCount)</label>
+                    <label class="glpi-switch">
+                        <input id="glpi-import-sel-agents" type="checkbox" @bind="State.Selection.ImportAgents"
+                               disabled="@(State.IsRunning || analysis.AgentsCount == 0)" />
+                        <span class="glpi-switch-slider"></span>
+                    </label>
+                </div>
+
+                <div class="glpi-config-field checkbox">
+                    <label for="glpi-import-sel-components"><i class="ti ti-cpu me-2"></i>Composants matériels (@analysis.ComponentsCount)</label>
+                    <label class="glpi-switch">
+                        <input id="glpi-import-sel-components" type="checkbox" @bind="State.Selection.ImportComponents"
+                               disabled="@(State.IsRunning || analysis.ComponentsCount == 0)" />
+                        <span class="glpi-switch-slider"></span>
+                    </label>
+                </div>
+
+                <div class="glpi-config-field checkbox">
+                    <label for="glpi-import-sel-softwares"><i class="ti ti-apps me-2"></i>Logiciels (@analysis.SoftwaresCount)</label>
+                    <label class="glpi-switch">
+                        <input id="glpi-import-sel-softwares" type="checkbox" @bind="State.Selection.ImportSoftwares"
+                               disabled="@(State.IsRunning || analysis.SoftwaresCount == 0)" />
+                        <span class="glpi-switch-slider"></span>
+                    </label>
+                </div>
+
+                <div class="glpi-config-field checkbox">
+                    <label for="glpi-import-sel-printers"><i class="ti ti-printer me-2"></i>Imprimantes (@analysis.PrintersCount)</label>
+                    <label class="glpi-switch">
+                        <input id="glpi-import-sel-printers" type="checkbox" @bind="State.Selection.ImportPrinters"
+                               disabled="@(State.IsRunning || analysis.PrintersCount == 0)" />
+                        <span class="glpi-switch-slider"></span>
+                    </label>
+                </div>
+
+                <div class="glpi-config-field checkbox">
+                    <label for="glpi-import-sel-peripherals"><i class="ti ti-mouse me-2"></i>Périphériques (@analysis.PeripheralsCount)</label>
+                    <label class="glpi-switch">
+                        <input id="glpi-import-sel-peripherals" type="checkbox" @bind="State.Selection.ImportPeripherals"
+                               disabled="@(State.IsRunning || analysis.PeripheralsCount == 0)" />
+                        <span class="glpi-switch-slider"></span>
+                    </label>
+                </div>
+
+                <div class="glpi-config-field checkbox">
+                    <label for="glpi-import-sel-volumes"><i class="ti ti-server-2 me-2"></i>Volumes (@analysis.VolumesCount)</label>
+                    <label class="glpi-switch">
+                        <input id="glpi-import-sel-volumes" type="checkbox" @bind="State.Selection.ImportVolumes"
+                               disabled="@(State.IsRunning || analysis.VolumesCount == 0)" />
+                        <span class="glpi-switch-slider"></span>
+                    </label>
+                </div>
+
+                <div class="glpi-config-field checkbox">
+                    <label for="glpi-import-sel-batteries"><i class="ti ti-battery me-2"></i>Batteries (@analysis.BatteriesCount)</label>
+                    <label class="glpi-switch">
+                        <input id="glpi-import-sel-batteries" type="checkbox" @bind="State.Selection.ImportBatteries"
+                               disabled="@(State.IsRunning || analysis.BatteriesCount == 0)" />
+                        <span class="glpi-switch-slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <p class="hint mt-2">
+                CPU : @analysis.CpuCount · RAM : @analysis.RamCount · Disques : @analysis.DiskCount ·
+                Cartes réseau : @analysis.NetworkCardCount
+            </p>
+
+            <button type="button" class="glpi-config-save mt-2" disabled="@(!State.CanRun)" @onclick="RunImportAsync">
+                @if (State.IsRunning)
+                {
+                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                    <span>Import en cours…</span>
+                }
+                else
+                {
+                    <i class="ti ti-database-import me-1"></i>
+                    <span>Lancer l'import</span>
+                }
+            </button>
+        </div>
+    </div>
+}
+
+<div class="card">
+    <div class="card-body">
+        <p class="text-secondary">
+            L'import est en lecture seule et idempotent : un poste déjà importé (identifié par son
+            <code>glpi_computers.id</code> d'origine) est mis à jour plutôt que dupliqué.
+        </p>
+
+        @if (State.IsRunning)
+        {
+            <div class="alert alert-info">
+                <i class="ti ti-info-circle me-1"></i>
+                Un import est en cours (peut-être déclenché par un autre administrateur) — cette page se
+                mettra à jour automatiquement pour tous les admins connectés dès qu'il sera terminé.
+            </div>
+        }
+
+        @if (State.LastError is not null)
+        {
+            <div class="alert alert-danger">
+                <i class="ti ti-alert-circle me-1"></i>@State.LastError
+            </div>
+        }
+
+        @if (State.LastResult is { } result)
+        {
+            <div class="alert alert-success">
+                <i class="ti ti-check me-1"></i>
+                Dernier import terminé en @result.Duration.TotalSeconds.ToString("0.0") s
+                @if (State.LastRunAt is { } lastRunAt)
+                {
+                    <span>(le @lastRunAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm"))</span>
+                }
+            </div>
+
+            <div class="row row-cards mb-3">
+                <div class="col-6 col-md-3">
+                    <div class="card card-sm">
+                        <div class="card-body text-center">
+                            <div class="fs-2 fw-bold">@result.ComputersCreated</div>
+                            <div class="text-secondary">Postes créés</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card card-sm">
+                        <div class="card-body text-center">
+                            <div class="fs-2 fw-bold">@result.ComputersUpdated</div>
+                            <div class="text-secondary">Postes mis à jour</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card card-sm">
+                        <div class="card-body text-center">
+                            <div class="fs-2 fw-bold">@result.MonitorsImported</div>
+                            <div class="text-secondary">Moniteurs importés</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card card-sm">
+                        <div class="card-body text-center">
+                            <div class="fs-2 fw-bold">@(result.AgentsCreated + result.AgentsUpdated)</div>
+                            <div class="text-secondary">Agents (@result.AgentsCreated créés)</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card card-sm">
+                        <div class="card-body text-center">
+                            <div class="fs-2 fw-bold">@result.ComponentsImported</div>
+                            <div class="text-secondary">Composants importés</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card card-sm">
+                        <div class="card-body text-center">
+                            <div class="fs-2 fw-bold">@result.SoftwaresImported</div>
+                            <div class="text-secondary">Logiciels importés</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card card-sm">
+                        <div class="card-body text-center">
+                            <div class="fs-2 fw-bold">@result.PrintersImported</div>
+                            <div class="text-secondary">Imprimantes importées</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card card-sm">
+                        <div class="card-body text-center">
+                            <div class="fs-2 fw-bold">@result.PeripheralsImported</div>
+                            <div class="text-secondary">Périphériques importés</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card card-sm">
+                        <div class="card-body text-center">
+                            <div class="fs-2 fw-bold">@result.VolumesImported</div>
+                            <div class="text-secondary">Volumes importés</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card card-sm">
+                        <div class="card-body text-center">
+                            <div class="fs-2 fw-bold">@result.BatteriesImported</div>
+                            <div class="text-secondary">Batteries importées</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (result.Warnings.Count > 0)
+            {
+                <div class="glpi-fiche-block-title"><i class="ti ti-alert-triangle"></i>Avertissements</div>
+                <ul>
+                    @foreach (string warning in result.Warnings)
+                    {
+                        <li>@warning</li>
+                    }
+                </ul>
+            }
+        }
+    </div>
+</div>

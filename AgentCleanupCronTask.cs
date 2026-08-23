@@ -17,7 +17,15 @@ namespace GlpiNg.Modules.Inventory;
 /// </summary>
 public sealed class AgentCleanupCronTask(DbContext db, IOptionsMonitor<AgentCleanupOptions> options) : ICronTask
 {
+    public string Key => "agent_cleanup";
+
     public string Name => "Purge des agents orphelins";
+
+    public string Description =>
+        "Purge les agents GLPI-Agent jamais rattachés à un ordinateur (contact seul) inactifs " +
+        "depuis plus longtemps que le délai réglé dans la configuration du module Inventaire.";
+
+    public int DefaultFrequencyMinutes => 1440;
 
     public async Task RunAsync(CancellationToken cancellationToken)
     {

@@ -25,6 +25,11 @@ public static class InventoryModuleServiceCollectionExtensions
         services.Configure<GlpiImportOptions>(configuration.GetSection(GlpiImportOptions.SectionName));
         services.AddScoped<GlpiMySqlImportService>();
 
+        // État partagé entre tous les admins consultant /admin/import/glpi (voir
+        // GlpiImportStateService) : singleton plutôt que scoped, pour qu'un import
+        // déclenché par un admin soit visible par tous les autres.
+        services.AddSingleton<GlpiImportStateService>();
+
         // Contribution du module au service cron de l'hôte (voir GlpiNg.Modules.Cron) :
         // purge périodique des agents orphelins, réglage "AgentCleanupDays" de l'onglet
         // "Parc" (Administration > Inventaire).

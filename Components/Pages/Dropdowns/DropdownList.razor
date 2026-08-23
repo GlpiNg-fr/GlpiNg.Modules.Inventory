@@ -1,19 +1,23 @@
 @page "/config/dropdowns"
 @page "/config/dropdowns/{TypeSlug}"
+@page "/config/components"
+@page "/config/components/{TypeSlug}"
 @rendermode InteractiveServer
 
-<PageTitle>GlpiNg — Intitulés</PageTitle>
+<PageTitle>GlpiNg — @(_typeResolved ? DropdownTypeCatalog.GroupLabel(DropdownTypeCatalog.Group(_type)) : DropdownTypeCatalog.GroupLabel(IsComponentsRoute ? DropdownGroup.Components : DropdownGroup.Labels))</PageTitle>
 
 @if (!_typeResolved)
 {
     <div class="text-center text-secondary py-5">
         <i class="ti ti-list-off fs-1"></i>
-        <p class="mt-2">Cet Intitulé est introuvable.</p>
+        <p class="mt-2">Cette catégorie est introuvable.</p>
     </div>
 }
 else
 {
-    <DropdownsTopMenu Current="@DropdownTypeCatalog.Slug(_type)" />
+    <DropdownsTopMenu Current="@DropdownTypeCatalog.Slug(_type)"
+                       Items="@(DropdownTypeCatalog.Group(_type) == DropdownGroup.Components ? DropdownTypeCatalog.Components : DropdownTypeCatalog.Labels)"
+                       BaseRoute="@DropdownTypeCatalog.GroupBaseRoute(DropdownTypeCatalog.Group(_type))" />
 
     <div class="glpi-list-page">
     <div class="card">

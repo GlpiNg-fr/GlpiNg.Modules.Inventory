@@ -1,0 +1,307 @@
+@page "/admin/rules/{RuleId:int}"
+@using GlpiNg.Modules.Inventory.Services
+@rendermode InteractiveServer
+
+<PageTitle>GlpiNg — @(_rule?.Name ?? "Règle métier")</PageTitle>
+
+@if (_rule is null)
+{
+    <div class="text-center text-secondary py-5">
+        <i class="ti ti-adjustments-off fs-1"></i>
+        <p class="mt-2">Cette règle est introuvable.</p>
+    </div>
+}
+else
+{
+    <div class="glpi-fiche-layout">
+        <aside class="glpi-fiche-sidebar">
+            <button type="button" class="glpi-fiche-tab-item @(_activeTabKey == "main" ? "active" : "")" @onclick='() => SetTab("main")'>
+                <i class="ti ti-adjustments"></i>
+                <span>Règle</span>
+            </button>
+            <button type="button" class="glpi-fiche-tab-item @(_activeTabKey == "criteria" ? "active" : "")" @onclick='() => SetTab("criteria")'>
+                <i class="ti ti-filter"></i>
+                <span>Critères</span>
+                <span class="glpi-fiche-tab-count">@_rule.Criteria.Count</span>
+            </button>
+            <button type="button" class="glpi-fiche-tab-item @(_activeTabKey == "actions" ? "active" : "")" @onclick='() => SetTab("actions")'>
+                <i class="ti ti-bolt"></i>
+                <span>Actions</span>
+                <span class="glpi-fiche-tab-count">@_rule.Actions.Count</span>
+            </button>
+            <button type="button" class="glpi-fiche-tab-item @(_activeTabKey == "test" ? "active" : "")" @onclick='() => SetTab("test")'>
+                <i class="ti ti-player-play"></i>
+                <span>Tester</span>
+            </button>
+        </aside>
+
+        <div class="glpi-fiche-panel">
+            @switch (_activeTabKey)
+            {
+                case "main":
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="glpi-fiche-field">
+                                <label>Nom</label>
+                                <input class="form-control" @bind="_rule.Name" @bind:event="oninput" />
+                            </div>
+                            <div class="glpi-fiche-field">
+                                <label>Opérateur logique</label>
+                                <select class="form-select" @bind="_rule.LogicalOperator">
+                                    <option value="@ComputerRuleLogicalOperator.And">ET (tous les critères)</option>
+                                    <option value="@ComputerRuleLogicalOperator.Or">OU (au moins un critère)</option>
+                                </select>
+                            </div>
+                            <div class="glpi-fiche-field">
+                                <label>Actif</label>
+                                <select class="form-select" @bind="_rule.IsActive">
+                                    <option value="true">Oui</option>
+                                    <option value="false">Non</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="glpi-fiche-field">
+                                <label>Règle utilisée pour</label>
+                                <select class="form-select" @bind="_rule.AppliesTo">
+                                    <option value="@ComputerRuleAppliesTo.OnCreateAndUpdate">Ajout / Mise à jour</option>
+                                    <option value="@ComputerRuleAppliesTo.OnCreate">Ajout</option>
+                                    <option value="@ComputerRuleAppliesTo.OnUpdate">Mise à jour</option>
+                                </select>
+                            </div>
+                            <div class="glpi-fiche-field">
+                                <label>Commentaires</label>
+                                <textarea class="form-control" rows="3" @bind="_rule.Comment"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-3">
+                        <button type="button" class="btn btn-outline-danger" @onclick="DeleteAsync">
+                            <i class="ti ti-trash me-1"></i>Supprimer définitivement
+                        </button>
+                        <button type="button" class="btn btn-primary" disabled="@_isSaving" @onclick="SaveAsync">
+                            <i class="ti ti-device-floppy me-1"></i>@(_isSaving ? "Enregistrement…" : "Sauvegarder")
+                        </button>
+                    </div>
+                    break;
+
+                case "criteria":
+                    <div class="glpi-fiche-block">
+                        <div class="glpi-fiche-block-title"><i class="ti ti-filter"></i>Critères (@_rule.Criteria.Count)</div>
+                        <p class="text-secondary">
+                            Une règle s'applique si l'ensemble de ses critères, combinés par l'opérateur logique
+                            de l'onglet « Règle » (@(_rule.LogicalOperator == ComputerRuleLogicalOperator.Or ? "OU" : "ET")), est vérifié.
+                        </p>
+
+                        @if (_rule.Criteria.Count > 0)
+                        {
+                            <div class="table-responsive mb-3">
+                                <table class="table table-vcenter card-table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Champ</th>
+                                            <th>Opérateur</th>
+                                            <th>Valeur</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (ComputerRuleCriterion criterion in _rule.Criteria)
+                                        {
+                                            <tr>
+                                                <td>@ComputerRuleFieldCatalog.Label(criterion.Field)</td>
+                                                <td>@OperatorLabel(criterion.Operator)</td>
+                                                <td>@(IsValuelessOperator(criterion.Operator) ? "—" : criterion.Value)</td>
+                                                <td class="text-end">
+                                                    <button type="button" class="btn btn-sm btn-icon text-danger" @onclick="() => RemoveCriterionAsync(criterion)">
+                                                        <i class="ti ti-trash"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+
+                        <div class="row g-2 align-items-end">
+                            <div class="col-md-3">
+                                <label class="form-label">Champ</label>
+                                <select class="form-select" @bind="_newCriterion.Field">
+                                    @foreach (ComputerRuleFieldDefinition field in ComputerRuleFieldCatalog.All)
+                                    {
+                                        <option value="@field.Key">@field.Label</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Opérateur</label>
+                                <select class="form-select" @bind="_newCriterion.Operator">
+                                    @foreach (ComputerRuleCriterionOperator op in Enum.GetValues<ComputerRuleCriterionOperator>())
+                                    {
+                                        <option value="@op">@OperatorLabel(op)</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Valeur</label>
+                                @if (IsValuelessOperator(_newCriterion.Operator))
+                                {
+                                    <input class="form-control" disabled placeholder="—" />
+                                }
+                                else
+                                {
+                                    <input class="form-control" @bind="_newCriterion.Value"
+                                           placeholder="@(_newCriterion.Operator == ComputerRuleCriterionOperator.MatchesRegex ? "expression régulière" : "")" />
+                                }
+                            </div>
+                            <div class="col-md-2">
+                                <button type="button" class="btn btn-primary w-100" @onclick="AddCriterionAsync">
+                                    <i class="ti ti-plus me-1"></i>Ajouter
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    break;
+
+                case "actions":
+                    <div class="glpi-fiche-block">
+                        <div class="glpi-fiche-block-title"><i class="ti ti-bolt"></i>Actions (@_rule.Actions.Count)</div>
+                        <p class="text-secondary">
+                            <i class="ti ti-info-circle me-1"></i>Pour « Résultat d'une expression régulière », la valeur peut référencer
+                            les groupes capturés par le dernier critère « correspond à l'expression régulière » ayant validé la règle,
+                            avec la notation <code>#0</code>, <code>#1</code>...
+                        </p>
+
+                        @if (_rule.Actions.Count > 0)
+                        {
+                            <div class="table-responsive mb-3">
+                                <table class="table table-vcenter card-table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Champ</th>
+                                            <th>Type d'action</th>
+                                            <th>Valeur</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (ComputerRuleAction action in _rule.Actions)
+                                        {
+                                            <tr>
+                                                <td>@ComputerRuleFieldCatalog.Label(action.Field)</td>
+                                                <td>@ActionTypeLabel(action.ActionType)</td>
+                                                <td>@action.Value</td>
+                                                <td class="text-end">
+                                                    <button type="button" class="btn btn-sm btn-icon text-danger" @onclick="() => RemoveActionAsync(action)">
+                                                        <i class="ti ti-trash"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+
+                        <div class="row g-2 align-items-end">
+                            <div class="col-md-3">
+                                <label class="form-label">Champ</label>
+                                <select class="form-select" @bind="_newAction.Field">
+                                    @foreach (ComputerRuleFieldDefinition field in ComputerRuleFieldCatalog.All)
+                                    {
+                                        <option value="@field.Key">@field.Label</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Type d'action</label>
+                                <select class="form-select" @bind="_newAction.ActionType">
+                                    @foreach (ComputerRuleActionType actionType in Enum.GetValues<ComputerRuleActionType>())
+                                    {
+                                        <option value="@actionType">@ActionTypeLabel(actionType)</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Valeur</label>
+                                <input class="form-control" @bind="_newAction.Value" />
+                            </div>
+                            <div class="col-md-2">
+                                <button type="button" class="btn btn-primary w-100" @onclick="AddActionAsync">
+                                    <i class="ti ti-plus me-1"></i>Ajouter
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    break;
+
+                case "test":
+                    <div class="glpi-fiche-block">
+                        <div class="glpi-fiche-block-title"><i class="ti ti-player-play"></i>Tester le moteur de règles</div>
+                        <p class="text-secondary">
+                            Prévisualise l'effet de cette règle, telle qu'actuellement enregistrée, sur un ordinateur existant —
+                            sans modifier l'ordinateur.
+                        </p>
+
+                        <div class="row g-2 align-items-end mb-3">
+                            <div class="col-md-5">
+                                <label class="form-label">Ordinateur</label>
+                                <select class="form-select" @bind="_testComputerId">
+                                    <option value="0">-- Choisir un ordinateur --</option>
+                                    @foreach (Computer computer in _testComputers)
+                                    {
+                                        <option value="@computer.Id">@computer.Name</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Mode</label>
+                                <select class="form-select" @bind="_testIsUpdate">
+                                    <option value="false">Simuler un ajout</option>
+                                    <option value="true">Simuler une mise à jour</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <button type="button" class="btn btn-primary w-100" disabled="@(_testComputerId == 0)" @onclick="RunTestAsync">
+                                    <i class="ti ti-player-play me-1"></i>Tester
+                                </button>
+                            </div>
+                        </div>
+
+                        @if (_testRan)
+                        {
+                            @if (!_testMatched)
+                            {
+                                <p class="text-secondary"><i class="ti ti-circle-x me-1"></i>Les critères ne correspondent pas à cet ordinateur (ou n'entraînent aucune modification).</p>
+                            }
+                            else
+                            {
+                                <table class="table table-vcenter card-table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Champ</th>
+                                            <th>Avant</th>
+                                            <th>Après</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var change in _testChanges)
+                                        {
+                                            <tr>
+                                                <td>@change.Label</td>
+                                                <td>@change.Before</td>
+                                                <td>@change.After</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            }
+                        }
+                    </div>
+                    break;
+            }
+        </div>
+    </div>
+}

@@ -1,10 +1,13 @@
 namespace GlpiNg.Modules.Inventory.Models;
 
 /// <summary>
-/// Catégorie d'Intitulé GLPI (front/dropdown.php) : liste de valeurs de référence proposées à
-/// la saisie sur les fiches. Sous-ensemble des dizaines de catégories réelles de GLPI, restreint
-/// aux champs effectivement portés par Computer dans GlpiNg (pas de matériel réseau/imprimantes/
-/// moniteurs, pas de câblage/internet : ces domaines n'existent pas ici).
+/// Catégorie d'Intitulé GLPI (front/dropdown.php) ou de Composant GLPI (front/devices.php) :
+/// liste de valeurs de référence proposées à la saisie sur les fiches, ou catalogue de modèles de
+/// composants matériel. Sous-ensemble des dizaines de catégories réelles de GLPI, restreint aux
+/// champs effectivement portés par Computer dans GlpiNg (pas de matériel réseau/imprimantes/
+/// moniteurs, pas de câblage/internet : ces domaines n'existent pas ici). Voir
+/// DropdownTypeCatalog.Group pour la répartition Intitulés/Composants — les nouvelles valeurs
+/// doivent être ajoutées en fin d'énumération (jamais insérées : Type est persisté comme entier).
 /// </summary>
 public enum DropdownType
 {
@@ -14,7 +17,28 @@ public enum DropdownType
     OperatingSystem,
     OperatingSystemVersion,
     Location,
-    Status
+    Status,
+
+    // Catégories de Composants (front/devices.php) : catalogue de modèles de matériel, distinct
+    // des Intitulés ci-dessus — voir DropdownTypeCatalog.Group.
+    Processor,
+    Memory,
+    HardDrive,
+    NetworkCard,
+    GraphicCard,
+    SoundCard,
+    Drive,
+    PciDevice,
+    Camera,
+    PowerSupply,
+    Battery,
+    Case,
+    Motherboard,
+    GenericDevice,
+    Controller,
+    Firmware,
+    Sensor,
+    SimCard
 }
 
 /// <summary>

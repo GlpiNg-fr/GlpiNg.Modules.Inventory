@@ -16,6 +16,12 @@ public partial class DropdownList : ComponentBase
     [Inject]
     private IJSRuntime JS { get; set; } = null!;
 
+    [Inject]
+    private NavigationManager Nav { get; set; } = null!;
+
+    /// <summary>Route demandée ("/config/components/..." vs "/config/dropdowns/...") : détermine le groupe par défaut (TypeSlug absent) et quel jeu d'onglets afficher.</summary>
+    private bool IsComponentsRoute => new Uri(Nav.Uri).AbsolutePath.StartsWith("/config/components", StringComparison.OrdinalIgnoreCase);
+
     private DropdownType _type;
     private bool _typeResolved;
     private List<DropdownItem> _items = [];
@@ -138,7 +144,7 @@ public partial class DropdownList : ComponentBase
 
     private bool SetDefaultType()
     {
-        _type = DropdownTypeCatalog.All[0];
+        _type = (IsComponentsRoute ? DropdownTypeCatalog.Components : DropdownTypeCatalog.Labels)[0];
         return true;
     }
 
