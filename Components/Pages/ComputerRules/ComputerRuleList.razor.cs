@@ -110,12 +110,4 @@ public partial class ComputerRuleList : ComponentBase
         await JS.InvokeVoidAsync("glpiNg.hideModal", "newComputerRuleModal");
         Nav.NavigateTo($"/admin/rules/{newId}");
     }
-
-    private static string AppliesToLabel(ComputerRuleAppliesTo appliesTo) => appliesTo switch
-    {
-        ComputerRuleAppliesTo.OnCreateAndUpdate => "Ajout / Mise à jour",
-        ComputerRuleAppliesTo.OnCreate => "Ajout",
-        ComputerRuleAppliesTo.OnUpdate => "Mise à jour",
-        _ => appliesTo.ToString()
-    };
 }

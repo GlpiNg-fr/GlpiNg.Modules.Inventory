@@ -1,0 +1,158 @@
+@using GlpiNg.Modules.Inventory.Models
+@using GlpiNg.Modules.Inventory.Services
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<DbContext> DbFactory
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="glpi-fiche-field">
+            <label>Nom</label>
+            <input class="form-control" @bind="Item.Name" @bind:event="oninput" @bind:after="NotifyChangedAsync" />
+        </div>
+        <div class="glpi-fiche-field">
+            <label>Statut</label>
+            <select class="form-select" value="@(Item.StatusId?.ToString() ?? "")"
+                    @onchange="@((ChangeEventArgs e) => { Item.StatusId = string.IsNullOrEmpty((string?)e.Value) ? null : int.Parse((string)e.Value!); return NotifyChangedAsync(); })">
+                <option value="">—</option>
+                @foreach (DropdownItem status in StatusOptions)
+                {
+                    <option value="@status.Id">@status.Name</option>
+                }
+            </select>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="glpi-fiche-field">
+            <label>Type</label>
+            <input class="form-control" @bind="Item.Type" @bind:after="NotifyChangedAsync" />
+        </div>
+        <div class="glpi-fiche-field">
+            <label>Couleur</label>
+            <input class="form-control" @bind="Item.Color" @bind:after="NotifyChangedAsync" />
+        </div>
+    </div>
+    <div class="col-12">
+        <div class="glpi-fiche-field">
+            <label>Commentaires</label>
+            <textarea class="form-control" rows="3" @bind="Item.Comment" @bind:after="NotifyChangedAsync"></textarea>
+        </div>
+    </div>
+</div>
+
+<hr />
+<h4 class="mb-3"><i class="ti ti-plug-connected me-1"></i>Extrémité A</h4>
+<div class="row">
+    <div class="col-md-6">
+        <div class="glpi-fiche-field">
+            <label>Type d'élément</label>
+            <select class="form-select" value="@Item.EndpointAType.ToString()" @onchange="OnEndpointATypeChangedAsync">
+                @foreach (CableEndpointType type in CableEndpointCatalog.AllTypes)
+                {
+                    <option value="@type.ToString()">@CableEndpointCatalog.DisplayName(type)</option>
+                }
+            </select>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="glpi-fiche-field">
+            <label>Élément</label>
+            <select class="form-select" value="@Item.EndpointAId.ToString()"
+                    @onchange="@((ChangeEventArgs e) => { Item.EndpointAId = int.Parse((string)e.Value!); return NotifyChangedAsync(); })">
+                <option value="0">—</option>
+                @foreach ((int id, string name) in _endpointAItems)
+                {
+                    <option value="@id">@name</option>
+                }
+            </select>
+        </div>
+    </div>
+</div>
+
+<hr />
+<h4 class="mb-3"><i class="ti ti-plug-connected me-1"></i>Extrémité B (facultative)</h4>
+<div class="row">
+    <div class="col-md-6">
+        <div class="glpi-fiche-field">
+            <label>Type d'élément</label>
+            <select class="form-select" value="@(Item.EndpointBType?.ToString() ?? "")" @onchange="OnEndpointBTypeChangedAsync">
+                <option value="">— Aucune —</option>
+                @foreach (CableEndpointType type in CableEndpointCatalog.AllTypes)
+                {
+                    <option value="@type.ToString()">@CableEndpointCatalog.DisplayName(type)</option>
+                }
+            </select>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="glpi-fiche-field">
+            <label>Élément</label>
+            <select class="form-select" value="@(Item.EndpointBId?.ToString() ?? "0")" disabled="@(Item.EndpointBType is null)"
+                    @onchange="@((ChangeEventArgs e) => { int value = int.Parse((string)e.Value!); Item.EndpointBId = value == 0 ? null : value; return NotifyChangedAsync(); })">
+                <option value="0">—</option>
+                @foreach ((int id, string name) in _endpointBItems)
+                {
+                    <option value="@id">@name</option>
+                }
+            </select>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public Cable Item { get; set; } = null!;
+
+    [Parameter, EditorRequired]
+    public List<DropdownItem> StatusOptions { get; set; } = [];
+
+    [Parameter]
+    public EventCallback OnChanged { get; set; }
+
+    private Cable? _loadedForItem;
+    private List<(int Id, string Name)> _endpointAItems = [];
+    private List<(int Id, string Name)> _endpointBItems = [];
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (ReferenceEquals(_loadedForItem, Item)) return;
+        _loadedForItem = Item;
+
+        await using DbContext db = await DbFactory.CreateDbContextAsync();
+        _endpointAItems = await CableEndpointCatalog.GetItemsAsync(db, Item.EndpointAType);
+        _endpointBItems = Item.EndpointBType is { } typeB ? await CableEndpointCatalog.GetItemsAsync(db, typeB) : [];
+    }
+
+    private async Task OnEndpointATypeChangedAsync(ChangeEventArgs e)
+    {
+        Item.EndpointAType = Enum.Parse<CableEndpointType>((string)e.Value!);
+        Item.EndpointAId = 0;
+
+        await using DbContext db = await DbFactory.CreateDbContextAsync();
+        _endpointAItems = await CableEndpointCatalog.GetItemsAsync(db, Item.EndpointAType);
+
+        await NotifyChangedAsync();
+    }
+
+    private async Task OnEndpointBTypeChangedAsync(ChangeEventArgs e)
+    {
+        string? value = (string?)e.Value;
+        if (string.IsNullOrEmpty(value))
+        {
+            Item.EndpointBType = null;
+            Item.EndpointBId = null;
+            _endpointBItems = [];
+        }
+        else
+        {
+            Item.EndpointBType = Enum.Parse<CableEndpointType>(value);
+            Item.EndpointBId = null;
+
+            await using DbContext db = await DbFactory.CreateDbContextAsync();
+            _endpointBItems = await CableEndpointCatalog.GetItemsAsync(db, Item.EndpointBType.Value);
+        }
+
+        await NotifyChangedAsync();
+    }
+
+    private Task NotifyChangedAsync() => OnChanged.InvokeAsync();
+}

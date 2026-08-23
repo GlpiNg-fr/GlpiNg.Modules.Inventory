@@ -13,6 +13,14 @@ public static class SavedSearchItemTypes
         ("Monitor", "Moniteur", "ti-device-tv", "/parc/monitors"),
         ("Software", "Logiciel", "ti-apps", "/parc/software"),
         ("Peripheral", "Périphérique", "ti-mouse", "/parc/peripherals"),
+        ("NetworkEquipment", "Matériel réseau", "ti-router", "/parc/network-equipments"),
+        ("Printer", "Imprimante", "ti-printer", "/parc/printers"),
+        ("Phone", "Téléphone", "ti-phone", "/parc/phones"),
+        ("Rack", "Baie", "ti-server-2", "/parc/racks"),
+        ("Enclosure", "Châssis", "ti-layout-grid", "/parc/enclosures"),
+        ("Pdu", "PDU", "ti-plug", "/parc/pdus"),
+        ("PassiveEquipment", "Équipement passif", "ti-plug-connected", "/parc/passive-equipments"),
+        ("Cable", "Câble", "ti-cable", "/parc/cables"),
         ("Agent", "Agent", "ti-cpu", "/tools/deployments/agent"),
     ];
 

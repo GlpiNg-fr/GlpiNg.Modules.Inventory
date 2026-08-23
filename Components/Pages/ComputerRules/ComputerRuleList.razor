@@ -1,4 +1,5 @@
 @page "/admin/rules"
+@using GlpiNg.Modules.Inventory.Services
 @rendermode InteractiveServer
 
 <PageTitle>GlpiNg — Règles métier pour les actifs</PageTitle>
@@ -49,11 +50,11 @@
                 <tr>
                     <th style="width: 2.5rem;"></th>
                     <th>Nom</th>
+                    <th>Description</th>
+                    <th>Règle utilisée pour</th>
                     <th>Critères</th>
                     <th>Actions</th>
-                    <th>Correspondance</th>
-                    <th>Utilisée pour</th>
-                    <th>Actif</th>
+                    <th>Activé</th>
                     <th style="width: 6rem;">Position</th>
                 </tr>
             </thead>
@@ -81,10 +82,20 @@
                                     <i class="ti ti-adjustments me-1 text-secondary"></i>@rule.Name
                                 </a>
                             </td>
-                            <td>@rule.Criteria.Count</td>
-                            <td>@rule.Actions.Count</td>
-                            <td>@(rule.LogicalOperator == ComputerRuleLogicalOperator.Or ? "OU" : "ET")</td>
-                            <td>@AppliesToLabel(rule.AppliesTo)</td>
+                            <td>@rule.Comment</td>
+                            <td>@ComputerRuleLabels.AppliesToLabel(rule.AppliesTo)</td>
+                            <td>
+                                @foreach (ComputerRuleCriterion criterion in rule.Criteria)
+                                {
+                                    <div class="small">@ComputerRuleLabels.CriterionSummary(criterion)</div>
+                                }
+                            </td>
+                            <td>
+                                @foreach (ComputerRuleAction action in rule.Actions)
+                                {
+                                    <div class="small">@ComputerRuleLabels.ActionSummary(action)</div>
+                                }
+                            </td>
                             <td>
                                 <button type="button" class="btn btn-sm @(rule.IsActive ? "btn-outline-success" : "btn-outline-secondary")" @onclick="() => ToggleActiveAsync(rule)">
                                     @(rule.IsActive ? "Oui" : "Non")

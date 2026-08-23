@@ -1,0 +1,87 @@
+@using GlpiNg.Modules.Inventory.Models
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="glpi-fiche-field">
+            <label>Nom</label>
+            <input class="form-control" @bind="Item.Name" @bind:event="oninput" @bind:after="NotifyChangedAsync" />
+        </div>
+        <div class="glpi-fiche-field">
+            <label>Statut</label>
+            <select class="form-select" value="@(Item.StatusId?.ToString() ?? "")"
+                    @onchange="@((ChangeEventArgs e) => Item.StatusId = string.IsNullOrEmpty((string?)e.Value) ? null : int.Parse((string)e.Value!))">
+                <option value="">—</option>
+                @foreach (DropdownItem status in StatusOptions)
+                {
+                    <option value="@status.Id">@status.Name</option>
+                }
+            </select>
+        </div>
+        <div class="glpi-fiche-field">
+            <label>Lieu</label>
+            <select class="form-select" value="@(Item.LocationId?.ToString() ?? "")"
+                    @onchange="@((ChangeEventArgs e) => Item.LocationId = string.IsNullOrEmpty((string?)e.Value) ? null : int.Parse((string)e.Value!))">
+                <option value="">—</option>
+                @foreach (DropdownItem location in LocationOptions)
+                {
+                    <option value="@location.Id">@location.Name</option>
+                }
+            </select>
+        </div>
+        <div class="glpi-fiche-field">
+            <label>Type</label>
+            <input class="form-control" @bind="Item.Type" />
+        </div>
+        <div class="glpi-fiche-field">
+            <label>Technicien responsable</label>
+            <input class="form-control" @bind="Item.TechnicianInCharge" />
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="glpi-fiche-field">
+            <label>Fabricant</label>
+            <input class="form-control" @bind="Item.Manufacturer" />
+        </div>
+        <div class="glpi-fiche-field">
+            <label>Modèle</label>
+            <input class="form-control" @bind="Item.Model" />
+        </div>
+        <div class="glpi-fiche-field">
+            <label>Numéro de série</label>
+            <input class="form-control" @bind="Item.SerialNumber" />
+        </div>
+        <div class="glpi-fiche-field">
+            <label>Numéro d'inventaire</label>
+            <input class="form-control" @bind="Item.InventoryNumber" />
+        </div>
+        <div class="glpi-fiche-field">
+            <label>Utilisateur</label>
+            <input class="form-control" @bind="Item.AssignedUser" />
+        </div>
+        <div class="glpi-fiche-field">
+            <label>Nombre d'unités</label>
+            <input type="number" class="form-control" value="@Item.UnitCount"
+                   @onchange="@((ChangeEventArgs e) => Item.UnitCount = string.IsNullOrEmpty((string?)e.Value) ? null : int.Parse((string)e.Value!))" />
+        </div>
+        <div class="glpi-fiche-field">
+            <label>Commentaires</label>
+            <textarea class="form-control" rows="4" @bind="Item.Comment"></textarea>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public Rack Item { get; set; } = null!;
+
+    [Parameter, EditorRequired]
+    public List<DropdownItem> StatusOptions { get; set; } = [];
+
+    [Parameter, EditorRequired]
+    public List<DropdownItem> LocationOptions { get; set; } = [];
+
+    [Parameter]
+    public EventCallback OnChanged { get; set; }
+
+    private Task NotifyChangedAsync() => OnChanged.InvokeAsync();
+}

@@ -29,10 +29,6 @@ else
                 <span>Actions</span>
                 <span class="glpi-fiche-tab-count">@_rule.Actions.Count</span>
             </button>
-            <button type="button" class="glpi-fiche-tab-item @(_activeTabKey == "test" ? "active" : "")" @onclick='() => SetTab("test")'>
-                <i class="ti ti-player-play"></i>
-                <span>Tester</span>
-            </button>
         </aside>
 
         <div class="glpi-fiche-panel">
@@ -80,10 +76,79 @@ else
                         <button type="button" class="btn btn-outline-danger" @onclick="DeleteAsync">
                             <i class="ti ti-trash me-1"></i>Supprimer définitivement
                         </button>
+                        <button type="button" class="btn @(_testPanelOpen ? "btn-secondary" : "btn-outline-secondary")" @onclick="() => _testPanelOpen = !_testPanelOpen">
+                            <i class="ti ti-player-play me-1"></i>Tester
+                        </button>
                         <button type="button" class="btn btn-primary" disabled="@_isSaving" @onclick="SaveAsync">
                             <i class="ti ti-device-floppy me-1"></i>@(_isSaving ? "Enregistrement…" : "Sauvegarder")
                         </button>
                     </div>
+
+                    @if (_testPanelOpen)
+                    {
+                        <div class="glpi-fiche-block mt-3">
+                            <div class="glpi-fiche-block-title"><i class="ti ti-player-play"></i>Tester le moteur de règles</div>
+                            <p class="text-secondary">
+                                Prévisualise l'effet de cette règle, telle qu'actuellement enregistrée, sur un ordinateur existant —
+                                sans modifier l'ordinateur.
+                            </p>
+
+                            <div class="row g-2 align-items-end mb-3">
+                                <div class="col-md-5">
+                                    <label class="form-label">Ordinateur</label>
+                                    <select class="form-select" @bind="_testComputerId">
+                                        <option value="0">-- Choisir un ordinateur --</option>
+                                        @foreach (Computer computer in _testComputers)
+                                        {
+                                            <option value="@computer.Id">@computer.Name</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Mode</label>
+                                    <select class="form-select" @bind="_testIsUpdate">
+                                        <option value="false">Simuler un ajout</option>
+                                        <option value="true">Simuler une mise à jour</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <button type="button" class="btn btn-primary w-100" disabled="@(_testComputerId == 0)" @onclick="RunTestAsync">
+                                        <i class="ti ti-player-play me-1"></i>Tester
+                                    </button>
+                                </div>
+                            </div>
+
+                            @if (_testRan)
+                            {
+                                @if (!_testMatched)
+                                {
+                                    <p class="text-secondary"><i class="ti ti-circle-x me-1"></i>Les critères ne correspondent pas à cet ordinateur (ou n'entraînent aucune modification).</p>
+                                }
+                                else
+                                {
+                                    <table class="table table-vcenter card-table mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Champ</th>
+                                                <th>Avant</th>
+                                                <th>Après</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var change in _testChanges)
+                                            {
+                                                <tr>
+                                                    <td>@change.Label</td>
+                                                    <td>@change.Before</td>
+                                                    <td>@change.After</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                }
+                            }
+                        </div>
+                    }
                     break;
 
                 case "criteria":
@@ -111,8 +176,8 @@ else
                                         {
                                             <tr>
                                                 <td>@ComputerRuleFieldCatalog.Label(criterion.Field)</td>
-                                                <td>@OperatorLabel(criterion.Operator)</td>
-                                                <td>@(IsValuelessOperator(criterion.Operator) ? "—" : criterion.Value)</td>
+                                                <td>@ComputerRuleLabels.OperatorLabel(criterion.Operator)</td>
+                                                <td>@(ComputerRuleLabels.IsValuelessOperator(criterion.Operator) ? "—" : criterion.Value)</td>
                                                 <td class="text-end">
                                                     <button type="button" class="btn btn-sm btn-icon text-danger" @onclick="() => RemoveCriterionAsync(criterion)">
                                                         <i class="ti ti-trash"></i>
@@ -140,13 +205,13 @@ else
                                 <select class="form-select" @bind="_newCriterion.Operator">
                                     @foreach (ComputerRuleCriterionOperator op in Enum.GetValues<ComputerRuleCriterionOperator>())
                                     {
-                                        <option value="@op">@OperatorLabel(op)</option>
+                                        <option value="@op">@ComputerRuleLabels.OperatorLabel(op)</option>
                                     }
                                 </select>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Valeur</label>
-                                @if (IsValuelessOperator(_newCriterion.Operator))
+                                @if (ComputerRuleLabels.IsValuelessOperator(_newCriterion.Operator))
                                 {
                                     <input class="form-control" disabled placeholder="—" />
                                 }
@@ -191,7 +256,7 @@ else
                                         {
                                             <tr>
                                                 <td>@ComputerRuleFieldCatalog.Label(action.Field)</td>
-                                                <td>@ActionTypeLabel(action.ActionType)</td>
+                                                <td>@ComputerRuleLabels.ActionTypeLabel(action.ActionType)</td>
                                                 <td>@action.Value</td>
                                                 <td class="text-end">
                                                     <button type="button" class="btn btn-sm btn-icon text-danger" @onclick="() => RemoveActionAsync(action)">
@@ -220,7 +285,7 @@ else
                                 <select class="form-select" @bind="_newAction.ActionType">
                                     @foreach (ComputerRuleActionType actionType in Enum.GetValues<ComputerRuleActionType>())
                                     {
-                                        <option value="@actionType">@ActionTypeLabel(actionType)</option>
+                                        <option value="@actionType">@ComputerRuleLabels.ActionTypeLabel(actionType)</option>
                                     }
                                 </select>
                             </div>
@@ -234,71 +299,6 @@ else
                                 </button>
                             </div>
                         </div>
-                    </div>
-                    break;
-
-                case "test":
-                    <div class="glpi-fiche-block">
-                        <div class="glpi-fiche-block-title"><i class="ti ti-player-play"></i>Tester le moteur de règles</div>
-                        <p class="text-secondary">
-                            Prévisualise l'effet de cette règle, telle qu'actuellement enregistrée, sur un ordinateur existant —
-                            sans modifier l'ordinateur.
-                        </p>
-
-                        <div class="row g-2 align-items-end mb-3">
-                            <div class="col-md-5">
-                                <label class="form-label">Ordinateur</label>
-                                <select class="form-select" @bind="_testComputerId">
-                                    <option value="0">-- Choisir un ordinateur --</option>
-                                    @foreach (Computer computer in _testComputers)
-                                    {
-                                        <option value="@computer.Id">@computer.Name</option>
-                                    }
-                                </select>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Mode</label>
-                                <select class="form-select" @bind="_testIsUpdate">
-                                    <option value="false">Simuler un ajout</option>
-                                    <option value="true">Simuler une mise à jour</option>
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <button type="button" class="btn btn-primary w-100" disabled="@(_testComputerId == 0)" @onclick="RunTestAsync">
-                                    <i class="ti ti-player-play me-1"></i>Tester
-                                </button>
-                            </div>
-                        </div>
-
-                        @if (_testRan)
-                        {
-                            @if (!_testMatched)
-                            {
-                                <p class="text-secondary"><i class="ti ti-circle-x me-1"></i>Les critères ne correspondent pas à cet ordinateur (ou n'entraînent aucune modification).</p>
-                            }
-                            else
-                            {
-                                <table class="table table-vcenter card-table mb-0">
-                                    <thead>
-                                        <tr>
-                                            <th>Champ</th>
-                                            <th>Avant</th>
-                                            <th>Après</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach (var change in _testChanges)
-                                        {
-                                            <tr>
-                                                <td>@change.Label</td>
-                                                <td>@change.Before</td>
-                                                <td>@change.After</td>
-                                            </tr>
-                                        }
-                                    </tbody>
-                                </table>
-                            }
-                        }
                     </div>
                     break;
             }

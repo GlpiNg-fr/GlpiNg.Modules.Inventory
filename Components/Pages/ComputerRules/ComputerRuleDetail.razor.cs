@@ -25,6 +25,7 @@ public partial class ComputerRuleDetail : ComponentBase, IAsyncDisposable
     private ComputerRuleCriterion _newCriterion = new() { Field = ComputerRuleFieldCatalog.All[0].Key };
     private ComputerRuleAction _newAction = new() { Field = ComputerRuleFieldCatalog.All[0].Key };
 
+    private bool _testPanelOpen;
     private List<Computer> _testComputers = [];
     private int _testComputerId;
     private bool _testIsUpdate;
@@ -88,7 +89,7 @@ public partial class ComputerRuleDetail : ComponentBase, IAsyncDisposable
     private async Task AddCriterionAsync()
     {
         if (_db is null || _rule is null) return;
-        if (!IsValuelessOperator(_newCriterion.Operator) && string.IsNullOrWhiteSpace(_newCriterion.Value)) return;
+        if (!ComputerRuleLabels.IsValuelessOperator(_newCriterion.Operator) && string.IsNullOrWhiteSpace(_newCriterion.Value)) return;
 
         _newCriterion.ComputerRuleId = _rule.Id;
         _rule.Criteria.Add(_newCriterion);
@@ -165,31 +166,6 @@ public partial class ComputerRuleDetail : ComponentBase, IAsyncDisposable
 
         return clone;
     }
-
-    private static bool IsValuelessOperator(ComputerRuleCriterionOperator op) =>
-        op is ComputerRuleCriterionOperator.Exists or ComputerRuleCriterionOperator.DoesNotExist;
-
-    private static string OperatorLabel(ComputerRuleCriterionOperator op) => op switch
-    {
-        ComputerRuleCriterionOperator.Is => "est",
-        ComputerRuleCriterionOperator.IsNot => "n'est pas",
-        ComputerRuleCriterionOperator.Contains => "contient",
-        ComputerRuleCriterionOperator.NotContains => "ne contient pas",
-        ComputerRuleCriterionOperator.StartsWith => "commence par",
-        ComputerRuleCriterionOperator.EndsWith => "finit par",
-        ComputerRuleCriterionOperator.MatchesRegex => "expression régulière vérifie",
-        ComputerRuleCriterionOperator.Exists => "existe",
-        ComputerRuleCriterionOperator.DoesNotExist => "n'existe pas",
-        _ => op.ToString()
-    };
-
-    private static string ActionTypeLabel(ComputerRuleActionType type) => type switch
-    {
-        ComputerRuleActionType.Assign => "Affecter",
-        ComputerRuleActionType.Append => "Ajouter à la fin",
-        ComputerRuleActionType.RegexResult => "Résultat d'une expression régulière",
-        _ => type.ToString()
-    };
 
     public async ValueTask DisposeAsync()
     {
