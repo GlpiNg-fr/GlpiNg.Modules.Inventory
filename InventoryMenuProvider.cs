@@ -4,8 +4,8 @@ namespace GlpiNg.Modules.Inventory;
 
 /// <summary>
 /// Contribue le groupe "Parc" (tout le parc matériel/logiciel), l'entrée "Recherches
-/// sauvegardées" du groupe "Outils", les entrées "Inventaire"/"Dictionnaires" du groupe
-/// "Administration", ainsi que l'entrée "Intitulés" du groupe "Configuration" — qui relèvent
+/// sauvegardées" du groupe "Outils", les entrées "Inventaire"/"Dictionnaires"/"Règles" du
+/// groupe "Administration", ainsi que l'entrée "Intitulés" du groupe "Configuration" — qui relèvent
 /// toutes du domaine Inventory (voir Models/GlpiAgent.cs et le protocole GLPI-Agent exposé par ce
 /// module, ainsi que Models/DropdownItem.cs pour les Intitulés). L'entrée "Déploiements" du même
 /// groupe "Outils" est contribuée séparément par DeploymentMenuProvider (module
@@ -45,6 +45,7 @@ public sealed class InventoryMenuProvider : IMenuProvider
         [
             new("Inventaire", "/admin/inventory", "ti-clipboard-list"),
             new("Dictionnaires", "/admin/dictionaries", "ti-book-2"),
+            new("Règles", "/admin/rules", "ti-adjustments"),
         ]),
         new("configuration", "ti-settings", "Configuration",
         [
