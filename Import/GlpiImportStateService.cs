@@ -1,3 +1,4 @@
+using GlpiNg.Modules.Abstractions.Import;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using MySqlConnector;
@@ -34,9 +35,21 @@ public sealed class GlpiImportStateService
     public GlpiImportAnalysis? Analysis { get; private set; }
     public GlpiImportSelection Selection { get; } = new();
 
+    /// <summary>
+    /// Analyse/sélection "Administration" (entités/groupes/profils/utilisateurs) et configuration
+    /// générale — voir <see cref="IGlpiAdminImportService"/> (implémenté par l'hôte). Distincte de
+    /// <see cref="Analysis"/>/<see cref="Selection"/> (parc, module Inventory) car ce sont deux
+    /// services différents, mais pilotée par la même page /admin/import/glpi et le même bouton
+    /// "Analyser"/"Lancer l'import".
+    /// </summary>
+    public GlpiAdminImportAnalysis? AdminAnalysis { get; private set; }
+    public GlpiAdminImportSelection AdminSelection { get; } = new();
+
     public bool IsRunning { get; private set; }
     public GlpiImportResult? LastResult { get; private set; }
     public string? LastError { get; private set; }
+    public GlpiAdminImportResult? LastAdminResult { get; private set; }
+    public string? LastAdminError { get; private set; }
     public DateTime? LastRunAt { get; private set; }
 
     /// <summary>Levé après chaque changement d'état, pour que les pages abonnées se rafraîchissent (StateHasChanged).</summary>
@@ -75,7 +88,7 @@ public sealed class GlpiImportStateService
     public bool CanRun => !IsRunning
         && !IsAnalyzing
         && Analysis is not null
-        && Selection.AnySelected;
+        && (Selection.AnySelected || AdminSelection.AnySelected);
 
     public async Task AnalyzeAsync()
     {
@@ -89,16 +102,21 @@ public sealed class GlpiImportStateService
             IsAnalyzing = true;
             AnalysisError = null;
             Analysis = null;
+            AdminAnalysis = null;
             LastResult = null;
             LastError = null;
+            LastAdminResult = null;
+            LastAdminError = null;
             Changed?.Invoke();
 
             await using AsyncServiceScope scope = _scopeFactory.CreateAsyncScope();
             GlpiMySqlImportService importService = scope.ServiceProvider.GetRequiredService<GlpiMySqlImportService>();
+            IGlpiAdminImportService adminImportService = scope.ServiceProvider.GetRequiredService<IGlpiAdminImportService>();
+            string connectionString = BuildConnectionString();
 
             try
             {
-                GlpiImportAnalysis analysis = await importService.AnalyzeAsync(BuildConnectionString());
+                GlpiImportAnalysis analysis = await importService.AnalyzeAsync(connectionString);
                 Analysis = analysis;
 
                 // Coche par défaut les catégories non vides : rien à gagner à laisser une case
@@ -112,6 +130,15 @@ public sealed class GlpiImportStateService
                 Selection.ImportPeripherals = analysis.PeripheralsCount > 0;
                 Selection.ImportVolumes = analysis.VolumesCount > 0;
                 Selection.ImportBatteries = analysis.BatteriesCount > 0;
+
+                GlpiAdminImportAnalysis adminAnalysis = await adminImportService.AnalyzeAsync(connectionString);
+                AdminAnalysis = adminAnalysis;
+
+                AdminSelection.ImportEntities = adminAnalysis.EntitiesCount > 0;
+                AdminSelection.ImportGroups = adminAnalysis.GroupsCount > 0;
+                AdminSelection.ImportProfiles = adminAnalysis.ProfilesCount > 0;
+                AdminSelection.ImportUsers = adminAnalysis.UsersCount > 0;
+                AdminSelection.ImportGeneralConfig = adminAnalysis.GeneralConfigAvailable;
             }
             catch (Exception ex)
             {
@@ -139,19 +166,38 @@ public sealed class GlpiImportStateService
         {
             IsRunning = true;
             LastError = null;
+            LastAdminError = null;
             Changed?.Invoke();
 
             await using AsyncServiceScope scope = _scopeFactory.CreateAsyncScope();
             GlpiMySqlImportService importService = scope.ServiceProvider.GetRequiredService<GlpiMySqlImportService>();
+            IGlpiAdminImportService adminImportService = scope.ServiceProvider.GetRequiredService<IGlpiAdminImportService>();
+            string connectionString = BuildConnectionString();
 
-            try
+            if (Selection.AnySelected)
             {
-                LastResult = await importService.RunAsync(connectionStringOverride: BuildConnectionString(), selection: Selection);
+                try
+                {
+                    LastResult = await importService.RunAsync(connectionStringOverride: connectionString, selection: Selection);
+                }
+                catch (Exception ex)
+                {
+                    LastError = ex.Message;
+                    LastResult = null;
+                }
             }
-            catch (Exception ex)
+
+            if (AdminSelection.AnySelected)
             {
-                LastError = ex.Message;
-                LastResult = null;
+                try
+                {
+                    LastAdminResult = await adminImportService.RunAsync(connectionString, AdminSelection);
+                }
+                catch (Exception ex)
+                {
+                    LastAdminError = ex.Message;
+                    LastAdminResult = null;
+                }
             }
 
             LastRunAt = DateTime.UtcNow;

@@ -66,7 +66,7 @@
     </div>
 }
 
-@if (State.Analysis is { } analysis)
+@if (State.Analysis is { } analysis && State.AdminAnalysis is { } adminAnalysis)
 {
     <div class="card mb-3">
         <div class="card-header">
@@ -159,6 +159,63 @@
             <p class="hint mt-2">
                 CPU : @analysis.CpuCount · RAM : @analysis.RamCount · Disques : @analysis.DiskCount ·
                 Cartes réseau : @analysis.NetworkCardCount
+            </p>
+
+            <div class="glpi-config-divider">
+                <span><i class="ti ti-users-group"></i> Administration &amp; configuration</span>
+            </div>
+
+            <div class="glpi-config-field-grid">
+                <div class="glpi-config-field checkbox">
+                    <label for="glpi-import-sel-entities"><i class="ti ti-building me-2"></i>Entités (@adminAnalysis.EntitiesCount)</label>
+                    <label class="glpi-switch">
+                        <input id="glpi-import-sel-entities" type="checkbox" @bind="State.AdminSelection.ImportEntities"
+                               disabled="@(State.IsRunning || adminAnalysis.EntitiesCount == 0)" />
+                        <span class="glpi-switch-slider"></span>
+                    </label>
+                </div>
+
+                <div class="glpi-config-field checkbox">
+                    <label for="glpi-import-sel-groups"><i class="ti ti-users me-2"></i>Groupes (@adminAnalysis.GroupsCount)</label>
+                    <label class="glpi-switch">
+                        <input id="glpi-import-sel-groups" type="checkbox" @bind="State.AdminSelection.ImportGroups"
+                               disabled="@(State.IsRunning || adminAnalysis.GroupsCount == 0)" />
+                        <span class="glpi-switch-slider"></span>
+                    </label>
+                </div>
+
+                <div class="glpi-config-field checkbox">
+                    <label for="glpi-import-sel-profiles"><i class="ti ti-shield-lock me-2"></i>Profils (@adminAnalysis.ProfilesCount)</label>
+                    <label class="glpi-switch">
+                        <input id="glpi-import-sel-profiles" type="checkbox" @bind="State.AdminSelection.ImportProfiles"
+                               disabled="@(State.IsRunning || adminAnalysis.ProfilesCount == 0)" />
+                        <span class="glpi-switch-slider"></span>
+                    </label>
+                </div>
+
+                <div class="glpi-config-field checkbox">
+                    <label for="glpi-import-sel-users"><i class="ti ti-user me-2"></i>Utilisateurs (@adminAnalysis.UsersCount)</label>
+                    <label class="glpi-switch">
+                        <input id="glpi-import-sel-users" type="checkbox" @bind="State.AdminSelection.ImportUsers"
+                               disabled="@(State.IsRunning || adminAnalysis.UsersCount == 0)" />
+                        <span class="glpi-switch-slider"></span>
+                    </label>
+                </div>
+
+                <div class="glpi-config-field checkbox">
+                    <label for="glpi-import-sel-config"><i class="ti ti-settings me-2"></i>Configuration générale</label>
+                    <label class="glpi-switch">
+                        <input id="glpi-import-sel-config" type="checkbox" @bind="State.AdminSelection.ImportGeneralConfig"
+                               disabled="@(State.IsRunning || !adminAnalysis.GeneralConfigAvailable)" />
+                        <span class="glpi-switch-slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <p class="hint mt-2">
+                Profils : seuls le nom, le commentaire et le statut par défaut sont importés (les droits fins par
+                module ne le sont pas — à configurer manuellement). Configuration générale : uniquement les
+                réglages ayant un équivalent direct dans "Configuration générale" &gt; "Général".
             </p>
 
             <button type="button" class="glpi-config-save mt-2" disabled="@(!State.CanRun)" @onclick="RunImportAsync">
@@ -299,6 +356,70 @@
                 <div class="glpi-fiche-block-title"><i class="ti ti-alert-triangle"></i>Avertissements</div>
                 <ul>
                     @foreach (string warning in result.Warnings)
+                    {
+                        <li>@warning</li>
+                    }
+                </ul>
+            }
+        }
+
+        @if (State.LastAdminError is not null)
+        {
+            <div class="alert alert-danger">
+                <i class="ti ti-alert-circle me-1"></i>@State.LastAdminError
+            </div>
+        }
+
+        @if (State.LastAdminResult is { } adminResult)
+        {
+            <div class="row row-cards mb-3">
+                <div class="col-6 col-md-3">
+                    <div class="card card-sm">
+                        <div class="card-body text-center">
+                            <div class="fs-2 fw-bold">@(adminResult.EntitiesCreated + adminResult.EntitiesUpdated)</div>
+                            <div class="text-secondary">Entités (@adminResult.EntitiesCreated créées)</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card card-sm">
+                        <div class="card-body text-center">
+                            <div class="fs-2 fw-bold">@(adminResult.GroupsCreated + adminResult.GroupsUpdated)</div>
+                            <div class="text-secondary">Groupes (@adminResult.GroupsCreated créés)</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card card-sm">
+                        <div class="card-body text-center">
+                            <div class="fs-2 fw-bold">@(adminResult.ProfilesCreated + adminResult.ProfilesUpdated)</div>
+                            <div class="text-secondary">Profils (@adminResult.ProfilesCreated créés)</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card card-sm">
+                        <div class="card-body text-center">
+                            <div class="fs-2 fw-bold">@(adminResult.UsersCreated + adminResult.UsersUpdated)</div>
+                            <div class="text-secondary">Utilisateurs (@adminResult.UsersCreated créés)</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card card-sm">
+                        <div class="card-body text-center">
+                            <div class="fs-2 fw-bold">@adminResult.GeneralConfigKeysImported</div>
+                            <div class="text-secondary">Réglages généraux importés</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (adminResult.Warnings.Count > 0)
+            {
+                <div class="glpi-fiche-block-title"><i class="ti ti-alert-triangle"></i>Avertissements (Administration)</div>
+                <ul>
+                    @foreach (string warning in adminResult.Warnings)
                     {
                         <li>@warning</li>
                     }

@@ -1,12 +1,17 @@
+using GlpiNg.Modules.Abstractions.Import;
 using GlpiNg.Modules.Inventory.Import;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace GlpiNg.Modules.Inventory.Controllers;
 
 /// <summary>
 /// Déclenche l'import de données depuis une base GLPI MySQL source (configuration
-/// "GlpiImport:ConnectionString" — voir appsettings/user-secrets).
+/// "GlpiImport:ConnectionString" — voir appsettings/user-secrets) : parc (<see cref="GlpiMySqlImportService"/>)
+/// et Administration/configuration générale (<see cref="IGlpiAdminImportService"/>, implémenté par
+/// l'hôte) d'un seul coup, toutes catégories confondues (voir les constructeurs par défaut de
+/// <see cref="GlpiImportSelection"/> et <see cref="GlpiAdminImportSelection"/>).
 ///
 /// Protégé par un jeton OAuth2 Bearer portant le scope "api" ou "inventory" (policy
 /// "OAuthApiAccess" définie dans Program.cs) plutôt que par le FallbackPolicy global
@@ -18,12 +23,18 @@ namespace GlpiNg.Modules.Inventory.Controllers;
 [ApiController]
 [Route("admin/import/glpi")]
 [Authorize(AuthenticationSchemes = "Bearer", Policy = "OAuthApiAccess")]
-public class GlpiImportController(GlpiMySqlImportService importService) : ControllerBase
+public class GlpiImportController(
+    GlpiMySqlImportService importService,
+    IGlpiAdminImportService adminImportService,
+    IOptions<GlpiImportOptions> options) : ControllerBase
 {
     [HttpPost]
-    public async Task<ActionResult<GlpiImportResult>> Run(CancellationToken cancellationToken)
+    public async Task<ActionResult<GlpiFullImportResult>> Run(CancellationToken cancellationToken)
     {
-        GlpiImportResult result = await importService.RunAsync(cancellationToken);
-        return Ok(result);
+        GlpiImportResult inventoryResult = await importService.RunAsync(cancellationToken);
+        GlpiAdminImportResult adminResult = await adminImportService.RunAsync(
+            options.Value.ConnectionString, new GlpiAdminImportSelection(), cancellationToken);
+
+        return Ok(new GlpiFullImportResult { Inventory = inventoryResult, Administration = adminResult });
     }
 }
