@@ -1,0 +1,66 @@
+@page "/admin/import-rules/refused"
+@rendermode InteractiveServer
+
+<PageTitle>GlpiNg — Historique des équipements refusés</PageTitle>
+
+<h3 class="mb-3"><i class="ti ti-history me-2"></i>Historique des équipements refusés</h3>
+
+<ImportRulesTopMenu Current="refused" />
+
+<div class="glpi-list-page">
+<div class="card">
+    <div class="card-header d-flex align-items-center justify-content-between glpi-list-toolbar">
+        <p class="text-secondary mb-0"><i class="ti ti-info-circle me-1"></i>Inventaires rejetés par une règle d'import (action « Refuser l'import »).</p>
+
+        <div class="btn-list align-items-center">
+            <button type="button" class="btn btn-icon" @onclick="LoadAsync" title="Rafraîchir">
+                <i class="ti ti-refresh"></i>
+            </button>
+            <button type="button" class="btn btn-outline-danger" disabled="@(_entries.Count == 0)" @onclick="ClearAllAsync">
+                <i class="ti ti-trash me-1"></i>Vider l'historique
+            </button>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Règle</th>
+                    <th>Nom de l'équipement</th>
+                    <th>Numéro de série</th>
+                    <th>Domaine</th>
+                    <th>Tag</th>
+                    <th>Adresse IP</th>
+                    <th>Agent</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (_entries.Count == 0)
+                {
+                    <tr>
+                        <td colspan="8" class="text-center text-secondary py-4">Aucun équipement refusé.</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (RefusedImportLog entry in _entries)
+                    {
+                        <tr>
+                            <td class="text-nowrap">@entry.OccurredAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>@entry.RuleName</td>
+                            <td>@(entry.ComputerName ?? "—")</td>
+                            <td>@(entry.SerialNumber ?? "—")</td>
+                            <td>@(entry.Domain ?? "—")</td>
+                            <td>@(entry.Tag ?? "—")</td>
+                            <td>@(entry.IpAddress ?? "—")</td>
+                            <td>@(entry.AgentIdentifier ?? "—")</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+</div>

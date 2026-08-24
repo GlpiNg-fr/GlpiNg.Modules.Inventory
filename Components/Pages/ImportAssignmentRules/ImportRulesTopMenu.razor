@@ -1,0 +1,27 @@
+<div class="card mb-3">
+    <div class="card-header">
+        <ul class="nav nav-tabs card-header-tabs" style="border-bottom: none;">
+            <li class="nav-item">
+                <a href="/admin/import-rules" class="nav-link @(Current == "rules" ? "active" : "")">
+                    <i class="ti ti-route me-1"></i>Règles sur l'entité ordinateur
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/import-rules/blacklist" class="nav-link @(Current == "blacklist" ? "active" : "")">
+                    <i class="ti ti-eye-off me-1"></i>Liste noire
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/import-rules/refused" class="nav-link @(Current == "refused" ? "active" : "")">
+                    <i class="ti ti-history me-1"></i>Historique des équipements refusés
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+@code {
+    /// <summary>Onglet actuellement affiché ("rules"/"blacklist"/"refused") — voir Administration > GLPI Inventory > Règles sur l'instance GLPI réelle, dont ces trois pages reprennent le découpage.</summary>
+    [Parameter, EditorRequired]
+    public string Current { get; set; } = string.Empty;
+}

@@ -1,0 +1,142 @@
+@page "/admin/import-rules/blacklist"
+@using GlpiNg.Modules.Inventory.Models
+@rendermode InteractiveServer
+
+<PageTitle>GlpiNg — Liste noire</PageTitle>
+
+<h3 class="mb-3"><i class="ti ti-eye-off me-2"></i>Liste noire</h3>
+
+<ImportRulesTopMenu Current="blacklist" />
+
+<div class="glpi-list-page">
+<div class="card">
+    <div class="card-header d-flex align-items-center justify-content-between glpi-list-toolbar">
+        <label class="form-check m-0 px-2" title="Tout sélectionner">
+            <input class="form-check-input m-0" type="checkbox" checked="@AllSelected"
+                   @onchange="@((ChangeEventArgs e) => ToggleSelectAll((bool)(e.Value ?? false)))" />
+        </label>
+
+        <div class="btn-list align-items-center">
+            <div class="dropdown">
+                <button type="button" class="btn btn-icon text-danger" data-bs-toggle="dropdown" aria-expanded="false"
+                        disabled="@(_selectedIds.Count == 0)" title="Supprimer la sélection">
+                    <i class="ti ti-trash"></i>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end p-3" style="min-width: 260px;">
+                    <p class="mb-2">Supprimer @_selectedIds.Count valeur(s) sélectionnée(s) ?</p>
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-sm">Annuler</button>
+                        <button type="button" class="btn btn-sm btn-danger" @onclick="DeleteSelectedAsync">Supprimer</button>
+                    </div>
+                </div>
+            </div>
+
+            <button type="button" class="btn btn-icon" @onclick="LoadAsync" title="Rafraîchir">
+                <i class="ti ti-refresh"></i>
+            </button>
+
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newImportBlacklistEntryModal">
+                <i class="ti ti-plus me-1"></i>Ajouter
+            </button>
+        </div>
+    </div>
+
+    <p class="text-secondary px-3 pt-3 mb-0">
+        <i class="ti ti-info-circle me-1"></i>Une valeur listée ici (IP, MAC ou numéro de série connu comme factice)
+        est traitée comme absente à l'inventaire plutôt qu'enregistrée telle quelle.
+    </p>
+
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+            <thead>
+                <tr>
+                    <th style="width: 2.5rem;"></th>
+                    <th>Nom</th>
+                    <th>Type</th>
+                    <th>Valeur</th>
+                    <th style="width: 3rem;"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (_entries.Count == 0)
+                {
+                    <tr>
+                        <td colspan="5" class="text-center text-secondary py-4">Aucune valeur en liste noire.</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (ImportBlacklistEntry entry in _entries)
+                    {
+                        <tr>
+                            <td>
+                                <input class="form-check-input m-0" type="checkbox" checked="@_selectedIds.Contains(entry.Id)"
+                                       @onchange="@((ChangeEventArgs e) => ToggleSelect(entry.Id, (bool)(e.Value ?? false)))" />
+                            </td>
+                            <td>@entry.Name</td>
+                            <td>@BlacklistTypeLabel(entry.Type)</td>
+                            <td class="text-secondary">@entry.Value</td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-icon text-danger" title="Supprimer" @onclick="() => DeleteSelectedSingleAsync(entry.Id)">
+                                    <i class="ti ti-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+</div>
+
+<div class="modal fade" id="newImportBlacklistEntryModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="ti ti-eye-off me-2"></i>Nouvelle valeur en liste noire</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <div class="glpi-fiche-field">
+                    <label>Nom</label>
+                    <input class="form-control" @bind="_newEntry.Name" @bind:event="oninput" />
+                </div>
+                <div class="glpi-fiche-field">
+                    <label>Type</label>
+                    <select class="form-select" @bind="_newEntry.Type">
+                        <option value="@ImportBlacklistType.IpAddress">IP</option>
+                        <option value="@ImportBlacklistType.MacAddress">MAC</option>
+                        <option value="@ImportBlacklistType.SerialNumber">Numéro de série</option>
+                    </select>
+                </div>
+                <div class="glpi-fiche-field">
+                    <label>Valeur</label>
+                    <input class="form-control" @bind="_newEntry.Value" @bind:event="oninput" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-warning" disabled="@string.IsNullOrWhiteSpace(_newEntry.Name)" @onclick="CreateAsync">
+                    <i class="ti ti-plus me-1"></i>Ajouter
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private static string BlacklistTypeLabel(ImportBlacklistType type) => type switch
+    {
+        ImportBlacklistType.IpAddress => "IP",
+        ImportBlacklistType.MacAddress => "MAC",
+        ImportBlacklistType.SerialNumber => "Numéro de série",
+        _ => type.ToString()
+    };
+
+    private Task DeleteSelectedSingleAsync(int id)
+    {
+        _selectedIds.Clear();
+        _selectedIds.Add(id);
+        return DeleteSelectedAsync();
+    }
+}
