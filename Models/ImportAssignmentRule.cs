@@ -1,3 +1,5 @@
+using GlpiNg.Modules.Abstractions.Entities;
+
 namespace GlpiNg.Modules.Inventory.Models;
 
 /// <summary>Opérateur logique combinant tous les critères d'une règle (même principe que ComputerRuleLogicalOperator).</summary>
@@ -24,8 +26,14 @@ public enum ImportAssignmentRuleLogicalOperator
 /// responsable (Computer.AssignedUser, déjà un champ texte libre) et le refus d'import sont
 /// proposés.
 /// </summary>
-public class ImportAssignmentRule
+public class ImportAssignmentRule : IEntityScoped
 {
+    /// <inheritdoc />
+    public int? EntityId { get; set; }
+
+    /// <inheritdoc />
+    public bool IsRecursive { get; set; }
+
     public int Id { get; set; }
     public required string Name { get; set; }
     public string? Comment { get; set; }

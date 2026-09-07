@@ -1,7 +1,15 @@
+using GlpiNg.Modules.Abstractions.Entities;
+
 namespace GlpiNg.Modules.Inventory.Models;
 
-public class Computer
+public class Computer : IEntityScoped
 {
+    /// <inheritdoc />
+    public int? EntityId { get; set; }
+
+    /// <inheritdoc />
+    public bool IsRecursive { get; set; }
+
     public int Id { get; set; }
     public required string Name { get; set; }
     public string? SerialNumber { get; set; }

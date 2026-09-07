@@ -1,3 +1,5 @@
+using GlpiNg.Modules.Abstractions.Entities;
+
 namespace GlpiNg.Modules.Inventory.Models;
 
 /// <summary>Opérateur logique combinant tous les critères d'une règle (même principe que DictionaryRuleLogicalOperator).</summary>
@@ -27,8 +29,14 @@ public enum ComputerRuleAppliesTo
 /// comme le moteur de règles générique de GLPI (onglets Règle/Critères/Actions) — c'est
 /// précisément le cas que DictionaryRule laisse volontairement de côté (voir sa doc).
 /// </summary>
-public class ComputerRule
+public class ComputerRule : IEntityScoped
 {
+    /// <inheritdoc />
+    public int? EntityId { get; set; }
+
+    /// <inheritdoc />
+    public bool IsRecursive { get; set; }
+
     public int Id { get; set; }
     public required string Name { get; set; }
     public string? Comment { get; set; }

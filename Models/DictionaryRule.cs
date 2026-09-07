@@ -1,3 +1,5 @@
+using GlpiNg.Modules.Abstractions.Entities;
+
 namespace GlpiNg.Modules.Inventory.Models;
 
 /// <summary>
@@ -69,8 +71,14 @@ public enum DictionaryActionType
 /// par règle au travers de trois onglets (Règle/Critères/Actions) — ici, l'action est un
 /// simple champ de la règle elle-même (onglet "Règle" et "Critères" seulement côté UI).
 /// </summary>
-public class DictionaryRule
+public class DictionaryRule : IEntityScoped
 {
+    /// <inheritdoc />
+    public int? EntityId { get; set; }
+
+    /// <inheritdoc />
+    public bool IsRecursive { get; set; }
+
     public int Id { get; set; }
     public DictionaryRuleType Type { get; set; }
     public required string Name { get; set; }

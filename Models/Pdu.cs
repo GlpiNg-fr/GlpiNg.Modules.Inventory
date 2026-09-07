@@ -1,8 +1,16 @@
+using GlpiNg.Modules.Abstractions.Entities;
+
 namespace GlpiNg.Modules.Inventory.Models;
 
 /// <summary>PDU (bandeau d'alimentation) du parc : équivalent de glpi_pdus dans GLPI. Actif géré manuellement, même principe que <see cref="NetworkEquipment"/>.</summary>
-public class Pdu
+public class Pdu : IEntityScoped
 {
+    /// <inheritdoc />
+    public int? EntityId { get; set; }
+
+    /// <inheritdoc />
+    public bool IsRecursive { get; set; }
+
     public int Id { get; set; }
     public required string Name { get; set; }
 

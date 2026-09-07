@@ -1,3 +1,5 @@
+using GlpiNg.Modules.Abstractions.Entities;
+
 namespace GlpiNg.Modules.Inventory.Models;
 
 /// <summary>
@@ -6,8 +8,14 @@ namespace GlpiNg.Modules.Inventory.Models;
 /// vers une imprimante — un consommable est soit en stock, soit consommé, jamais "en service" sur
 /// un actif précis (voir <see cref="Consumable"/>).
 /// </summary>
-public class ConsumableItem
+public class ConsumableItem : IEntityScoped
 {
+    /// <inheritdoc />
+    public int? EntityId { get; set; }
+
+    /// <inheritdoc />
+    public bool IsRecursive { get; set; }
+
     public int Id { get; set; }
     public required string Name { get; set; }
 

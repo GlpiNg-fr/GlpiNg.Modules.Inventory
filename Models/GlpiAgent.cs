@@ -1,3 +1,5 @@
+using GlpiNg.Modules.Abstractions.Entities;
+
 namespace GlpiNg.Modules.Inventory.Models;
 
 /// <summary>
@@ -8,8 +10,14 @@ namespace GlpiNg.Modules.Inventory.Models;
 /// navigation object-relationnelle, afin de ne pas créer de dépendance de ce module
 /// vers le module Deploy.
 /// </summary>
-public class GlpiAgent
+public class GlpiAgent : IEntityScoped
 {
+    /// <inheritdoc />
+    public int? EntityId { get; set; }
+
+    /// <inheritdoc />
+    public bool IsRecursive { get; set; }
+
     public int Id { get; set; }
 
     /// <summary>

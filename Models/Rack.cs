@@ -1,8 +1,16 @@
+using GlpiNg.Modules.Abstractions.Entities;
+
 namespace GlpiNg.Modules.Inventory.Models;
 
 /// <summary>Baie du parc : équivalent de glpi_racks dans GLPI. Actif géré manuellement, même principe que <see cref="NetworkEquipment"/>.</summary>
-public class Rack
+public class Rack : IEntityScoped
 {
+    /// <inheritdoc />
+    public int? EntityId { get; set; }
+
+    /// <inheritdoc />
+    public bool IsRecursive { get; set; }
+
     public int Id { get; set; }
     public required string Name { get; set; }
 

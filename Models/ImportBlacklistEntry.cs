@@ -1,3 +1,5 @@
+using GlpiNg.Modules.Abstractions.Entities;
+
 namespace GlpiNg.Modules.Inventory.Models;
 
 /// <summary>Nature de la valeur factice couverte par une entrée de liste noire — voir ImportBlacklistEntry.</summary>
@@ -19,8 +21,14 @@ public enum ImportBlacklistType
 /// que fait GLPI ici, contrairement à RuleImportEntity (voir ImportAssignmentRule.cs) qui est un
 /// vrai moteur de règles.
 /// </summary>
-public class ImportBlacklistEntry
+public class ImportBlacklistEntry : IEntityScoped
 {
+    /// <inheritdoc />
+    public int? EntityId { get; set; }
+
+    /// <inheritdoc />
+    public bool IsRecursive { get; set; }
+
     public int Id { get; set; }
     public required string Name { get; set; }
     public ImportBlacklistType Type { get; set; }

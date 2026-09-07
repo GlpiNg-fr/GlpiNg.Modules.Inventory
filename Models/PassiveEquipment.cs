@@ -1,8 +1,16 @@
+using GlpiNg.Modules.Abstractions.Entities;
+
 namespace GlpiNg.Modules.Inventory.Models;
 
 /// <summary>Équipement passif du parc (baie de brassage, prise, ...) : équivalent de glpi_passivedcequipments dans GLPI. Actif géré manuellement, même principe que <see cref="NetworkEquipment"/>.</summary>
-public class PassiveEquipment
+public class PassiveEquipment : IEntityScoped
 {
+    /// <inheritdoc />
+    public int? EntityId { get; set; }
+
+    /// <inheritdoc />
+    public bool IsRecursive { get; set; }
+
     public int Id { get; set; }
     public required string Name { get; set; }
 

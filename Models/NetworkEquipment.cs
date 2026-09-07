@@ -1,3 +1,5 @@
+using GlpiNg.Modules.Abstractions.Entities;
+
 namespace GlpiNg.Modules.Inventory.Models;
 
 /// <summary>
@@ -5,8 +7,14 @@ namespace GlpiNg.Modules.Inventory.Models;
 /// glpi_networkequipments dans GLPI. Actif géré manuellement depuis l'UI (voir
 /// Components/Pages/NetworkEquipments), au même titre que <see cref="Peripheral"/>.
 /// </summary>
-public class NetworkEquipment
+public class NetworkEquipment : IEntityScoped
 {
+    /// <inheritdoc />
+    public int? EntityId { get; set; }
+
+    /// <inheritdoc />
+    public bool IsRecursive { get; set; }
+
     public int Id { get; set; }
     public required string Name { get; set; }
 

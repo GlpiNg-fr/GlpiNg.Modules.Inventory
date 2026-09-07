@@ -1,3 +1,5 @@
+using GlpiNg.Modules.Abstractions.Entities;
+
 namespace GlpiNg.Modules.Inventory.Models;
 
 /// <summary>Mode de calcul du nombre de résultats affiché pour une recherche sauvegardée, au sens GLPI ("Compter").</summary>
@@ -16,8 +18,14 @@ public enum SavedSearchCountMode
 /// CriteriaJson/SortJson sérialisent la forme de critères/tri propre à la page qui les a créées
 /// (ex. Computers/Index.SearchCriterion[] et SortCriterion[] — voir Index.razor.cs).
 /// </summary>
-public class SavedSearch
+public class SavedSearch : IEntityScoped
 {
+    /// <inheritdoc />
+    public int? EntityId { get; set; }
+
+    /// <inheritdoc />
+    public bool IsRecursive { get; set; }
+
     public int Id { get; set; }
     public required string Name { get; set; }
 

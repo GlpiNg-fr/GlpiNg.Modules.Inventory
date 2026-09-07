@@ -1,3 +1,5 @@
+using GlpiNg.Modules.Abstractions.Entities;
+
 namespace GlpiNg.Modules.Inventory.Models;
 
 /// <summary>
@@ -7,8 +9,14 @@ namespace GlpiNg.Modules.Inventory.Models;
 /// <see cref="Cartridge"/> individuelle rattachée à ce modèle (voir sa doc), avec son propre cycle
 /// de vie (réceptionnée / mise en service sur une imprimante / retirée).
 /// </summary>
-public class CartridgeItem
+public class CartridgeItem : IEntityScoped
 {
+    /// <inheritdoc />
+    public int? EntityId { get; set; }
+
+    /// <inheritdoc />
+    public bool IsRecursive { get; set; }
+
     public int Id { get; set; }
     public required string Name { get; set; }
 

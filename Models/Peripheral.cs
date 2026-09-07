@@ -1,3 +1,5 @@
+using GlpiNg.Modules.Abstractions.Entities;
+
 namespace GlpiNg.Modules.Inventory.Models;
 
 /// <summary>
@@ -7,8 +9,14 @@ namespace GlpiNg.Modules.Inventory.Models;
 /// manuellement depuis l'UI (voir Components/Pages/Peripherals), au même titre que GlpiGroup
 /// ou GlpiEntity côté hôte.
 /// </summary>
-public class Peripheral
+public class Peripheral : IEntityScoped
 {
+    /// <inheritdoc />
+    public int? EntityId { get; set; }
+
+    /// <inheritdoc />
+    public bool IsRecursive { get; set; }
+
     public int Id { get; set; }
     public required string Name { get; set; }
 

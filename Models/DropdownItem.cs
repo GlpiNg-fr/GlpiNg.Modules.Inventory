@@ -1,3 +1,5 @@
+using GlpiNg.Modules.Abstractions.Entities;
+
 namespace GlpiNg.Modules.Inventory.Models;
 
 /// <summary>
@@ -48,8 +50,14 @@ public enum DropdownType
 /// Computers/Detail.razor, champs Fabricant/Type/Modèle/Système d'exploitation/Version) — les deux
 /// mécanismes sont indépendants et peuvent coexister sur un même champ.
 /// </summary>
-public class DropdownItem
+public class DropdownItem : IEntityScoped
 {
+    /// <inheritdoc />
+    public int? EntityId { get; set; }
+
+    /// <inheritdoc />
+    public bool IsRecursive { get; set; }
+
     public int Id { get; set; }
     public DropdownType Type { get; set; }
     public required string Name { get; set; }

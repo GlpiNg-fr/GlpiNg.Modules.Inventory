@@ -1,8 +1,16 @@
+using GlpiNg.Modules.Abstractions.Entities;
+
 namespace GlpiNg.Modules.Inventory.Models;
 
 /// <summary>Imprimante du parc : équivalent de glpi_printers dans GLPI. Actif géré manuellement, même principe que <see cref="NetworkEquipment"/>.</summary>
-public class Printer
+public class Printer : IEntityScoped
 {
+    /// <inheritdoc />
+    public int? EntityId { get; set; }
+
+    /// <inheritdoc />
+    public bool IsRecursive { get; set; }
+
     public int Id { get; set; }
     public required string Name { get; set; }
 

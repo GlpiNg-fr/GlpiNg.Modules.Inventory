@@ -1,3 +1,5 @@
+using GlpiNg.Modules.Abstractions.Entities;
+
 namespace GlpiNg.Modules.Inventory.Models;
 
 /// <summary>Type d'actif pouvant être l'extrémité d'un <see cref="Cable"/> — limité aux types
@@ -21,8 +23,14 @@ public enum CableEndpointType
 /// d'annuaire inter-module utilisée par Deployment ; la résolution se fait directement via
 /// CableEndpointCatalog.
 /// </summary>
-public class Cable
+public class Cable : IEntityScoped
 {
+    /// <inheritdoc />
+    public int? EntityId { get; set; }
+
+    /// <inheritdoc />
+    public bool IsRecursive { get; set; }
+
     public int Id { get; set; }
     public required string Name { get; set; }
 

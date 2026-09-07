@@ -1,8 +1,16 @@
+using GlpiNg.Modules.Abstractions.Entities;
+
 namespace GlpiNg.Modules.Inventory.Models;
 
 /// <summary>Châssis du parc (lame serveur, ...) : équivalent de glpi_enclosures dans GLPI. Actif géré manuellement, même principe que <see cref="NetworkEquipment"/>.</summary>
-public class Enclosure
+public class Enclosure : IEntityScoped
 {
+    /// <inheritdoc />
+    public int? EntityId { get; set; }
+
+    /// <inheritdoc />
+    public bool IsRecursive { get; set; }
+
     public int Id { get; set; }
     public required string Name { get; set; }
 
