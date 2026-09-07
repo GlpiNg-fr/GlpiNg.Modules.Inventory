@@ -1,0 +1,96 @@
+@using GlpiNg.Modules.Inventory.Search
+
+@* Panneau « Trier », pendant de SearchCriteriaPanel : même extraction, même absence de généricité. *@
+
+<div class="dropdown">
+    <button type="button" class="btn dropdown-toggle" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false"
+            title="Depuis les en-têtes de colonnes : clic pour trier, Ctrl+clic pour un tri secondaire">
+        <i class="ti ti-arrows-sort me-1"></i>Trier
+        @if (SortCriteria.Count > 0)
+        {
+            <span class="badge bg-blue-lt ms-1">@SortCriteria.Count</span>
+        }
+    </button>
+    <div class="dropdown-menu p-3" style="min-width: 420px;">
+        @if (SortCriteria.Count == 0)
+        {
+            <p class="text-secondary mb-2">Aucun tri actif.</p>
+        }
+        @foreach (SortCriterion sortCriterion in SortCriteria)
+        {
+            <div class="row g-2 align-items-center mb-2">
+                <div class="col">
+                    <select class="form-select form-select-sm" value="@sortCriterion.Field"
+                            @onchange="@((ChangeEventArgs e) => sortCriterion.Field = (string)e.Value!)">
+                        @foreach (SearchField field in SortableFields)
+                        {
+                            <option value="@field.Key">@field.Label</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-auto" style="width: 9.5rem;">
+                    <select class="form-select form-select-sm" value="@(sortCriterion.Descending ? "desc" : "asc")"
+                            @onchange="@((ChangeEventArgs e) => sortCriterion.Descending = (string)e.Value! == "desc")">
+                        <option value="asc">Croissant</option>
+                        <option value="desc">Décroissant</option>
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <button type="button" class="btn btn-icon btn-sm" title="Supprimer ce tri"
+                            @onclick="() => SortCriteria.Remove(sortCriterion)">
+                        <i class="ti ti-trash"></i>
+                    </button>
+                </div>
+            </div>
+        }
+
+        <div class="d-flex align-items-center justify-content-between mt-3">
+            <button type="button" class="btn btn-sm" disabled="@(SortCriteria.Count >= SortableFields.Count)" @onclick="AddSortCriterion">
+                <i class="ti ti-circle-plus me-1"></i>Ajouter un autre tri
+            </button>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-sm" @onclick="ResetAsync">Réinitialiser le tri</button>
+                <button type="button" class="btn btn-sm btn-primary" @onclick="OnApply">
+                    <i class="ti ti-arrows-sort me-1"></i>Trier
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public IReadOnlyList<SearchField> Fields { get; set; } = [];
+
+    [Parameter, EditorRequired]
+    public List<SortCriterion> SortCriteria { get; set; } = null!;
+
+    [Parameter, EditorRequired]
+    public EventCallback OnApply { get; set; }
+
+    /// <summary>Champ retenu quand le tri est réinitialisé, et premier tri par défaut.</summary>
+    [Parameter]
+    public string DefaultSortField { get; set; } = "name";
+
+    /// <summary>« Tous les champs » n'est pas un champ réel : on ne peut pas trier dessus.</summary>
+    private List<SearchField> SortableFields => [.. Fields.Where(candidate => candidate.Key != SearchField.AllFieldsKey)];
+
+    private void AddSortCriterion()
+    {
+        string? nextField = SortableFields
+            .Select(candidate => candidate.Key)
+            .FirstOrDefault(key => SortCriteria.All(criterion => criterion.Field != key));
+
+        if (nextField is not null)
+        {
+            SortCriteria.Add(new SortCriterion { Field = nextField });
+        }
+    }
+
+    private Task ResetAsync()
+    {
+        SortCriteria.Clear();
+        SortCriteria.Add(new SortCriterion { Field = DefaultSortField });
+        return OnApply.InvokeAsync();
+    }
+}

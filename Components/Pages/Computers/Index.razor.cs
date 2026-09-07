@@ -1,6 +1,7 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using System.Text.Json;
 using GlpiNg.Modules.Inventory.Models;
+using GlpiNg.Modules.Inventory.Search;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
@@ -11,85 +12,35 @@ namespace GlpiNg.Modules.Inventory.Components.Pages.Computers;
 
 public partial class Index : ComponentBase
 {
-    private enum SearchFieldType
-    {
-        Text,
-        Number,
-        Date
-    }
-
     private enum SavedSearchesTab
     {
         Computer,
         Other
     }
 
-    private sealed record SearchFieldDefinition(string Key, string Label, SearchFieldType Type);
-
-    private sealed class SearchCriterion
-    {
-        public string Link { get; set; } = "AND";
-        public string FieldKey { get; set; } = "all";
-        public string Operator { get; set; } = "contains";
-        public string Value { get; set; } = string.Empty;
-    }
-
-    private sealed class SortCriterion
-    {
-        public string Field { get; set; } = "name";
-        public bool Descending { get; set; }
-    }
-
-    private static readonly Dictionary<SearchFieldType, (string Value, string Label)[]> OperatorsByType = new()
-    {
-        [SearchFieldType.Text] =
-        [
-            ("contains", "contient"),
-            ("notcontains", "ne contient pas"),
-            ("equals", "est"),
-            ("notequals", "n'est pas"),
-            ("empty", "est vide")
-        ],
-        [SearchFieldType.Number] =
-        [
-            ("equals", "est"),
-            ("notequals", "n'est pas"),
-            ("greaterthan", "supérieur à"),
-            ("lessthan", "inférieur à"),
-            ("empty", "est vide")
-        ],
-        [SearchFieldType.Date] =
-        [
-            ("equals", "est"),
-            ("before", "avant le"),
-            ("after", "après le"),
-            ("empty", "est vide")
-        ]
-    };
-
-    private static readonly SearchFieldDefinition[] SearchFields =
+    private static readonly SearchField<Computer>[] SearchFields =
     [
-        new("all", "Tous les champs", SearchFieldType.Text),
-        new("name", "Nom", SearchFieldType.Text),
-        new("status", "Statut", SearchFieldType.Text),
-        new("manufacturer", "Fabricant", SearchFieldType.Text),
-        new("model", "Modèle", SearchFieldType.Text),
-        new("serial", "Numéro de série", SearchFieldType.Text),
-        new("chassistype", "Type", SearchFieldType.Text),
-        new("os", "Système d'exploitation", SearchFieldType.Text),
-        new("osversion", "Version de l'OS", SearchFieldType.Text),
-        new("oskernel", "Version du noyau", SearchFieldType.Text),
-        new("uuid", "UUID matériel", SearchFieldType.Text),
-        new("vmsystem", "Système de virtualisation", SearchFieldType.Text),
-        new("site", "Site", SearchFieldType.Text),
-        new("building", "Bâtiment", SearchFieldType.Text),
-        new("room", "Salle", SearchFieldType.Text),
-        new("assigneduser", "Usager", SearchFieldType.Text),
-        new("lastloggeduser", "Dernier utilisateur connecté", SearchFieldType.Text),
-        new("memory", "Mémoire (Mo)", SearchFieldType.Number),
-        new("battery", "Batterie (%)", SearchFieldType.Number),
-        new("lastinventory", "Dernière remontée", SearchFieldType.Date),
-        new("createdat", "Date de création", SearchFieldType.Date)
+        SearchField<Computer>.AllFields(),
+        SearchField<Computer>.Text("name", "Nom", computer => computer.Name),
+        SearchField<Computer>.Text("status", "Statut", computer => computer.StatusItem?.Name),
+        SearchField<Computer>.Text("manufacturer", "Fabricant", computer => computer.Manufacturer),
+        SearchField<Computer>.Text("model", "Modèle", computer => computer.Model),
+        SearchField<Computer>.Text("serial", "Numéro de série", computer => computer.SerialNumber),
+        SearchField<Computer>.Text("chassistype", "Type", computer => computer.ChassisType),
+        SearchField<Computer>.Text("os", "Système d'exploitation", computer => computer.OperatingSystem),
+        SearchField<Computer>.Text("osversion", "Version de l'OS", computer => computer.OsVersion),
+        SearchField<Computer>.Text("oskernel", "Version du noyau", computer => computer.OsKernelVersion),
+        SearchField<Computer>.Text("uuid", "UUID matériel", computer => computer.HardwareUuid),
+        SearchField<Computer>.Text("vmsystem", "Système de virtualisation", computer => computer.VmSystem),
+        SearchField<Computer>.Text("site", "Site", computer => computer.Site),
+        SearchField<Computer>.Text("building", "Bâtiment", computer => computer.Building),
+        SearchField<Computer>.Text("room", "Salle", computer => computer.Room),
+        SearchField<Computer>.Text("assigneduser", "Usager", computer => computer.AssignedUser),
+        SearchField<Computer>.Text("lastloggeduser", "Dernier utilisateur connecté", computer => computer.LastLoggedUser),
+        SearchField<Computer>.Number("memory", "Mémoire (Mo)", computer => computer.TotalMemoryMb),
+        SearchField<Computer>.Number("battery", "Batterie (%)", computer => GetBatteryPercent(computer)),
+        SearchField<Computer>.Date("lastinventory", "Dernière remontée", computer => computer.LastInventoryAt),
+        SearchField<Computer>.Date("createdat", "Date de création", computer => computer.CreatedAt),
     ];
 
     /// <summary>Colonnes affichées par défaut (hors "name", toujours en premier) tant qu'aucune préférence utilisateur n'est enregistrée.</summary>
@@ -153,8 +104,8 @@ public partial class Index : ComponentBase
         ? _otherSavedSearches
         : _otherSavedSearches.Where(saved => saved.Name.Contains(_savedSearchFilter, StringComparison.OrdinalIgnoreCase)).ToList();
 
-    private IEnumerable<SearchFieldDefinition> AvailableColumnsToAdd =>
-        SearchFields.Where(f => f.Key != "all" && f.Key != "name" && !_columns.Contains(f.Key));
+    private IEnumerable<SearchField<Computer>> AvailableColumnsToAdd =>
+        SearchFields.Where(candidate => candidate.Key != SearchField.AllFieldsKey && candidate.Key != "name" && !_columns.Contains(candidate.Key));
 
     protected override async Task OnInitializedAsync()
     {
@@ -253,45 +204,10 @@ public partial class Index : ComponentBase
         await JS.InvokeVoidAsync("glpiNg.copyToClipboard", names);
     }
 
-    private static SearchFieldDefinition? FindField(string key)
-    {
-        return SearchFields.FirstOrDefault(field => field.Key == key);
-    }
+    private static SearchField<Computer>? FindField(string key) => SearchEngine.Find(SearchFields, key);
 
-    private List<string> GetDistinctTextValues(string fieldKey) =>
-        _computers.Select(computer => GetFieldText(computer, fieldKey))
-            .Where(value => !string.IsNullOrWhiteSpace(value))
-            .Select(value => value!)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
-            .ToList();
-
-    private static (string Value, string Label)[] GetOperators(SearchFieldDefinition? field)
-    {
-        if (field is null) return [];
-        if (field.Key == "all") return [("contains", "contient"), ("notcontains", "ne contient pas")];
-        return OperatorsByType[field.Type];
-    }
-
-    private void OnCriterionFieldChanged(SearchCriterion criterion, string fieldKey)
-    {
-        criterion.FieldKey = fieldKey;
-        (string Value, string Label)[] operators = GetOperators(FindField(fieldKey));
-        criterion.Operator = operators.Length > 0 ? operators[0].Value : "contains";
-        criterion.Value = string.Empty;
-    }
-
-    private void AddCriterion()
-    {
-        _criteria.Add(new SearchCriterion());
-    }
-
-    private void RemoveCriterion(SearchCriterion criterion)
-    {
-        if (_criteria.Count <= 1) return;
-        _criteria.Remove(criterion);
-        ApplySearch();
-    }
+    /// <summary>Valeurs proposées derrière « est » / « n'est pas » sur un champ texte.</summary>
+    private IEnumerable<string> DistinctValues(string fieldKey) => SearchEngine.DistinctValues(_computers, SearchFields, fieldKey);
 
     private void ApplySearch()
     {
@@ -590,43 +506,7 @@ public partial class Index : ComponentBase
 
     private void ApplyFilterAndSort()
     {
-        List<Computer> matched = _computers;
-        bool first = true;
-
-        foreach (SearchCriterion criterion in _criteria)
-        {
-            if (criterion.Operator != "empty" && string.IsNullOrWhiteSpace(criterion.Value)) continue;
-
-            List<Computer> criterionMatches = _computers.Where(computer => EvaluateCriterion(computer, criterion)).ToList();
-
-            if (first)
-            {
-                matched = criterionMatches;
-                first = false;
-            }
-            else if (criterion.Link == "OR")
-            {
-                matched = matched.Union(criterionMatches).ToList();
-            }
-            else
-            {
-                matched = matched.Intersect(criterionMatches).ToList();
-            }
-        }
-
-        IOrderedEnumerable<Computer>? ordered = null;
-        foreach (SortCriterion criterion in _sortCriteria)
-        {
-            ordered = ordered is null
-                ? (criterion.Descending
-                    ? matched.OrderByDescending(computer => GetSortKey(computer, criterion.Field))
-                    : matched.OrderBy(computer => GetSortKey(computer, criterion.Field)))
-                : (criterion.Descending
-                    ? ordered.ThenByDescending(computer => GetSortKey(computer, criterion.Field))
-                    : ordered.ThenBy(computer => GetSortKey(computer, criterion.Field)));
-        }
-
-        _filteredComputers = (ordered ?? matched.AsEnumerable()).ToList();
+        _filteredComputers = SearchEngine.Apply(_computers, SearchFields, _criteria, _sortCriteria);
         _selectedIds.IntersectWith(_filteredComputers.Select(computer => computer.Id));
         ApplyPaging();
         SaveListState();
@@ -639,19 +519,6 @@ public partial class Index : ComponentBase
             .Skip((_currentPage - 1) * _pageSize)
             .Take(_pageSize)
             .ToList();
-    }
-
-    private static IComparable GetSortKey(Computer computer, string key)
-    {
-        SearchFieldDefinition? field = FindField(key);
-        if (field is null) return computer.Name;
-
-        return field.Type switch
-        {
-            SearchFieldType.Number => GetFieldNumber(computer, key) ?? double.MinValue,
-            SearchFieldType.Date => GetFieldDate(computer, key) ?? DateTime.MinValue,
-            _ => GetFieldText(computer, key) ?? string.Empty
-        };
     }
 
     private void ToggleSelect(int computerId, bool selected)
@@ -692,115 +559,6 @@ public partial class Index : ComponentBase
         await LoadAsync();
     }
 
-    private static bool EvaluateCriterion(Computer computer, SearchCriterion criterion)
-    {
-        SearchFieldDefinition? field = FindField(criterion.FieldKey);
-        if (field is null) return true;
-
-        if (field.Key == "all")
-        {
-            string term = criterion.Value.Trim();
-            if (term.Length == 0) return true;
-
-            bool anyMatch = GetAllFieldsText(computer).Any(value => value.Contains(term, StringComparison.OrdinalIgnoreCase));
-            return criterion.Operator == "notcontains" ? !anyMatch : anyMatch;
-        }
-
-        return field.Type switch
-        {
-            SearchFieldType.Text => EvaluateText(GetFieldText(computer, field.Key), criterion),
-            SearchFieldType.Number => EvaluateNumber(GetFieldNumber(computer, field.Key), criterion),
-            SearchFieldType.Date => EvaluateDate(GetFieldDate(computer, field.Key), criterion),
-            _ => true
-        };
-    }
-
-    private static bool EvaluateText(string? raw, SearchCriterion criterion)
-    {
-        if (criterion.Operator == "empty") return string.IsNullOrWhiteSpace(raw);
-
-        string value = raw ?? string.Empty;
-        string term = criterion.Value.Trim();
-        return criterion.Operator switch
-        {
-            "contains" => value.Contains(term, StringComparison.OrdinalIgnoreCase),
-            "notcontains" => !value.Contains(term, StringComparison.OrdinalIgnoreCase),
-            "equals" => string.Equals(value, term, StringComparison.OrdinalIgnoreCase),
-            "notequals" => !string.Equals(value, term, StringComparison.OrdinalIgnoreCase),
-            _ => true
-        };
-    }
-
-    private static bool EvaluateNumber(double? raw, SearchCriterion criterion)
-    {
-        if (criterion.Operator == "empty") return raw is null;
-        if (raw is null) return false;
-        if (!double.TryParse(criterion.Value, out double target)) return true;
-
-        return criterion.Operator switch
-        {
-            "equals" => raw.Value == target,
-            "notequals" => raw.Value != target,
-            "greaterthan" => raw.Value > target,
-            "lessthan" => raw.Value < target,
-            _ => true
-        };
-    }
-
-    private static bool EvaluateDate(DateTime? raw, SearchCriterion criterion)
-    {
-        if (criterion.Operator == "empty") return raw is null;
-        if (raw is null) return false;
-        if (!DateTime.TryParse(criterion.Value, out DateTime target)) return true;
-
-        DateTime rawDate = raw.Value.Date;
-        DateTime targetDate = target.Date;
-        return criterion.Operator switch
-        {
-            "equals" => rawDate == targetDate,
-            "before" => rawDate < targetDate,
-            "after" => rawDate > targetDate,
-            _ => true
-        };
-    }
-
-    private static IEnumerable<string> GetAllFieldsText(Computer computer)
-    {
-        if (!string.IsNullOrWhiteSpace(computer.Name)) yield return computer.Name;
-        if (!string.IsNullOrWhiteSpace(computer.Manufacturer)) yield return computer.Manufacturer;
-        if (!string.IsNullOrWhiteSpace(computer.Model)) yield return computer.Model;
-        if (!string.IsNullOrWhiteSpace(computer.OperatingSystem)) yield return computer.OperatingSystem;
-        if (!string.IsNullOrWhiteSpace(computer.SerialNumber)) yield return computer.SerialNumber;
-    }
-
-    private static string? GetFieldText(Computer computer, string key) => key switch
-    {
-        "name" => computer.Name,
-        "status" => computer.StatusItem?.Name,
-        "manufacturer" => computer.Manufacturer,
-        "model" => computer.Model,
-        "serial" => computer.SerialNumber,
-        "chassistype" => computer.ChassisType,
-        "os" => computer.OperatingSystem,
-        "osversion" => computer.OsVersion,
-        "oskernel" => computer.OsKernelVersion,
-        "uuid" => computer.HardwareUuid,
-        "vmsystem" => computer.VmSystem,
-        "site" => computer.Site,
-        "building" => computer.Building,
-        "room" => computer.Room,
-        "assigneduser" => computer.AssignedUser,
-        "lastloggeduser" => computer.LastLoggedUser,
-        _ => null
-    };
-
-    private static double? GetFieldNumber(Computer computer, string key) => key switch
-    {
-        "memory" => computer.TotalMemoryMb,
-        "battery" => GetBatteryPercent(computer),
-        _ => null
-    };
-
     /// <summary>Pourcentage d'usure de la batterie (capacité réelle / capacité constructeur), moyenné si plusieurs batteries. Null si aucune batterie exploitable.</summary>
     private static double? GetBatteryPercent(Computer computer)
     {
@@ -811,27 +569,26 @@ public partial class Index : ComponentBase
         return percents.Count > 0 ? percents.Average() : null;
     }
 
-    private static DateTime? GetFieldDate(Computer computer, string key) => key switch
-    {
-        "lastinventory" => computer.LastInventoryAt,
-        "createdat" => computer.CreatedAt,
-        _ => null
-    };
-
+    /// <summary>
+    /// Rendu d'une cellule de colonne dynamique. Passe par l'accesseur du champ, donc une colonne
+    /// ajoutée à SearchFields devient affichable sans code supplémentaire.
+    /// </summary>
     private static string CellText(Computer computer, string key)
     {
-        SearchFieldDefinition? field = FindField(key);
+        SearchField<Computer>? field = FindField(key);
         if (field is null) return "—";
+
+        object? raw = field.Value(computer);
 
         return field.Type switch
         {
-            SearchFieldType.Date => GetFieldDate(computer, key) is { } date
+            SearchFieldType.Date => raw is DateTime date
                 ? date.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
                 : (key == "lastinventory" ? "Jamais" : "—"),
-            SearchFieldType.Number => GetFieldNumber(computer, key) is { } number
-                ? number.ToString("0.##") + (key == "battery" ? "%" : string.Empty)
+            SearchFieldType.Number => raw is not null
+                ? Convert.ToDouble(raw).ToString("0.##") + (key == "battery" ? "%" : string.Empty)
                 : "—",
-            _ => GetFieldText(computer, key) is { Length: > 0 } text ? text : "—"
+            _ => raw?.ToString() is { Length: > 0 } text ? text : "—",
         };
     }
 

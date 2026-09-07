@@ -1,4 +1,4 @@
-@page "/parc/enclosures"
+﻿@page "/parc/enclosures"
 @rendermode InteractiveServer
 
 <PageTitle>GlpiNg — Matériels réseau</PageTitle>
@@ -7,11 +7,8 @@
 <div class="card">
     <div class="card-header d-flex align-items-center justify-content-between glpi-list-toolbar">
         <div class="btn-list">
-            <div class="input-icon" style="width: 260px;">
-                <span class="input-icon-addon"><i class="ti ti-search"></i></span>
-                <input type="text" class="form-control" placeholder="Rechercher..." value="@_search"
-                       @oninput="@((ChangeEventArgs e) => OnSearchInput((string?)e.Value))" />
-            </div>
+            <SearchCriteriaPanel Fields="SearchFields" Criteria="_criteria" DistinctValues="DistinctValues" OnApply="ApplyFilterAndSort" />
+            <SortCriteriaPanel Fields="SearchFields" SortCriteria="_sortCriteria" OnApply="ApplyFilterAndSort" />
         </div>
 
         <div class="btn-list align-items-center">

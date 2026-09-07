@@ -1,0 +1,168 @@
+@using GlpiNg.Modules.Inventory.Search
+
+@* Panneau « Rechercher » commun à toutes les listes du parc, extrait de la page Ordinateurs (où il
+   était dupliqué avec la page Moniteurs). Non générique : il ne manipule que la description des
+   champs (clé, libellé, type), jamais les actifs eux-mêmes — c'est le SearchEngine qui les lit.
+   Les valeurs distinctes proposées derrière « est » / « n'est pas » sont fournies par la page, qui
+   seule détient la liste chargée. *@
+
+<div class="dropdown">
+    <button type="button" class="btn dropdown-toggle" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+        <i class="ti ti-search me-1"></i>Rechercher
+        @if (ActiveCriteriaCount > 0)
+        {
+            <span class="badge bg-blue-lt ms-1">@ActiveCriteriaCount</span>
+        }
+    </button>
+    <div class="dropdown-menu p-3" style="min-width: 640px;">
+        @for (int criterionIndex = 0; criterionIndex < Criteria.Count; criterionIndex++)
+        {
+            SearchCriterion criterion = Criteria[criterionIndex];
+            SearchField? field = Fields.FirstOrDefault(f => f.Key == criterion.FieldKey);
+
+            <div class="row g-2 align-items-center mb-2">
+                <div class="col-auto" style="width: 5.5rem;">
+                    @if (criterionIndex == 0)
+                    {
+                        <span class="text-secondary">PAS</span>
+                    }
+                    else
+                    {
+                        <select class="form-select form-select-sm" value="@criterion.Link"
+                                @onchange="@((ChangeEventArgs e) => criterion.Link = (string)e.Value!)">
+                            <option value="AND">ET</option>
+                            <option value="OR">OU</option>
+                        </select>
+                    }
+                </div>
+                <div class="col">
+                    <select class="form-select form-select-sm" value="@criterion.FieldKey"
+                            @onchange="@((ChangeEventArgs e) => OnFieldChanged(criterion, (string)e.Value!))">
+                        @foreach (SearchField option in Fields)
+                        {
+                            <option value="@option.Key">@option.Label</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-auto" style="width: 10rem;">
+                    <select class="form-select form-select-sm" value="@criterion.Operator"
+                            @onchange="@((ChangeEventArgs e) => criterion.Operator = (string)e.Value!)">
+                        @foreach ((string opValue, string opLabel) in SearchOperators.For(field))
+                        {
+                            <option value="@opValue">@opLabel</option>
+                        }
+                    </select>
+                </div>
+                <div class="col">
+                    @if (criterion.Operator != SearchOperators.Empty)
+                    {
+                        @if (field?.Type == SearchFieldType.Date)
+                        {
+                            <input type="date" class="form-control form-control-sm" value="@criterion.Value"
+                                   @onchange="@((ChangeEventArgs e) => criterion.Value = (string)(e.Value ?? string.Empty))" />
+                        }
+                        else if (field?.Type == SearchFieldType.Text && field.Key != SearchField.AllFieldsKey
+                                 && (criterion.Operator == "equals" || criterion.Operator == "notequals"))
+                        {
+                            <select class="form-select form-select-sm" value="@criterion.Value"
+                                    @onchange="@((ChangeEventArgs e) => criterion.Value = (string)e.Value!)">
+                                <option value="">—</option>
+                                @foreach (string distinctValue in DistinctValues(field.Key))
+                                {
+                                    <option value="@distinctValue">@distinctValue</option>
+                                }
+                            </select>
+                        }
+                        else
+                        {
+                            <input type="@(field?.Type == SearchFieldType.Number ? "number" : "text")" class="form-control form-control-sm"
+                                   value="@criterion.Value"
+                                   @onchange="@((ChangeEventArgs e) => criterion.Value = (string)(e.Value ?? string.Empty))" />
+                        }
+                    }
+                </div>
+                <div class="col-auto">
+                    <button type="button" class="btn btn-icon btn-sm" title="Supprimer ce critère"
+                            disabled="@(Criteria.Count <= 1)" @onclick="() => RemoveCriterion(criterion)">
+                        <i class="ti ti-trash"></i>
+                    </button>
+                </div>
+            </div>
+        }
+
+        <div class="d-flex align-items-center justify-content-between mt-3">
+            <button type="button" class="btn btn-sm" @onclick="AddCriterion">
+                <i class="ti ti-circle-plus me-1"></i>Ajouter un critère
+            </button>
+            <div class="d-flex gap-2">
+                @if (OnSaveRequested.HasDelegate)
+                {
+                    <button type="button" class="btn btn-icon btn-sm" title="Sauvegarder la recherche courante"
+                            @onclick="OnSaveRequested">
+                        <i class="ti ti-bookmark-plus"></i>
+                    </button>
+                }
+                <button type="button" class="btn btn-sm" @onclick="ResetAsync">Réinitialiser</button>
+                <button type="button" class="btn btn-sm btn-primary" @onclick="OnApply">
+                    <i class="ti ti-search me-1"></i>Rechercher
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public IReadOnlyList<SearchField> Fields { get; set; } = [];
+
+    /// <summary>Liste mutée en place par le panneau ; la page la passe telle quelle au SearchEngine.</summary>
+    [Parameter, EditorRequired]
+    public List<SearchCriterion> Criteria { get; set; } = null!;
+
+    /// <summary>Valeurs distinctes d'un champ texte, pour la liste déroulante de « est » / « n'est pas ».</summary>
+    [Parameter, EditorRequired]
+    public Func<string, IEnumerable<string>> DistinctValues { get; set; } = null!;
+
+    [Parameter, EditorRequired]
+    public EventCallback OnApply { get; set; }
+
+    /// <summary>Optionnel : sans gestionnaire, le bouton de sauvegarde n'est pas affiché.</summary>
+    [Parameter]
+    public EventCallback OnSaveRequested { get; set; }
+
+    private int ActiveCriteriaCount => Criteria.Count(criterion => criterion.IsActive);
+
+    private void OnFieldChanged(SearchCriterion criterion, string fieldKey)
+    {
+        criterion.FieldKey = fieldKey;
+
+        // Le jeu d'opérateurs change avec le type du champ : celui qui était sélectionné peut ne
+        // plus exister, auquel cas on retombe sur le premier proposé.
+        SearchField? field = Fields.FirstOrDefault(f => f.Key == fieldKey);
+        (string Value, string Label)[] operators = SearchOperators.For(field);
+
+        if (!operators.Any(op => op.Value == criterion.Operator))
+        {
+            criterion.Operator = operators[0].Value;
+        }
+
+        criterion.Value = string.Empty;
+    }
+
+    private void AddCriterion() => Criteria.Add(new SearchCriterion());
+
+    private void RemoveCriterion(SearchCriterion criterion)
+    {
+        if (Criteria.Count > 1)
+        {
+            Criteria.Remove(criterion);
+        }
+    }
+
+    private Task ResetAsync()
+    {
+        Criteria.Clear();
+        Criteria.Add(new SearchCriterion());
+        return OnApply.InvokeAsync();
+    }
+}

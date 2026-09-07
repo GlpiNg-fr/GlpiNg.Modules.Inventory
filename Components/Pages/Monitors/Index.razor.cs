@@ -1,6 +1,7 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using System.Text.Json;
 using GlpiNg.Modules.Inventory.Models;
+using GlpiNg.Modules.Inventory.Search;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
@@ -10,43 +11,22 @@ namespace GlpiNg.Modules.Inventory.Components.Pages.Monitors;
 
 public partial class Index : ComponentBase
 {
-    private enum SearchFieldType
-    {
-        Text
-    }
-
     private enum SavedSearchesTab
     {
         Monitor,
         Other
     }
 
-    private sealed record SearchFieldDefinition(string Key, string Label, SearchFieldType Type);
-
-    private sealed class SearchCriterion
-    {
-        public string Link { get; set; } = "AND";
-        public string FieldKey { get; set; } = "all";
-        public string Operator { get; set; } = "contains";
-        public string Value { get; set; } = string.Empty;
-    }
-
-    private sealed class SortCriterion
-    {
-        public string Field { get; set; } = "designation";
-        public bool Descending { get; set; }
-    }
-
     private sealed record MonitorRow(int Id, int ComputerId, string ComputerName, string Designation, string? Manufacturer, string? Serial, string? Status);
 
-    private static readonly SearchFieldDefinition[] SearchFields =
+    private static readonly SearchField<MonitorRow>[] SearchFields =
     [
-        new("all", "Tous les champs", SearchFieldType.Text),
-        new("designation", "Désignation", SearchFieldType.Text),
-        new("status", "Statut", SearchFieldType.Text),
-        new("manufacturer", "Fabricant", SearchFieldType.Text),
-        new("serial", "Numéro de série", SearchFieldType.Text),
-        new("computername", "Poste associé", SearchFieldType.Text)
+        SearchField<MonitorRow>.AllFields(),
+        SearchField<MonitorRow>.Text("designation", "Désignation", monitor => monitor.Designation),
+        SearchField<MonitorRow>.Text("status", "Statut", monitor => monitor.Status),
+        SearchField<MonitorRow>.Text("manufacturer", "Fabricant", monitor => monitor.Manufacturer),
+        SearchField<MonitorRow>.Text("serial", "Numéro de série", monitor => monitor.Serial),
+        SearchField<MonitorRow>.Text("computername", "Poste associé", monitor => monitor.ComputerName),
     ];
 
     private static readonly string[] DefaultColumns = ["manufacturer", "serial", "computername"];
@@ -101,8 +81,8 @@ public partial class Index : ComponentBase
         ? _otherSavedSearches
         : _otherSavedSearches.Where(saved => saved.Name.Contains(_savedSearchFilter, StringComparison.OrdinalIgnoreCase)).ToList();
 
-    private IEnumerable<SearchFieldDefinition> AvailableColumnsToAdd =>
-        SearchFields.Where(f => f.Key != "all" && f.Key != "designation" && !_columns.Contains(f.Key));
+    private IEnumerable<SearchField<MonitorRow>> AvailableColumnsToAdd =>
+        SearchFields.Where(candidate => candidate.Key != SearchField.AllFieldsKey && candidate.Key != "designation" && !_columns.Contains(candidate.Key));
 
     protected override async Task OnInitializedAsync()
     {
@@ -165,52 +145,10 @@ public partial class Index : ComponentBase
         }
     }
 
-    private static SearchFieldDefinition? FindField(string key)
-    {
-        return SearchFields.FirstOrDefault(field => field.Key == key);
-    }
+    private static SearchField<MonitorRow>? FindField(string key) => SearchEngine.Find(SearchFields, key);
 
-    private List<string> GetDistinctTextValues(string fieldKey) =>
-        _monitors.Select(monitor => GetFieldText(monitor, fieldKey))
-            .Where(value => !string.IsNullOrWhiteSpace(value))
-            .Select(value => value!)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
-            .ToList();
-
-    private static (string Value, string Label)[] GetOperators(SearchFieldDefinition? field)
-    {
-        if (field is null) return [];
-        if (field.Key == "all") return [("contains", "contient"), ("notcontains", "ne contient pas")];
-        return
-        [
-            ("contains", "contient"),
-            ("notcontains", "ne contient pas"),
-            ("equals", "est"),
-            ("notequals", "n'est pas"),
-            ("empty", "est vide")
-        ];
-    }
-
-    private void OnCriterionFieldChanged(SearchCriterion criterion, string fieldKey)
-    {
-        criterion.FieldKey = fieldKey;
-        (string Value, string Label)[] operators = GetOperators(FindField(fieldKey));
-        criterion.Operator = operators.Length > 0 ? operators[0].Value : "contains";
-        criterion.Value = string.Empty;
-    }
-
-    private void AddCriterion()
-    {
-        _criteria.Add(new SearchCriterion());
-    }
-
-    private void RemoveCriterion(SearchCriterion criterion)
-    {
-        if (_criteria.Count <= 1) return;
-        _criteria.Remove(criterion);
-        ApplySearch();
-    }
+    /// <summary>Valeurs proposées derrière « est » / « n'est pas » sur un champ texte.</summary>
+    private IEnumerable<string> DistinctValues(string fieldKey) => SearchEngine.DistinctValues(_monitors, SearchFields, fieldKey);
 
     private void ApplySearch()
     {
@@ -509,43 +447,7 @@ public partial class Index : ComponentBase
 
     private void ApplyFilterAndSort()
     {
-        List<MonitorRow> matched = _monitors;
-        bool first = true;
-
-        foreach (SearchCriterion criterion in _criteria)
-        {
-            if (criterion.Operator != "empty" && string.IsNullOrWhiteSpace(criterion.Value)) continue;
-
-            List<MonitorRow> criterionMatches = _monitors.Where(monitor => EvaluateCriterion(monitor, criterion)).ToList();
-
-            if (first)
-            {
-                matched = criterionMatches;
-                first = false;
-            }
-            else if (criterion.Link == "OR")
-            {
-                matched = matched.Union(criterionMatches).ToList();
-            }
-            else
-            {
-                matched = matched.Intersect(criterionMatches).ToList();
-            }
-        }
-
-        IOrderedEnumerable<MonitorRow>? ordered = null;
-        foreach (SortCriterion criterion in _sortCriteria)
-        {
-            ordered = ordered is null
-                ? (criterion.Descending
-                    ? matched.OrderByDescending(monitor => GetSortKey(monitor, criterion.Field))
-                    : matched.OrderBy(monitor => GetSortKey(monitor, criterion.Field)))
-                : (criterion.Descending
-                    ? ordered.ThenByDescending(monitor => GetSortKey(monitor, criterion.Field))
-                    : ordered.ThenBy(monitor => GetSortKey(monitor, criterion.Field)));
-        }
-
-        _filteredMonitors = (ordered ?? matched.AsEnumerable()).ToList();
+        _filteredMonitors = SearchEngine.Apply(_monitors, SearchFields, _criteria, _sortCriteria);
         ApplyPaging();
     }
 
@@ -558,67 +460,6 @@ public partial class Index : ComponentBase
             .ToList();
     }
 
-    private static IComparable GetSortKey(MonitorRow monitor, string key) => key switch
-    {
-        "designation" => monitor.Designation,
-        "status" => monitor.Status ?? string.Empty,
-        "manufacturer" => monitor.Manufacturer ?? string.Empty,
-        "serial" => monitor.Serial ?? string.Empty,
-        "computername" => monitor.ComputerName,
-        _ => monitor.Designation
-    };
-
-    private static bool EvaluateCriterion(MonitorRow monitor, SearchCriterion criterion)
-    {
-        SearchFieldDefinition? field = FindField(criterion.FieldKey);
-        if (field is null) return true;
-
-        if (field.Key == "all")
-        {
-            string term = criterion.Value.Trim();
-            if (term.Length == 0) return true;
-
-            bool anyMatch = GetAllFieldsText(monitor).Any(value => value.Contains(term, StringComparison.OrdinalIgnoreCase));
-            return criterion.Operator == "notcontains" ? !anyMatch : anyMatch;
-        }
-
-        return EvaluateText(GetFieldText(monitor, field.Key), criterion);
-    }
-
-    private static bool EvaluateText(string? raw, SearchCriterion criterion)
-    {
-        if (criterion.Operator == "empty") return string.IsNullOrWhiteSpace(raw);
-
-        string value = raw ?? string.Empty;
-        string term = criterion.Value.Trim();
-        return criterion.Operator switch
-        {
-            "contains" => value.Contains(term, StringComparison.OrdinalIgnoreCase),
-            "notcontains" => !value.Contains(term, StringComparison.OrdinalIgnoreCase),
-            "equals" => string.Equals(value, term, StringComparison.OrdinalIgnoreCase),
-            "notequals" => !string.Equals(value, term, StringComparison.OrdinalIgnoreCase),
-            _ => true
-        };
-    }
-
-    private static IEnumerable<string> GetAllFieldsText(MonitorRow monitor)
-    {
-        yield return monitor.Designation;
-        yield return monitor.ComputerName;
-        if (!string.IsNullOrWhiteSpace(monitor.Manufacturer)) yield return monitor.Manufacturer;
-        if (!string.IsNullOrWhiteSpace(monitor.Serial)) yield return monitor.Serial;
-    }
-
-    private static string? GetFieldText(MonitorRow monitor, string key) => key switch
-    {
-        "designation" => monitor.Designation,
-        "status" => monitor.Status,
-        "manufacturer" => monitor.Manufacturer,
-        "serial" => monitor.Serial,
-        "computername" => monitor.ComputerName,
-        _ => null
-    };
-
     private static string CellText(MonitorRow monitor, string key) =>
-        GetFieldText(monitor, key) is { Length: > 0 } text ? text : "—";
+        FindField(key)?.Value(monitor)?.ToString() is { Length: > 0 } text ? text : "—";
 }

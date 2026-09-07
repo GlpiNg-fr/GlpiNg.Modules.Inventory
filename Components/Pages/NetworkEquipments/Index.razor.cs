@@ -1,4 +1,5 @@
-using GlpiNg.Modules.Inventory.Models;
+﻿using GlpiNg.Modules.Inventory.Models;
+using GlpiNg.Modules.Inventory.Search;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.JSInterop;
@@ -7,6 +8,28 @@ namespace GlpiNg.Modules.Inventory.Components.Pages.NetworkEquipments;
 
 public partial class Index : ComponentBase
 {
+    /// <summary>Champs interrogeables de cette liste — voir SearchEngine. Propriété d'instance
+    /// et non champ statique : certains accesseurs appellent des méthodes de la page.</summary>
+    private SearchField<NetworkEquipment>[] SearchFields =>
+    [
+        SearchField<NetworkEquipment>.AllFields(),
+        SearchField<NetworkEquipment>.Text("name", "Nom", item => item.Name),
+        SearchField<NetworkEquipment>.Text("status", "Statut", item => item.StatusItem?.Name),
+        SearchField<NetworkEquipment>.Text("location", "Lieu", item => item.LocationItem?.Name),
+        SearchField<NetworkEquipment>.Text("type", "Type", item => item.Type),
+        SearchField<NetworkEquipment>.Text("manufacturer", "Fabricant", item => item.Manufacturer),
+        SearchField<NetworkEquipment>.Text("model", "Modèle", item => item.Model),
+        SearchField<NetworkEquipment>.Text("serial", "Numéro de série", item => item.SerialNumber),
+        SearchField<NetworkEquipment>.Text("inventorynumber", "Numéro d'inventaire", item => item.InventoryNumber),
+        SearchField<NetworkEquipment>.Text("technician", "Technicien responsable", item => item.TechnicianInCharge),
+        SearchField<NetworkEquipment>.Text("user", "Utilisateur", item => item.AssignedUser),
+        SearchField<NetworkEquipment>.Text("comment", "Commentaires", item => item.Comment),
+        SearchField<NetworkEquipment>.Text("uuid", "UUID", item => item.Uuid),
+        SearchField<NetworkEquipment>.Number("memory", "Mémoire (Mo)", item => item.MemoryMb),
+        SearchField<NetworkEquipment>.Date("createdat", "Date de création", item => item.CreatedAt),
+        SearchField<NetworkEquipment>.Date("updatedat", "Dernière modification", item => item.UpdatedAt),
+    ];
+
     private static readonly int[] PageSizeOptions = [25, 50, 100, 200, 500];
 
     [Inject]
@@ -19,9 +42,8 @@ public partial class Index : ComponentBase
     private List<NetworkEquipment> _filtered = [];
     private List<NetworkEquipment> _paged = [];
     private readonly HashSet<int> _selectedIds = [];
-    private string _search = string.Empty;
-    private string _sortField = "name";
-    private bool _sortDescending;
+    private readonly List<SearchCriterion> _criteria = [new()];
+    private readonly List<SortCriterion> _sortCriteria = [new() { Field = "name" }];
     private int _pageSize = 25;
     private int _currentPage = 1;
     private NetworkEquipment _newItem = NewBlank();
@@ -51,60 +73,38 @@ public partial class Index : ComponentBase
         ApplyFilterAndSort();
     }
 
-    private void OnSearchInput(string? value)
-    {
-        _search = value ?? string.Empty;
-        _currentPage = 1;
-        ApplyFilterAndSort();
-    }
+    /// <summary>Valeurs proposées derrière « est » / « n'est pas » sur un champ texte.</summary>
+    private IEnumerable<string> DistinctValues(string fieldKey) => SearchEngine.DistinctValues(_items, SearchFields, fieldKey);
 
-    private void SetSort(string field)
+    /// <summary>
+    /// Tri par clic sur un en-tête : remplace le tri courant, et inverse le sens si la colonne
+    /// était déjà le seul tri actif. Les tris multiples se règlent depuis le panneau « Trier ».
+    /// </summary>
+    private void SetSort(string fieldKey)
     {
-        if (_sortField == field)
+        if (_sortCriteria is [{ } only] && only.Field == fieldKey)
         {
-            _sortDescending = !_sortDescending;
+            only.Descending = !only.Descending;
         }
         else
         {
-            _sortField = field;
-            _sortDescending = false;
+            _sortCriteria.Clear();
+            _sortCriteria.Add(new SortCriterion { Field = fieldKey });
         }
 
         ApplyFilterAndSort();
     }
 
-    private MarkupString SortIndicator(string field)
+    private MarkupString SortIndicator(string fieldKey)
     {
-        if (_sortField != field) return new MarkupString(string.Empty);
-        return new MarkupString($"<i class=\"ti {(_sortDescending ? "ti-caret-up-filled" : "ti-caret-down-filled")}\"></i>");
+        SortCriterion? criterion = _sortCriteria.FirstOrDefault(sort => sort.Field == fieldKey);
+        if (criterion is null) return new MarkupString(string.Empty);
+        return new MarkupString($"<i class=\"ti {(criterion.Descending ? "ti-caret-up-filled" : "ti-caret-down-filled")}\"></i>");
     }
 
     private void ApplyFilterAndSort()
     {
-        IEnumerable<NetworkEquipment> matched = _items;
-
-        if (!string.IsNullOrWhiteSpace(_search))
-        {
-            string term = _search.Trim();
-            matched = matched.Where(item =>
-                (item.Name.Contains(term, StringComparison.OrdinalIgnoreCase))
-                || (item.Type?.Contains(term, StringComparison.OrdinalIgnoreCase) ?? false)
-                || (item.Manufacturer?.Contains(term, StringComparison.OrdinalIgnoreCase) ?? false)
-                || (item.Model?.Contains(term, StringComparison.OrdinalIgnoreCase) ?? false)
-                || (item.SerialNumber?.Contains(term, StringComparison.OrdinalIgnoreCase) ?? false));
-        }
-
-        Func<NetworkEquipment, IComparable> keySelector = _sortField switch
-        {
-            "status" => item => item.StatusItem?.Name ?? string.Empty,
-            "manufacturer" => item => item.Manufacturer ?? string.Empty,
-            "location" => item => item.LocationItem?.Name ?? string.Empty,
-            "type" => item => item.Type ?? string.Empty,
-            "model" => item => item.Model ?? string.Empty,
-            _ => item => item.Name
-        };
-
-        _filtered = (_sortDescending ? matched.OrderByDescending(keySelector) : matched.OrderBy(keySelector)).ToList();
+        _filtered = SearchEngine.Apply(_items, SearchFields, _criteria, _sortCriteria);
         _selectedIds.IntersectWith(_filtered.Select(item => item.Id));
         ApplyPaging();
     }

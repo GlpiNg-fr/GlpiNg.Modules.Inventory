@@ -1,4 +1,5 @@
-using GlpiNg.Modules.Inventory.Models;
+﻿using GlpiNg.Modules.Inventory.Models;
+using GlpiNg.Modules.Inventory.Search;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.JSInterop;
@@ -7,6 +8,24 @@ namespace GlpiNg.Modules.Inventory.Components.Pages.ConsumableItems;
 
 public partial class Index : ComponentBase
 {
+    /// <summary>Champs interrogeables de cette liste — voir SearchEngine. Propriété d'instance
+    /// et non champ statique : certains accesseurs appellent des méthodes de la page.</summary>
+    private SearchField<ConsumableItem>[] SearchFields =>
+    [
+        SearchField<ConsumableItem>.AllFields(),
+        SearchField<ConsumableItem>.Text("name", "Nom", item => item.Name),
+        SearchField<ConsumableItem>.Text("type", "Type", item => item.Type),
+        SearchField<ConsumableItem>.Text("manufacturer", "Fabricant", item => item.Manufacturer),
+        SearchField<ConsumableItem>.Text("reference", "Référence", item => item.Reference),
+        SearchField<ConsumableItem>.Text("location", "Lieu", item => item.LocationItem?.Name),
+        SearchField<ConsumableItem>.Text("technician", "Technicien responsable", item => item.TechnicianInCharge),
+        SearchField<ConsumableItem>.Text("comment", "Commentaires", item => item.Comment),
+        SearchField<ConsumableItem>.Number("stock", "Stock disponible", item => AvailableStock(item)),
+        SearchField<ConsumableItem>.Number("threshold", "Seuil d'alerte", item => item.AlertThreshold),
+        SearchField<ConsumableItem>.Date("createdat", "Date de création", item => item.CreatedAt),
+        SearchField<ConsumableItem>.Date("updatedat", "Dernière modification", item => item.UpdatedAt),
+    ];
+
     private static readonly int[] PageSizeOptions = [25, 50, 100, 200, 500];
 
     [Inject]
@@ -19,9 +38,8 @@ public partial class Index : ComponentBase
     private List<ConsumableItem> _filtered = [];
     private List<ConsumableItem> _paged = [];
     private readonly HashSet<int> _selectedIds = [];
-    private string _search = string.Empty;
-    private string _sortField = "name";
-    private bool _sortDescending;
+    private readonly List<SearchCriterion> _criteria = [new()];
+    private readonly List<SortCriterion> _sortCriteria = [new() { Field = "name" }];
     private int _pageSize = 25;
     private int _currentPage = 1;
     private ConsumableItem _newItem = NewBlank();
@@ -51,50 +69,38 @@ public partial class Index : ComponentBase
 
     private static int AvailableStock(ConsumableItem item) => item.Consumables.Count(c => c.DateOut is null);
 
-    private void OnSearchInput(string? value)
+    /// <summary>Valeurs proposées derrière « est » / « n'est pas » sur un champ texte.</summary>
+    private IEnumerable<string> DistinctValues(string fieldKey) => SearchEngine.DistinctValues(_items, SearchFields, fieldKey);
+
+    /// <summary>
+    /// Tri par clic sur un en-tête : remplace le tri courant, et inverse le sens si la colonne
+    /// était déjà le seul tri actif. Les tris multiples se règlent depuis le panneau « Trier ».
+    /// </summary>
+    private void SetSort(string fieldKey)
     {
-        _search = value ?? string.Empty;
-        _currentPage = 1;
+        if (_sortCriteria is [{ } only] && only.Field == fieldKey)
+        {
+            only.Descending = !only.Descending;
+        }
+        else
+        {
+            _sortCriteria.Clear();
+            _sortCriteria.Add(new SortCriterion { Field = fieldKey });
+        }
+
         ApplyFilterAndSort();
     }
 
-    private void SetSort(string field)
+    private MarkupString SortIndicator(string fieldKey)
     {
-        if (_sortField == field) _sortDescending = !_sortDescending;
-        else { _sortField = field; _sortDescending = false; }
-        ApplyFilterAndSort();
-    }
-
-    private MarkupString SortIndicator(string field)
-    {
-        if (_sortField != field) return new MarkupString(string.Empty);
-        return new MarkupString($"<i class=\"ti {(_sortDescending ? "ti-caret-up-filled" : "ti-caret-down-filled")}\"></i>");
+        SortCriterion? criterion = _sortCriteria.FirstOrDefault(sort => sort.Field == fieldKey);
+        if (criterion is null) return new MarkupString(string.Empty);
+        return new MarkupString($"<i class=\"ti {(criterion.Descending ? "ti-caret-up-filled" : "ti-caret-down-filled")}\"></i>");
     }
 
     private void ApplyFilterAndSort()
     {
-        IEnumerable<ConsumableItem> matched = _items;
-
-        if (!string.IsNullOrWhiteSpace(_search))
-        {
-            string term = _search.Trim();
-            matched = matched.Where(item =>
-                item.Name.Contains(term, StringComparison.OrdinalIgnoreCase)
-                || (item.Type?.Contains(term, StringComparison.OrdinalIgnoreCase) ?? false)
-                || (item.Manufacturer?.Contains(term, StringComparison.OrdinalIgnoreCase) ?? false)
-                || (item.Reference?.Contains(term, StringComparison.OrdinalIgnoreCase) ?? false));
-        }
-
-        Func<ConsumableItem, IComparable> keySelector = _sortField switch
-        {
-            "type" => item => item.Type ?? string.Empty,
-            "manufacturer" => item => item.Manufacturer ?? string.Empty,
-            "location" => item => item.LocationItem?.Name ?? string.Empty,
-            "stock" => item => AvailableStock(item),
-            _ => item => item.Name
-        };
-
-        _filtered = (_sortDescending ? matched.OrderByDescending(keySelector) : matched.OrderBy(keySelector)).ToList();
+        _filtered = SearchEngine.Apply(_items, SearchFields, _criteria, _sortCriteria);
         _selectedIds.IntersectWith(_filtered.Select(item => item.Id));
         ApplyPaging();
     }
