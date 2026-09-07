@@ -1,4 +1,4 @@
-namespace GlpiNg.Modules.Inventory.Models;
+﻿namespace GlpiNg.Modules.Inventory.Models;
 
 /// <summary>
 /// Registre des types d'éléments (au sens GLPI ItemType) sur lesquels une recherche peut être
@@ -20,6 +20,7 @@ public static class SavedSearchItemTypes
         ("Enclosure", "Châssis", "ti-layout-grid", "/parc/enclosures"),
         ("Pdu", "PDU", "ti-plug", "/parc/pdus"),
         ("PassiveEquipment", "Équipement passif", "ti-plug-connected", "/parc/passive-equipments"),
+        ("SimCard", "Carte SIM", "ti-sim-card", "/parc/simcards"),
         ("Cable", "Câble", "ti-cable", "/parc/cables"),
         ("Agent", "Agent", "ti-cpu", "/tools/deployments/agent"),
     ];

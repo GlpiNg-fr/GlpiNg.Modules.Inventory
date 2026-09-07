@@ -1,4 +1,4 @@
-using GlpiNg.Modules.Inventory.Models;
+﻿using GlpiNg.Modules.Inventory.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
 
@@ -58,6 +58,9 @@ public partial class Global : ComponentBase
 
         rows.AddRange((await db.Set<PassiveEquipment>().AsNoTracking().Include(i => i.StatusItem).Include(i => i.LocationItem).ToListAsync())
             .Select(i => new AssetRow(i.Id, i.Name, "PassiveEquipment", "Équipement passif", "ti-plug-connected", $"/parc/passive-equipments/{i.Id}", i.StatusItem, i.LocationItem?.Name)));
+
+        rows.AddRange((await db.Set<SimCard>().AsNoTracking().Include(i => i.StatusItem).Include(i => i.LocationItem).ToListAsync())
+            .Select(i => new AssetRow(i.Id, i.Name, "SimCard", "Carte SIM", "ti-sim-card", $"/parc/simcards/{i.Id}", i.StatusItem, i.LocationItem?.Name)));
 
         _items = rows;
         _currentPage = 1;

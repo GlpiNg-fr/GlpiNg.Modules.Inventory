@@ -1,4 +1,4 @@
-using GlpiNg.Modules.Abstractions.Menu;
+﻿using GlpiNg.Modules.Abstractions.Menu;
 
 namespace GlpiNg.Modules.Inventory;
 
@@ -34,9 +34,8 @@ public sealed class InventoryMenuProvider : IMenuProvider
             new("Châssis", "/parc/enclosures", "ti-layout-grid"),
             new("PDU", "/parc/pdus", "ti-plug"),
             new("Équipements passifs", "/parc/passive-equipments", "ti-plug-connected"),
-            new("Actifs non gérés", Icon: "ti-help"),
             new("Câbles", "/parc/cables", "ti-cable"),
-            new("Carte SIM éléments", Icon: "ti-sim-card"),
+            new("Cartes SIM", "/parc/simcards", "ti-sim-card"),
             new("Global", "/parc/allassets", "ti-world"),
         ]),
         new("outils", "ti-briefcase", "Outils",
