@@ -1,4 +1,4 @@
-using GlpiNg.Modules.Abstractions.Entities;
+﻿using GlpiNg.Modules.Abstractions.Entities;
 
 namespace GlpiNg.Modules.Inventory.Models;
 
@@ -38,6 +38,12 @@ public class Computer : IEntityScoped
 
     /// <summary>content.operatingsystem.kernel_version.</summary>
     public string? OsKernelVersion { get; set; }
+
+    /// <summary>Identifiant de prise en main à distance remonté par l'agent (section "remote_mgmt").</summary>
+    public string? RemoteManagementId { get; set; }
+
+    /// <summary>Outil correspondant à <see cref="RemoteManagementId"/> : "teamviewer", "anydesk", ...</summary>
+    public string? RemoteManagementType { get; set; }
 
     /// <summary>Statut de l'élément (voir Models/DropdownItem.cs, DropdownType.Status) — optionnel, résolu depuis les Intitulés plutôt qu'une énumération fixe.</summary>
     public int? StatusId { get; set; }

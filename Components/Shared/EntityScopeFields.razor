@@ -1,0 +1,63 @@
+@using GlpiNg.Modules.Abstractions.Entities
+@inject IEntityOptionsProvider EntityOptions
+
+@* Bloc « Entité » commun à toutes les fiches d'objets cloisonnés. Jusqu'ici le rattachement se
+   faisait uniquement à la création (entité active, voir GlpiNgDbContext.SaveChanges) sans être ni
+   affiché ni modifiable : réaffecter un objet demandait de passer par la base.
+
+   La liste proposée est bornée au cloisonnement de l'utilisateur (voir EntityOptionsProvider) : on
+   ne peut pas envoyer un objet dans une entité qu'on ne voit pas, ce qui reviendrait à le perdre. *@
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="glpi-fiche-field">
+            <label>Entité</label>
+            @if (_options.Count == 0)
+            {
+                <input class="form-control" value="Aucune entité disponible" disabled />
+            }
+            else
+            {
+                <select class="form-select" value="@(Item.EntityId?.ToString() ?? "")"
+                        @onchange="OnEntityChanged">
+                    <option value="">—</option>
+                    @foreach (EntityOption option in _options)
+                    {
+                        <option value="@option.Id">@option.Name</option>
+                    }
+                </select>
+            }
+            @if (Item.EntityId is { } current && _options.All(option => option.Id != current))
+            {
+                <div class="form-hint text-warning">
+                    Rattaché à une entité hors de votre périmètre : la changer ici vous en ferait perdre la visibilité.
+                </div>
+            }
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="glpi-fiche-field">
+            <label>Visibilité</label>
+            <label class="form-check">
+                <input class="form-check-input" type="checkbox" checked="@Item.IsRecursive"
+                       @onchange="@((ChangeEventArgs e) => Item.IsRecursive = (bool)(e.Value ?? false))" />
+                <span class="form-check-label">Visible depuis les sous-entités</span>
+            </label>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public IEntityScoped Item { get; set; } = null!;
+
+    private IReadOnlyList<EntityOption> _options = [];
+
+    protected override async Task OnInitializedAsync() => _options = await EntityOptions.GetAssignableAsync();
+
+    private void OnEntityChanged(ChangeEventArgs e)
+    {
+        string? value = (string?)e.Value;
+        Item.EntityId = string.IsNullOrEmpty(value) ? null : int.Parse(value);
+    }
+}

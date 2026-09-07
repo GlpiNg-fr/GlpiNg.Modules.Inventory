@@ -1,4 +1,4 @@
-namespace GlpiNg.Modules.Inventory.Models;
+﻿namespace GlpiNg.Modules.Inventory.Models;
 
 public enum ComponentType
 {
@@ -7,7 +7,16 @@ public enum ComponentType
     Disk,
     NetworkCard,
     Gpu,
-    Motherboard
+    Motherboard,
+
+    /// <summary>Contrôleur (stockage, USB, chipset) — section "controllers" de l'inventaire.</summary>
+    Controller,
+
+    /// <summary>Carte son — section "sounds".</summary>
+    SoundCard,
+
+    /// <summary>Modem — section "modems".</summary>
+    Modem
 }
 
 public class ComputerComponent
