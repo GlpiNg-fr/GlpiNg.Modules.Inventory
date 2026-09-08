@@ -1,4 +1,4 @@
-using GlpiNg.Modules.Abstractions.Import;
+﻿using GlpiNg.Modules.Abstractions.Import;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using MySqlConnector;
@@ -45,11 +45,22 @@ public sealed class GlpiImportStateService
     public GlpiAdminImportAnalysis? AdminAnalysis { get; private set; }
     public GlpiAdminImportSelection AdminSelection { get; } = new();
 
+    /// <summary>
+    /// Sélection des données du plugin d'inventaire détecté sur la base source (voir
+    /// <see cref="GlpiInventoryPluginInfo"/>). Distincte des deux autres pour la même raison :
+    /// troisième service, même page. Rien n'est coché par défaut — contrairement au parc et à
+    /// l'administration, ces données doublonnent un domaine que GlpiNg gère en propre, donc la
+    /// reprise se demande explicitement.
+    /// </summary>
+    public GlpiPluginImportSelection PluginSelection { get; } = new();
+
     public bool IsRunning { get; private set; }
     public GlpiImportResult? LastResult { get; private set; }
     public string? LastError { get; private set; }
     public GlpiAdminImportResult? LastAdminResult { get; private set; }
     public string? LastAdminError { get; private set; }
+    public GlpiPluginImportResult? LastPluginResult { get; private set; }
+    public string? LastPluginError { get; private set; }
     public DateTime? LastRunAt { get; private set; }
 
     /// <summary>Levé après chaque changement d'état, pour que les pages abonnées se rafraîchissent (StateHasChanged).</summary>
@@ -88,7 +99,7 @@ public sealed class GlpiImportStateService
     public bool CanRun => !IsRunning
         && !IsAnalyzing
         && Analysis is not null
-        && (Selection.AnySelected || AdminSelection.AnySelected);
+        && (Selection.AnySelected || AdminSelection.AnySelected || PluginSelection.AnySelected);
 
     public async Task AnalyzeAsync()
     {
@@ -107,6 +118,8 @@ public sealed class GlpiImportStateService
             LastError = null;
             LastAdminResult = null;
             LastAdminError = null;
+            LastPluginResult = null;
+            LastPluginError = null;
             Changed?.Invoke();
 
             await using AsyncServiceScope scope = _scopeFactory.CreateAsyncScope();
@@ -139,6 +152,12 @@ public sealed class GlpiImportStateService
                 AdminSelection.ImportProfiles = adminAnalysis.ProfilesCount > 0;
                 AdminSelection.ImportUsers = adminAnalysis.UsersCount > 0;
                 AdminSelection.ImportGeneralConfig = adminAnalysis.GeneralConfigAvailable;
+
+                // Volontairement décochées même quand le plugin en contient : voir PluginSelection.
+                PluginSelection.ImportIpRanges = false;
+                PluginSelection.ImportSnmpCredentials = false;
+                PluginSelection.ImportDeployPackages = false;
+                PluginSelection.ImportUnmanagedDevices = false;
             }
             catch (Exception ex)
             {
@@ -197,6 +216,24 @@ public sealed class GlpiImportStateService
                 {
                     LastAdminError = ex.Message;
                     LastAdminResult = null;
+                }
+            }
+
+            // Après l'administration : les données du plugin sont rattachées à l'entité racine,
+            // qui doit exister — c'est l'import "Administration" qui crée les entités.
+            if (PluginSelection.AnySelected && Analysis?.InventoryPlugin.TablePrefix is { Length: > 0 } tablePrefix)
+            {
+                try
+                {
+                    IGlpiInventoryPluginImportService pluginImportService =
+                        scope.ServiceProvider.GetRequiredService<IGlpiInventoryPluginImportService>();
+
+                    LastPluginResult = await pluginImportService.RunAsync(connectionString, tablePrefix, PluginSelection);
+                }
+                catch (Exception ex)
+                {
+                    LastPluginError = ex.Message;
+                    LastPluginResult = null;
                 }
             }
 

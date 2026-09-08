@@ -209,10 +209,52 @@
                             </p>
                         }
 
-                        <p class="mb-0 text-secondary">
-                            Ces données <strong>ne sont pas reprises</strong> par cet import, qui ne couvre que le parc
-                            et l'administration. GlpiNg réimplémente ce domaine en propre (Outils &gt; Déploiements),
-                            à reconstituer manuellement.
+                        <p class="mb-2 text-secondary">
+                            GlpiNg gère ce domaine en propre (Outils &gt; Déploiements). Cochez ce que vous
+                            souhaitez reprendre : rien n'est importé sans choix explicite.
+                        </p>
+
+                        <div class="glpi-config-field-grid">
+                            <div class="glpi-config-field checkbox">
+                                <label for="glpi-import-sel-ipranges"><i class="ti ti-network me-2"></i>Plages IP (@plugin.IpRangesCount)</label>
+                                <label class="glpi-switch">
+                                    <input id="glpi-import-sel-ipranges" type="checkbox" @bind="State.PluginSelection.ImportIpRanges"
+                                           disabled="@(State.IsRunning || plugin.IpRangesCount == 0)" />
+                                    <span class="glpi-switch-slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="glpi-config-field checkbox">
+                                <label for="glpi-import-sel-snmp"><i class="ti ti-key me-2"></i>Identifiants SNMP (@plugin.SnmpCredentialsCount)</label>
+                                <label class="glpi-switch">
+                                    <input id="glpi-import-sel-snmp" type="checkbox" @bind="State.PluginSelection.ImportSnmpCredentials"
+                                           disabled="@(State.IsRunning || plugin.SnmpCredentialsCount == 0)" />
+                                    <span class="glpi-switch-slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="glpi-config-field checkbox">
+                                <label for="glpi-import-sel-packages"><i class="ti ti-package me-2"></i>Paquets de déploiement (@plugin.DeployPackagesCount)</label>
+                                <label class="glpi-switch">
+                                    <input id="glpi-import-sel-packages" type="checkbox" @bind="State.PluginSelection.ImportDeployPackages"
+                                           disabled="@(State.IsRunning || plugin.DeployPackagesCount == 0)" />
+                                    <span class="glpi-switch-slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="glpi-config-field checkbox">
+                                <label for="glpi-import-sel-unmanaged"><i class="ti ti-help me-2"></i>Actifs non gérés (@plugin.UnmanagedDevicesCount)</label>
+                                <label class="glpi-switch">
+                                    <input id="glpi-import-sel-unmanaged" type="checkbox" @bind="State.PluginSelection.ImportUnmanagedDevices"
+                                           disabled="@(State.IsRunning || plugin.UnmanagedDevicesCount == 0)" />
+                                    <span class="glpi-switch-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <p class="hint mt-2 mb-0">
+                            Non repris : tâches et agents du plugin. Les agents sont déjà couverts par la catégorie
+                            « Agents » ci-dessus (<code>glpi_agents</code>, table du cœur de GLPI).
                         </p>
                     }
                 </div>
@@ -477,6 +519,62 @@
                 <div class="glpi-fiche-block-title"><i class="ti ti-alert-triangle"></i>Avertissements (Administration)</div>
                 <ul>
                     @foreach (string warning in adminResult.Warnings)
+                    {
+                        <li>@warning</li>
+                    }
+                </ul>
+            }
+        }
+
+        @if (State.LastPluginError is not null)
+        {
+            <div class="alert alert-danger">
+                <i class="ti ti-alert-circle me-1"></i>@State.LastPluginError
+            </div>
+        }
+
+        @if (State.LastPluginResult is { } pluginResult)
+        {
+            <div class="row row-cards mb-3">
+                <div class="col-6 col-md-3">
+                    <div class="card card-sm">
+                        <div class="card-body text-center">
+                            <div class="fs-2 fw-bold">@(pluginResult.IpRangesCreated + pluginResult.IpRangesUpdated)</div>
+                            <div class="text-secondary">Plages IP (@pluginResult.IpRangesCreated créées)</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card card-sm">
+                        <div class="card-body text-center">
+                            <div class="fs-2 fw-bold">@(pluginResult.SnmpCredentialsCreated + pluginResult.SnmpCredentialsUpdated)</div>
+                            <div class="text-secondary">Identifiants SNMP (@pluginResult.SnmpCredentialsCreated créés)</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card card-sm">
+                        <div class="card-body text-center">
+                            <div class="fs-2 fw-bold">@(pluginResult.DeployPackagesCreated + pluginResult.DeployPackagesUpdated)</div>
+                            <div class="text-secondary">Paquets (@pluginResult.DeployPackagesCreated créés)</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card card-sm">
+                        <div class="card-body text-center">
+                            <div class="fs-2 fw-bold">@(pluginResult.UnmanagedDevicesCreated + pluginResult.UnmanagedDevicesUpdated)</div>
+                            <div class="text-secondary">Actifs non gérés (@pluginResult.UnmanagedDevicesCreated créés)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (pluginResult.Warnings.Count > 0)
+            {
+                <div class="glpi-fiche-block-title"><i class="ti ti-alert-triangle"></i>Avertissements (plugin d'inventaire)</div>
+                <ul>
+                    @foreach (string warning in pluginResult.Warnings)
                     {
                         <li>@warning</li>
                     }
