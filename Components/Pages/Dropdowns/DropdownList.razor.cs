@@ -1,4 +1,4 @@
-using GlpiNg.Modules.Inventory.Models;
+﻿using GlpiNg.Modules.Inventory.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.JSInterop;
@@ -27,6 +27,10 @@ public partial class DropdownList : ComponentBase
     private List<DropdownItem> _items = [];
     private readonly HashSet<int> _selectedIds = [];
     private DropdownItem _newItem = new() { Name = string.Empty };
+
+    /// <summary>Messages de doublon, affichés là où l'utilisateur agit : dans la modale d'ajout, ou au-dessus de la liste en édition.</summary>
+    private string? _createError;
+    private string? _editError;
 
     private int? _editingId;
     private string _editName = string.Empty;
@@ -226,6 +230,14 @@ public partial class DropdownList : ComponentBase
         DropdownItem? tracked = await db.Set<DropdownItem>().FirstOrDefaultAsync(i => i.Id == id);
         if (tracked is null) return;
 
+        _editError = null;
+
+        if (await IsDuplicateAsync(db, _editName, _editParentId, excludedId: id))
+        {
+            _editError = DuplicateMessage(_editParentId);
+            return;
+        }
+
         tracked.Name = _editName;
         tracked.Comment = _editComment;
         tracked.Color = _editColor;
@@ -236,11 +248,45 @@ public partial class DropdownList : ComponentBase
         await LoadAsync();
     }
 
+    /// <summary>
+    /// Vrai si une valeur de même nom existe déjà dans ce type, sous le même parent. Contrôle
+    /// préalable plutôt que de laisser remonter la violation d'index : l'utilisateur doit savoir
+    /// que c'est le couple nom + parent qui est en cause, pas le nom seul.
+    /// </summary>
+    private async Task<bool> IsDuplicateAsync(DbContext db, string name, int? parentId, int? excludedId)
+    {
+        string trimmed = name.Trim();
+
+        return await db.Set<DropdownItem>().AnyAsync(item =>
+            item.Type == _type
+            && item.ParentId == parentId
+            && item.Name == trimmed
+            && (excludedId == null || item.Id != excludedId));
+    }
+
+    private string DuplicateMessage(int? parentId)
+    {
+        DropdownItem? parent = parentId is { } id ? _items.FirstOrDefault(item => item.Id == id) : null;
+
+        return parent is null
+            ? "Cette valeur existe déjà à la racine."
+            : $"Cette valeur existe déjà sous « {parent.Name} ».";
+    }
+
     private async Task CreateAsync()
     {
         if (string.IsNullOrWhiteSpace(_newItem.Name)) return;
 
+        _createError = null;
+
         await using DbContext db = await DbFactory.CreateDbContextAsync();
+
+        if (await IsDuplicateAsync(db, _newItem.Name, _newItem.ParentId, excludedId: null))
+        {
+            _createError = DuplicateMessage(_newItem.ParentId);
+            return;
+        }
+
         db.Set<DropdownItem>().Add(_newItem);
         await db.SaveChangesAsync();
 

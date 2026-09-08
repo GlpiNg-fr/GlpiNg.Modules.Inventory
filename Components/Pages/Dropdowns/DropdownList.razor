@@ -1,4 +1,4 @@
-@page "/config/dropdowns"
+﻿@page "/config/dropdowns"
 @page "/config/dropdowns/{TypeSlug}"
 @page "/config/components"
 @page "/config/components/{TypeSlug}"
@@ -20,6 +20,10 @@ else
                        BaseRoute="@DropdownTypeCatalog.GroupBaseRoute(DropdownTypeCatalog.Group(_type))" />
 
     <div class="glpi-list-page">
+    @if (_editError is not null)
+    {
+        <div class="alert alert-danger"><i class="ti ti-alert-circle me-1"></i>@_editError</div>
+    }
     <div class="card">
         <div class="card-header d-flex align-items-center justify-content-between glpi-list-toolbar">
             <p class="text-secondary mb-0"><i class="ti ti-info-circle me-1"></i>@DropdownTypeCatalog.Description(_type)</p>
@@ -180,6 +184,10 @@ else
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
                 </div>
                 <div class="modal-body">
+                    @if (_createError is not null)
+                    {
+                        <div class="alert alert-danger"><i class="ti ti-alert-circle me-1"></i>@_createError</div>
+                    }
                     <div class="glpi-fiche-field">
                         <label>Nom</label>
                         <input class="form-control" @bind="_newItem.Name" @bind:event="oninput" />
