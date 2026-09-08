@@ -1,4 +1,4 @@
-using GlpiNg.Modules.Inventory.Models;
+﻿using GlpiNg.Modules.Inventory.Models;
 using GlpiNg.Modules.Inventory.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
@@ -84,6 +84,17 @@ public partial class ComputerRuleDetail : ComponentBase, IAsyncDisposable
         _db.Set<ComputerRule>().Remove(_rule);
         await _db.SaveChangesAsync();
         Nav.NavigateTo("/admin/rules");
+    }
+
+    /// <summary>Indication de saisie adaptée à l'opérateur : heures pour une ancienneté, motif pour une expression régulière.</summary>
+    private string CriterionValuePlaceholder()
+    {
+        if (ComputerRuleLabels.IsDurationOperator(_newCriterion.Operator))
+        {
+            return "nombre d'heures (ex. 24)";
+        }
+
+        return _newCriterion.Operator == ComputerRuleCriterionOperator.MatchesRegex ? "expression régulière" : string.Empty;
     }
 
     private async Task AddCriterionAsync()

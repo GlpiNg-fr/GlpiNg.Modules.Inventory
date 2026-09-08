@@ -36,6 +36,10 @@ public static class InventoryModuleServiceCollectionExtensions
         services.Configure<AgentCleanupOptions>(configuration.GetSection(AgentCleanupOptions.SectionName));
         services.AddScoped<ICronTask, AgentCleanupCronTask>();
 
+        // Reevaluation periodique des regles pour les actifs : voir ComputerRuleCronTask, sans
+        // laquelle une regle portant sur l'anciennete du dernier contact ne se declencherait jamais.
+        services.AddScoped<ICronTask, ComputerRuleCronTask>();
+
         // Contribution du module au menu latéral de l'hôte (groupe "Parc" + entrées
         // Agents/Déploiements dans "Outils") — voir InventoryMenuProvider.
         services.AddSingleton<IMenuProvider, InventoryMenuProvider>();

@@ -1,4 +1,4 @@
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using GlpiNg.Modules.Inventory.Models;
 
 namespace GlpiNg.Modules.Inventory.Services;
@@ -12,27 +12,55 @@ namespace GlpiNg.Modules.Inventory.Services;
 /// </summary>
 public static partial class ComputerRuleEngine
 {
-    public static void Apply(Computer computer, bool isNew, IReadOnlyList<ComputerRule> rules)
+    /// <param name="statusResolver">
+    /// Traduit un nom de statut en identifiant d'intitulé. Fourni par l'appelant, qui a pré-résolu
+    /// les noms utilisés par les règles actives : la résolution demande un accès base, que ce
+    /// moteur — volontairement synchrone et sans dépendance — ne peut pas faire lui-même. Absent,
+    /// les actions sur le statut sont ignorées.
+    /// </param>
+    /// <param name="now">
+    /// Instant de référence des critères d'ancienneté. Paramétrable pour que l'évaluation d'un lot
+    /// de postes reste cohérente d'un bout à l'autre du traitement.
+    /// </param>
+    public static void Apply(
+        Computer computer,
+        bool isNew,
+        IReadOnlyList<ComputerRule> rules,
+        Func<string, int?>? statusResolver = null,
+        DateTime? now = null)
+        => Apply(computer, isNew ? ComputerRuleAppliesTo.OnCreate : ComputerRuleAppliesTo.OnUpdate, rules, statusResolver, now);
+
+    /// <summary>
+    /// Applique les règles correspondant à un moment donné. L'exécution périodique
+    /// (<see cref="ComputerRuleAppliesTo.OnSchedule"/>) passe par ici : c'est le seul moment où une
+    /// condition d'ancienneté peut être vérifiée, un inventaire venant par définition d'avoir lieu.
+    /// </summary>
+    public static void Apply(
+        Computer computer,
+        ComputerRuleAppliesTo moment,
+        IReadOnlyList<ComputerRule> rules,
+        Func<string, int?>? statusResolver = null,
+        DateTime? now = null)
     {
-        ComputerRuleAppliesTo appliesFlag = isNew ? ComputerRuleAppliesTo.OnCreate : ComputerRuleAppliesTo.OnUpdate;
+        DateTime reference = now ?? DateTime.UtcNow;
 
         foreach (ComputerRule rule in rules
-                     .Where(r => r.IsActive && (r.AppliesTo & appliesFlag) != 0)
+                     .Where(r => r.IsActive && (r.AppliesTo & moment) != 0)
                      .OrderBy(r => r.SortOrder))
         {
-            if (!Matches(computer, rule, out Match? regexMatch))
+            if (!Matches(computer, rule, reference, out Match? regexMatch))
             {
                 continue;
             }
 
             foreach (ComputerRuleAction action in rule.Actions)
             {
-                ApplyAction(computer, action, regexMatch);
+                ApplyAction(computer, action, regexMatch, statusResolver);
             }
         }
     }
 
-    private static bool Matches(Computer computer, ComputerRule rule, out Match? lastRegexMatch)
+    private static bool Matches(Computer computer, ComputerRule rule, DateTime now, out Match? lastRegexMatch)
     {
         lastRegexMatch = null;
         if (rule.Criteria.Count == 0)
@@ -45,18 +73,23 @@ public static partial class ComputerRuleEngine
         bool result = rule.LogicalOperator == ComputerRuleLogicalOperator.And;
         foreach (ComputerRuleCriterion criterion in rule.Criteria)
         {
-            bool matches = EvaluateSingle(computer, criterion, ref lastRegexMatch);
+            bool matches = EvaluateSingle(computer, criterion, now, ref lastRegexMatch);
             result = rule.LogicalOperator == ComputerRuleLogicalOperator.Or ? result || matches : result && matches;
         }
 
         return result;
     }
 
-    private static bool EvaluateSingle(Computer computer, ComputerRuleCriterion criterion, ref Match? lastRegexMatch)
+    private static bool EvaluateSingle(Computer computer, ComputerRuleCriterion criterion, DateTime now, ref Match? lastRegexMatch)
     {
         if (!ComputerRuleFieldCatalog.ByKey.TryGetValue(criterion.Field, out ComputerRuleFieldDefinition? field))
         {
             return false;
+        }
+
+        if (field.Kind == ComputerRuleFieldKind.Date)
+        {
+            return EvaluateDate(field.GetDate?.Invoke(computer), criterion, now);
         }
 
         string? fieldValue = field.GetValue(computer);
@@ -78,10 +111,60 @@ public static partial class ComputerRuleEngine
         };
     }
 
-    private static void ApplyAction(Computer computer, ComputerRuleAction action, Match? regexMatch)
+    /// <summary>
+    /// Critère d'ancienneté. Une date absente n'est jamais « plus ancienne que » : un poste jamais
+    /// inventorié n'a pas un contact vieux, il n'en a pas. Le traiter autrement ferait basculer
+    /// d'un coup tout le parc jamais contacté au premier passage de la règle.
+    /// </summary>
+    private static bool EvaluateDate(DateTime? value, ComputerRuleCriterion criterion, DateTime now)
+    {
+        if (criterion.Operator == ComputerRuleCriterionOperator.Exists)
+        {
+            return value is not null;
+        }
+
+        if (criterion.Operator == ComputerRuleCriterionOperator.DoesNotExist)
+        {
+            return value is null;
+        }
+
+        if (value is not DateTime date || !double.TryParse(criterion.Value, out double hours))
+        {
+            return false;
+        }
+
+        TimeSpan age = now - date;
+
+        return criterion.Operator switch
+        {
+            ComputerRuleCriterionOperator.OlderThanHours => age.TotalHours > hours,
+            ComputerRuleCriterionOperator.WithinLastHours => age.TotalHours <= hours,
+            _ => false,
+        };
+    }
+
+    private static void ApplyAction(Computer computer, ComputerRuleAction action, Match? regexMatch, Func<string, int?>? statusResolver)
     {
         if (!ComputerRuleFieldCatalog.ByKey.TryGetValue(action.Field, out ComputerRuleFieldDefinition? field))
         {
+            return;
+        }
+
+        if (field.IsReadOnly)
+        {
+            return;
+        }
+
+        if (field.Kind == ComputerRuleFieldKind.Status)
+        {
+            // Sans résolveur, l'action est ignorée plutôt qu'appliquée à moitié : mieux vaut un
+            // statut inchangé qu'un statut vidé.
+            if (statusResolver is not null && action.Value is { Length: > 0 } statusName
+                && statusResolver(statusName) is { } statusId)
+            {
+                computer.StatusId = statusId;
+            }
+
             return;
         }
 

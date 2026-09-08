@@ -1,4 +1,4 @@
-@page "/admin/rules/{RuleId:int}"
+﻿@page "/admin/rules/{RuleId:int}"
 @using GlpiNg.Modules.Inventory.Services
 @rendermode InteractiveServer
 
@@ -63,6 +63,8 @@ else
                                     <option value="@ComputerRuleAppliesTo.OnCreateAndUpdate">Ajout / Mise à jour</option>
                                     <option value="@ComputerRuleAppliesTo.OnCreate">Ajout</option>
                                     <option value="@ComputerRuleAppliesTo.OnUpdate">Mise à jour</option>
+                                    <option value="@(ComputerRuleAppliesTo.OnCreateAndUpdate | ComputerRuleAppliesTo.OnSchedule)">Ajout / Mise à jour / Périodique</option>
+                                    <option value="@ComputerRuleAppliesTo.OnSchedule">Exécution périodique seulement</option>
                                 </select>
                             </div>
                             <div class="glpi-fiche-field">
@@ -203,7 +205,7 @@ else
                             <div class="col-md-3">
                                 <label class="form-label">Opérateur</label>
                                 <select class="form-select" @bind="_newCriterion.Operator">
-                                    @foreach (ComputerRuleCriterionOperator op in Enum.GetValues<ComputerRuleCriterionOperator>())
+                                    @foreach (ComputerRuleCriterionOperator op in ComputerRuleLabels.OperatorsFor(_newCriterion.Field))
                                     {
                                         <option value="@op">@ComputerRuleLabels.OperatorLabel(op)</option>
                                     }
@@ -218,7 +220,8 @@ else
                                 else
                                 {
                                     <input class="form-control" @bind="_newCriterion.Value"
-                                           placeholder="@(_newCriterion.Operator == ComputerRuleCriterionOperator.MatchesRegex ? "expression régulière" : "")" />
+                                           type="@(ComputerRuleLabels.IsDurationOperator(_newCriterion.Operator) ? "number" : "text")"
+                                           placeholder="@CriterionValuePlaceholder()" />
                                 }
                             </div>
                             <div class="col-md-2">

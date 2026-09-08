@@ -1,4 +1,4 @@
-using GlpiNg.Modules.Inventory.Models;
+﻿using GlpiNg.Modules.Inventory.Models;
 
 namespace GlpiNg.Modules.Inventory.Services;
 
@@ -7,12 +7,35 @@ namespace GlpiNg.Modules.Inventory.Services;
 /// à la fois pour évaluer les critères (<see cref="GetValue"/>) et pour appliquer les actions
 /// (<see cref="SetValue"/>) d'une <see cref="ComputerRule"/>.
 /// </summary>
+public enum ComputerRuleFieldKind
+{
+    /// <summary>Champ texte : opérateurs de comparaison de chaînes.</summary>
+    Text,
+
+    /// <summary>Champ date : opérateurs d'ancienneté (OlderThanHours / WithinLastHours).</summary>
+    Date,
+
+    /// <summary>
+    /// Statut, résolu vers un intitulé. Lisible comme un texte, mais son affectation passe par un
+    /// résolveur fourni par l'appelant — voir <see cref="ComputerRuleEngine.Apply"/>.
+    /// </summary>
+    Status
+}
+
 public sealed class ComputerRuleFieldDefinition
 {
     public required string Key { get; init; }
     public required string Label { get; init; }
     public required Func<Computer, string?> GetValue { get; init; }
     public required Action<Computer, string?> SetValue { get; init; }
+
+    public ComputerRuleFieldKind Kind { get; init; } = ComputerRuleFieldKind.Text;
+
+    /// <summary>Renseigné pour <see cref="ComputerRuleFieldKind.Date"/> uniquement.</summary>
+    public Func<Computer, DateTime?>? GetDate { get; init; }
+
+    /// <summary>Vrai si le champ ne peut servir qu'en critère, jamais en action.</summary>
+    public bool IsReadOnly { get; init; }
 }
 
 /// <summary>
@@ -20,12 +43,11 @@ public sealed class ComputerRuleFieldDefinition
 /// pour les actifs (critères et actions) — ajouter un champ ici suffit à le rendre
 /// disponible dans l'UI et dans <see cref="ComputerRuleEngine"/>.
 ///
-/// Limité aux champs texte simples : les champs résolus depuis les Intitulés (StatusId/
-/// LocationId, voir DropdownItem) ne sont volontairement pas exposés ici — les modifier
-/// depuis une règle demanderait une résolution "valeur -> DropdownItem" (création à la
-/// volée comme Computers/Detail.razor.cs.SaveComputerFieldsAsync) qui a besoin d'un accès
-/// base, incompatible avec de simples délégués Func/Action synchrones. Simplification
-/// délibérée, comme DictionaryActionType.Ignore pour les dictionnaires.
+/// Trois natures de champ (voir <see cref="ComputerRuleFieldKind"/>) : texte, date, et statut.
+/// Le statut est résolu vers un intitulé (DropdownItem), ce qu'un délégué synchrone ne sait pas
+/// faire — l'affectation passe donc par un résolveur que l'appelant fournit au moteur, après avoir
+/// pré-résolu les noms de statut utilisés par les règles actives. Les autres champs d'intitulé
+/// (Lieu) restent hors catalogue tant que le besoin ne se présente pas.
 /// </summary>
 public static class ComputerRuleFieldCatalog
 {
@@ -47,6 +69,31 @@ public static class ComputerRuleFieldCatalog
         new() { Key = "Building", Label = "Bâtiment", GetValue = c => c.Building, SetValue = (c, v) => c.Building = v },
         new() { Key = "Room", Label = "Salle", GetValue = c => c.Room, SetValue = (c, v) => c.Room = v },
         new() { Key = "AssignedUser", Label = "Utilisateur affecté", GetValue = c => c.AssignedUser, SetValue = (c, v) => c.AssignedUser = v },
+
+        // Date du dernier inventaire remonté par l'agent : c'est le « dernier contact » d'un poste.
+        // Critère seulement — une règle n'a pas à réécrire une date constatée.
+        new()
+        {
+            Key = "LastInventoryAt",
+            Label = "Dernier inventaire",
+            Kind = ComputerRuleFieldKind.Date,
+            IsReadOnly = true,
+            GetDate = c => c.LastInventoryAt,
+            GetValue = c => c.LastInventoryAt?.ToString("O"),
+            SetValue = (_, _) => { },
+        },
+
+        // Statut : lisible comme un texte (le nom de l'intitulé), mais son affectation demande de
+        // résoudre ce nom vers un DropdownItem, ce qu'un délégué synchrone ne peut pas faire. Le
+        // moteur passe donc par un résolveur fourni par l'appelant — d'où SetValue sans effet ici.
+        new()
+        {
+            Key = "Status",
+            Label = "Statut",
+            Kind = ComputerRuleFieldKind.Status,
+            GetValue = c => c.StatusItem?.Name,
+            SetValue = (_, _) => { },
+        },
     ];
 
     public static readonly IReadOnlyDictionary<string, ComputerRuleFieldDefinition> ByKey = All.ToDictionary(f => f.Key);

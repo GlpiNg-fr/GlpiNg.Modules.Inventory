@@ -1,4 +1,4 @@
-using GlpiNg.Modules.Abstractions.Entities;
+﻿using GlpiNg.Modules.Abstractions.Entities;
 
 namespace GlpiNg.Modules.Inventory.Models;
 
@@ -15,7 +15,15 @@ public enum ComputerRuleAppliesTo
 {
     OnCreate = 1,
     OnUpdate = 2,
-    OnCreateAndUpdate = OnCreate | OnUpdate
+    OnCreateAndUpdate = OnCreate | OnUpdate,
+
+    /// <summary>
+    /// À l'exécution périodique de l'action automatique « Règles pour les actifs », en plus des
+    /// inventaires. Indispensable pour toute règle qui porte sur l'ancienneté du dernier contact :
+    /// évaluée uniquement à l'arrivée d'un inventaire, une telle condition ne serait jamais
+    /// vérifiée, puisque le contact vient précisément d'avoir lieu.
+    /// </summary>
+    OnSchedule = 4
 }
 
 /// <summary>
@@ -63,7 +71,13 @@ public enum ComputerRuleCriterionOperator
     EndsWith,
     MatchesRegex,
     Exists,
-    DoesNotExist
+    DoesNotExist,
+
+    /// <summary>Date antérieure à N heures — la valeur du critère est ce nombre d'heures.</summary>
+    OlderThanHours,
+
+    /// <summary>Date postérieure à N heures — pendant de <see cref="OlderThanHours"/>.</summary>
+    WithinLastHours
 }
 
 /// <summary>Un critère de règle : teste la valeur d'un champ de Computer (désigné par sa clé dans ComputerRuleFieldCatalog).</summary>
