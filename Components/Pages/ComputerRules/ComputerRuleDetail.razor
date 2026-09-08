@@ -50,7 +50,12 @@ else
                             </div>
                             <div class="glpi-fiche-field">
                                 <label>Actif</label>
-                                <select class="form-select" @bind="_rule.IsActive">
+                                @* Valeur et gestionnaire explicites plutot que @bind : sur un <select> lie a un booleen,
+                                   Blazor ecrit dans l'attribut value le resultat de bool.ToString(), soit "True" ou
+                                   "False". Aucune option en minuscules ne correspondait alors, la liste restait bloquee
+                                   sur son premier choix et le modele n'etait jamais mis a jour. *@
+                                <select class="form-select" value="@(_rule.IsActive ? "true" : "false")"
+                                        @onchange="@((ChangeEventArgs e) => _rule.IsActive = (string?)e.Value == "true")">
                                     <option value="true">Oui</option>
                                     <option value="false">Non</option>
                                 </select>
@@ -108,7 +113,9 @@ else
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label">Mode</label>
-                                    <select class="form-select" @bind="_testIsUpdate">
+                                    @* Meme correction que le selecteur « Actif » : voir la remarque plus haut. *@
+                                    <select class="form-select" value="@(_testIsUpdate ? "true" : "false")"
+                                            @onchange="@((ChangeEventArgs e) => _testIsUpdate = (string?)e.Value == "true")">
                                         <option value="false">Simuler un ajout</option>
                                         <option value="true">Simuler une mise à jour</option>
                                     </select>
