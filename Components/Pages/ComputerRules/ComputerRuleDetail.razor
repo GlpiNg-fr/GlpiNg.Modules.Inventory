@@ -217,6 +217,18 @@ else
                                 {
                                     <input class="form-control" disabled placeholder="—" />
                                 }
+                                else if (IsStatusField(_newCriterion.Field) && _statusOptions.Count > 0)
+                                {
+                                    @* Même raison que pour l'action : le statut se compare au nom
+                                       exact d'un intitulé, donc il se choisit plutôt qu'il ne se tape. *@
+                                    <select class="form-select" @bind="_newCriterion.Value">
+                                        <option value="">—</option>
+                                        @foreach (string status in _statusOptions)
+                                        {
+                                            <option value="@status">@status</option>
+                                        }
+                                    </select>
+                                }
                                 else
                                 {
                                     <input class="form-control" @bind="_newCriterion.Value"
@@ -276,8 +288,9 @@ else
                         <div class="row g-2 align-items-end">
                             <div class="col-md-3">
                                 <label class="form-label">Champ</label>
-                                <select class="form-select" @bind="_newAction.Field">
-                                    @foreach (ComputerRuleFieldDefinition field in ComputerRuleFieldCatalog.All)
+                                <select class="form-select" value="@_newAction.Field"
+                                        @onchange="@((ChangeEventArgs e) => OnActionFieldChanged((string)e.Value!))">
+                                    @foreach (ComputerRuleFieldDefinition field in AssignableFields)
                                     {
                                         <option value="@field.Key">@field.Label</option>
                                     }
@@ -286,7 +299,7 @@ else
                             <div class="col-md-3">
                                 <label class="form-label">Type d'action</label>
                                 <select class="form-select" @bind="_newAction.ActionType">
-                                    @foreach (ComputerRuleActionType actionType in Enum.GetValues<ComputerRuleActionType>())
+                                    @foreach (ComputerRuleActionType actionType in ActionTypesFor(_newAction.Field))
                                     {
                                         <option value="@actionType">@ComputerRuleLabels.ActionTypeLabel(actionType)</option>
                                     }
@@ -294,7 +307,30 @@ else
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Valeur</label>
-                                <input class="form-control" @bind="_newAction.Value" />
+                                @* Le statut se choisit parmi les intitulés existants : le moteur les
+                                   rapproche par nom exact et n'en crée pas, donc une saisie libre
+                                   rendait la règle silencieusement sans effet à la moindre faute. *@
+                                @if (IsStatusField(_newAction.Field))
+                                {
+                                    @if (_statusOptions.Count == 0)
+                                    {
+                                        <input class="form-control" value="Aucun statut défini" disabled />
+                                    }
+                                    else
+                                    {
+                                        <select class="form-select" @bind="_newAction.Value">
+                                            <option value="">—</option>
+                                            @foreach (string status in _statusOptions)
+                                            {
+                                                <option value="@status">@status</option>
+                                            }
+                                        </select>
+                                    }
+                                }
+                                else
+                                {
+                                    <input class="form-control" @bind="_newAction.Value" />
+                                }
                             </div>
                             <div class="col-md-2">
                                 <button type="button" class="btn btn-primary w-100" @onclick="AddActionAsync">

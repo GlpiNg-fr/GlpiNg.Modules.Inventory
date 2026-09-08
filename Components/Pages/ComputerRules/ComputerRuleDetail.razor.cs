@@ -17,6 +17,7 @@ public partial class ComputerRuleDetail : ComponentBase, IAsyncDisposable
     private NavigationManager Nav { get; set; } = null!;
 
     private DbContext? _db;
+    private List<string> _statusOptions = [];
     private ComputerRule? _rule;
     private int _loadedId;
     private bool _isSaving;
@@ -58,6 +59,16 @@ public partial class ComputerRuleDetail : ComponentBase, IAsyncDisposable
             .FirstOrDefaultAsync(r => r.Id == RuleId);
 
         _testComputers = await _db.Set<Computer>().AsNoTracking().OrderBy(c => c.Name).ToListAsync();
+
+        // Statuts existants : une action ou un critère sur le statut se choisit dans une liste, pas
+        // en saisie libre. Le moteur rapproche la valeur d'un intitulé par son nom exact, et la
+        // tâche périodique n'en crée pas à la volée — une faute de frappe rendrait donc la règle
+        // silencieusement sans effet.
+        _statusOptions = await _db.Set<DropdownItem>().AsNoTracking()
+            .Where(item => item.Type == DropdownType.Status)
+            .OrderBy(item => item.Name)
+            .Select(item => item.Name)
+            .ToListAsync();
     }
 
     private void SetTab(string key) => _activeTabKey = key;
@@ -95,6 +106,42 @@ public partial class ComputerRuleDetail : ComponentBase, IAsyncDisposable
         }
 
         return _newCriterion.Operator == ComputerRuleCriterionOperator.MatchesRegex ? "expression régulière" : string.Empty;
+    }
+
+    /// <summary>Vrai si le champ désigné est le statut, dont la valeur se choisit dans une liste.</summary>
+    private static bool IsStatusField(string fieldKey)
+        => ComputerRuleFieldCatalog.ByKey.TryGetValue(fieldKey, out ComputerRuleFieldDefinition? field)
+           && field.Kind == ComputerRuleFieldKind.Status;
+
+    /// <summary>
+    /// Types d'action proposés pour un champ. Sur le statut, seule l'affectation a un sens :
+    /// concaténer un statut ou y injecter le résultat d'une expression régulière ne donnerait
+    /// jamais un intitulé existant.
+    /// </summary>
+    private static IEnumerable<ComputerRuleActionType> ActionTypesFor(string fieldKey)
+        => IsStatusField(fieldKey)
+            ? [ComputerRuleActionType.Assign]
+            : Enum.GetValues<ComputerRuleActionType>();
+
+    /// <summary>
+    /// Champs affectables. Exclut ceux marqués en lecture seule — la date du dernier inventaire est
+    /// un constat, pas une valeur qu'une règle réécrit ; la proposer en action n'aurait donné
+    /// qu'une action sans effet.
+    /// </summary>
+    private static IEnumerable<ComputerRuleFieldDefinition> AssignableFields
+        => ComputerRuleFieldCatalog.All.Where(candidate => !candidate.IsReadOnly);
+
+    /// <summary>Aligne le type d'action sur le champ choisi : passer au statut doit retomber sur « Affecter ».</summary>
+    private void OnActionFieldChanged(string fieldKey)
+    {
+        _newAction.Field = fieldKey;
+
+        if (!ActionTypesFor(fieldKey).Contains(_newAction.ActionType))
+        {
+            _newAction.ActionType = ComputerRuleActionType.Assign;
+        }
+
+        _newAction.Value = null;
     }
 
     private async Task AddCriterionAsync()
