@@ -1,4 +1,4 @@
-@page "/admin/import/glpi"
+﻿@page "/admin/import/glpi"
 @rendermode InteractiveServer
 
 <PageTitle>GlpiNg — Import GLPI</PageTitle>
@@ -160,6 +160,63 @@
                 CPU : @analysis.CpuCount · RAM : @analysis.RamCount · Disques : @analysis.DiskCount ·
                 Cartes réseau : @analysis.NetworkCardCount
             </p>
+
+            @* Plugin d'inventaire de la base source : c'est lui qui porte, côté GLPI, le domaine
+               que GlpiNg réimplémente en propre (déploiement, découverte réseau). Le signaler ici
+               évite à l'administrateur de découvrir après coup que ces données ne sont pas
+               reprises par l'import. *@
+            @{
+                GlpiNg.Modules.Inventory.Import.GlpiInventoryPluginInfo plugin = analysis.InventoryPlugin;
+            }
+            @if (plugin.IsPresent)
+            {
+                <div class="alert @(plugin.DataCount > 0 ? "alert-info" : "alert-secondary") mt-3" role="alert">
+                    <h4 class="alert-title">
+                        <i class="ti ti-plug"></i>
+                        Plugin d'inventaire détecté : @(plugin.Name ?? plugin.Directory)
+                        @if (plugin.Version is { Length: > 0 } version)
+                        {
+                            <span class="badge bg-blue-lt ms-1">@version</span>
+                        }
+                        @if (plugin.State is not null && !plugin.IsActive)
+                        {
+                            <span class="badge bg-orange-lt ms-1" title="Le plugin est installé mais désactivé côté GLPI : ses données restent en base.">désactivé</span>
+                        }
+                    </h4>
+
+                    @if (plugin.IsRegisteredWithoutTables)
+                    {
+                        <p class="mb-0">
+                            Déclaré dans <code>glpi_plugins</code> mais aucune de ses tables n'est présente :
+                            plugin désinstallé, ou export partiel de la base. Rien à reprendre.
+                        </p>
+                    }
+                    else
+                    {
+                        <p class="mb-1">
+                            @plugin.TableCount table(s) <code>@plugin.TablePrefix*</code> dans la base source.
+                        </p>
+
+                        @if (plugin.DataCount > 0)
+                        {
+                            <p class="mb-1">
+                                Paquets de déploiement : @plugin.DeployPackagesCount ·
+                                Tâches : @plugin.TasksCount ·
+                                Agents : @plugin.AgentsCount ·
+                                Plages IP : @plugin.IpRangesCount ·
+                                Identifiants SNMP : @plugin.SnmpCredentialsCount ·
+                                Actifs non gérés : @plugin.UnmanagedDevicesCount
+                            </p>
+                        }
+
+                        <p class="mb-0 text-secondary">
+                            Ces données <strong>ne sont pas reprises</strong> par cet import, qui ne couvre que le parc
+                            et l'administration. GlpiNg réimplémente ce domaine en propre (Outils &gt; Déploiements),
+                            à reconstituer manuellement.
+                        </p>
+                    }
+                </div>
+            }
 
             <div class="glpi-config-divider">
                 <span><i class="ti ti-users-group"></i> Administration &amp; configuration</span>

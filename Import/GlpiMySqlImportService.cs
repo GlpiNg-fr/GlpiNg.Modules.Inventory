@@ -1,4 +1,4 @@
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using GlpiNg.Modules.Inventory.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -74,7 +74,125 @@ public class GlpiMySqlImportService(DbContext db, IOptions<GlpiImportOptions> op
                 """, cancellationToken),
             VolumesCount = await TryCountAsync(connection, "SELECT COUNT(*) FROM glpi_items_disks WHERE itemtype = 'Computer'", cancellationToken),
             BatteriesCount = await TryCountAsync(connection, "SELECT COUNT(*) FROM glpi_items_devicebatteries WHERE itemtype = 'Computer'", cancellationToken),
+            InventoryPlugin = await DetectInventoryPluginAsync(connection, cancellationToken),
         };
+    }
+
+    /// <summary>Répertoires possibles du plugin, du plus récent au plus ancien : GLPI Inventory est un fork de FusionInventory, avec renommage des tables.</summary>
+    private static readonly string[] InventoryPluginDirectories = ["glpiinventory", "fusioninventory"];
+
+    /// <summary>
+    /// Détecte le plugin d'inventaire de la base source (GLPI Inventory ou FusionInventory).
+    ///
+    /// Deux sources croisées, parce qu'aucune n'est suffisante seule : <c>glpi_plugins</c> donne le
+    /// nom, la version et l'état, mais reste renseigné après une désinstallation qui a laissé
+    /// tomber les tables ; l'existence des tables dit ce qu'il y a réellement à lire, mais pas la
+    /// version. Un plugin désactivé côté GLPI conserve ses données, donc l'état ne conditionne pas
+    /// la détection.
+    ///
+    /// Les tables sont découvertes par leur préfixe plutôt que listées en dur : leurs noms ont
+    /// changé entre FusionInventory et GLPI Inventory, et changent encore d'une version à l'autre.
+    /// Les compteurs par catégorie visent des noms connus et retombent à zéro si la table n'existe
+    /// pas — même dégradation que le reste de l'analyse.
+    /// </summary>
+    private static async Task<GlpiInventoryPluginInfo> DetectInventoryPluginAsync(MySqlConnection connection, CancellationToken cancellationToken)
+    {
+        GlpiInventoryPluginInfo info = new();
+        HashSet<string> tables = await GetPluginTableNamesAsync(connection, cancellationToken);
+
+        foreach (string directory in InventoryPluginDirectories)
+        {
+            string prefix = $"glpi_plugin_{directory}_";
+            int tableCount = tables.Count(table => table.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
+            (string? name, string? version, int? state) = await ReadPluginRegistrationAsync(connection, directory, cancellationToken);
+
+            if (tableCount == 0 && name is null)
+            {
+                continue;
+            }
+
+            info.IsPresent = true;
+            info.Directory = directory;
+            info.Name = name;
+            info.Version = version;
+            info.State = state;
+            info.TablePrefix = tableCount > 0 ? prefix : null;
+            info.TableCount = tableCount;
+
+            info.DeployPackagesCount = await TryCountAsync(connection, $"SELECT COUNT(*) FROM `{prefix}deploypackages`", cancellationToken);
+            info.TasksCount = await TryCountAsync(connection, $"SELECT COUNT(*) FROM `{prefix}tasks`", cancellationToken);
+            info.AgentsCount = await TryCountAsync(connection, $"SELECT COUNT(*) FROM `{prefix}agents`", cancellationToken);
+            info.IpRangesCount = await TryCountAsync(connection, $"SELECT COUNT(*) FROM `{prefix}ipranges`", cancellationToken);
+            info.SnmpCredentialsCount = await TryCountAsync(connection, $"SELECT COUNT(*) FROM `{prefix}configsecurities`", cancellationToken);
+            info.UnmanagedDevicesCount = await TryCountAsync(connection, $"SELECT COUNT(*) FROM `{prefix}unmanageds`", cancellationToken);
+
+            // Premier trouvé : les deux plugins ne cohabitent pas sur une même instance GLPI, et
+            // glpiinventory est testé en premier comme étant le successeur.
+            break;
+        }
+
+        return info;
+    }
+
+    /// <summary>
+    /// Noms des tables de plugin du schéma courant, filtrés ensuite en mémoire.
+    ///
+    /// Le préfixe n'est pas comparé en SQL : un <c>LIKE 'glpi_plugin_%'</c> traiterait chaque
+    /// underscore comme un joker, et l'échapper dépendrait de <c>sql_mode</c> (le mode
+    /// NO_BACKSLASH_ESCAPES change le sens de l'antislash). Ramener les quelques centaines de noms
+    /// et les filtrer côté client évite complètement la question.
+    /// </summary>
+    private static async Task<HashSet<string>> GetPluginTableNamesAsync(MySqlConnection connection, CancellationToken cancellationToken)
+    {
+        HashSet<string> tables = new(StringComparer.OrdinalIgnoreCase);
+        const string sql = "SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE()";
+
+        try
+        {
+            await using MySqlCommand command = new(sql, connection);
+            await using MySqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
+
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                tables.Add(reader.GetString(0));
+            }
+        }
+        catch (MySqlException)
+        {
+            // information_schema inaccessible (droits restreints) : la détection retombe sur la
+            // seule table glpi_plugins.
+        }
+
+        return tables;
+    }
+
+    private static async Task<(string? Name, string? Version, int? State)> ReadPluginRegistrationAsync(
+        MySqlConnection connection, string directory, CancellationToken cancellationToken)
+    {
+        const string sql = "SELECT name, version, state FROM glpi_plugins WHERE directory = @directory LIMIT 1";
+
+        try
+        {
+            await using MySqlCommand command = new(sql, connection);
+            command.Parameters.AddWithValue("@directory", directory);
+            await using MySqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
+
+            if (!await reader.ReadAsync(cancellationToken))
+            {
+                return (null, null, null);
+            }
+
+            return (
+                reader.IsDBNull(0) ? null : reader.GetString(0),
+                reader.IsDBNull(1) ? null : reader.GetString(1),
+                reader.IsDBNull(2) ? null : reader.GetInt32(2));
+        }
+        catch (MySqlException)
+        {
+            // glpi_plugins absente : base très ancienne ou dump partiel. La détection par les
+            // tables reste valable.
+            return (null, null, null);
+        }
     }
 
     /// <param name="cancellationToken"></param>

@@ -1,4 +1,4 @@
-namespace GlpiNg.Modules.Inventory.Import;
+﻿namespace GlpiNg.Modules.Inventory.Import;
 
 /// <summary>
 /// Résumé, avant import, du contenu de la base GLPI MySQL source (voir
@@ -22,4 +22,10 @@ public class GlpiImportAnalysis
     public int BatteriesCount { get; set; }
 
     public int ComponentsCount => CpuCount + RamCount + DiskCount + NetworkCardCount;
+
+    /// <summary>
+    /// Plugin d'inventaire détecté sur la base source (GLPI Inventory / FusionInventory). Toujours
+    /// renseigné : <see cref="GlpiInventoryPluginInfo.IsPresent"/> dit s'il y a quelque chose.
+    /// </summary>
+    public GlpiInventoryPluginInfo InventoryPlugin { get; set; } = new();
 }
