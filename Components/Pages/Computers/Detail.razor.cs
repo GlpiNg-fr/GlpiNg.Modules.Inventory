@@ -2,6 +2,7 @@
 using System.Text;
 using System.Text.RegularExpressions;
 using GlpiNg.Modules.Abstractions.Deployment;
+using GlpiNg.Modules.Abstractions.Preferences;
 using GlpiNg.Modules.Inventory.Models;
 using GlpiNg.Modules.Inventory.Services;
 using Microsoft.AspNetCore.Components;
@@ -45,6 +46,9 @@ public partial class Detail : ComponentBase, IDisposable
     private WakeOnLanSender WakeOnLan { get; set; } = null!;
 
     [Inject]
+    private IUserPreferences UserPreferences { get; set; } = null!;
+
+    [Inject]
     private ComputerListStateService ListState { get; set; } = null!;
 
     [Inject]
@@ -52,6 +56,8 @@ public partial class Detail : ComponentBase, IDisposable
 
     [Inject]
     private IHttpClientFactory HttpClientFactory { get; set; } = null!;
+
+    private UserPreferenceValues _preferences = UserPreferenceValues.Defaults;
 
     private Computer? _computer;
     private List<FicheTab> _tabs = [];
@@ -187,6 +193,8 @@ public partial class Detail : ComponentBase, IDisposable
         _selectedPackagesToAssign = [];
         _wakeMode = DeploymentWakeMode.None;
         _prepareInstallError = null;
+
+        _preferences = await UserPreferences.GetAsync();
 
         await using DbContext db = await DbFactory.CreateDbContextAsync();
 
@@ -1410,8 +1418,16 @@ public partial class Detail : ComponentBase, IDisposable
         _ => "bg-red-lt"
     };
 
+    /// <summary>
+    /// Met une adresse MAC à la forme retenue pour l'utilisateur (préférence personnelle, sinon
+    /// réglage de l'instance).
+    ///
+    /// Lisait auparavant GeneralSettings:MacAddressFormat directement dans IConfiguration, donc
+    /// dans appsettings.json — alors que ce réglage est enregistré en base par la page /config :
+    /// le changer depuis l'écran n'avait aucun effet ici.
+    /// </summary>
     private string FormatMac(string? mac) =>
-        MacAddressFormatter.Format(mac, Configuration["GeneralSettings:MacAddressFormat"] ?? "Windows");
+        MacAddressFormatter.Format(mac, _preferences.MacAddressFormat) ?? "—";
 
     private static string DhcpLabel(string? ipDhcp) => ipDhcp switch
     {

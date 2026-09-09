@@ -1,4 +1,5 @@
-﻿using System.Security.Claims;
+﻿using GlpiNg.Modules.Abstractions.Preferences;
+using System.Security.Claims;
 using System.Text.Json;
 using GlpiNg.Modules.Inventory.Models;
 using GlpiNg.Modules.Inventory.Search;
@@ -60,6 +61,11 @@ public partial class Index : ComponentBase
     private bool _showSaveSearchModal;
     private int? _currentUserId;
     private string? _currentUserName;
+    // Taille de page par défaut du compte connecté (page /preferences). Injecté par l'hôte, qui
+    // seul connaît le modèle d'utilisateur — voir IUserPreferences.
+    [Inject]
+    private IUserPreferences UserPreferences { get; set; } = null!;
+
     private int _pageSize = 25;
     private int _currentPage = 1;
     private bool _isRefreshing;
@@ -86,6 +92,8 @@ public partial class Index : ComponentBase
 
     protected override async Task OnInitializedAsync()
     {
+        _pageSize = (await UserPreferences.GetAsync()).ItemsPerPage;
+
         if (AuthStateTask is not null)
         {
             AuthenticationState authState = await AuthStateTask;

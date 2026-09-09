@@ -1,4 +1,5 @@
-﻿using GlpiNg.Modules.Inventory.Models;
+﻿using GlpiNg.Modules.Abstractions.Preferences;
+using GlpiNg.Modules.Inventory.Models;
 using GlpiNg.Modules.Inventory.Search;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
@@ -43,6 +44,11 @@ public partial class Index : ComponentBase
     private readonly HashSet<int> _selectedIds = [];
     private readonly List<SearchCriterion> _criteria = [new()];
     private readonly List<SortCriterion> _sortCriteria = [new() { Field = "name" }];
+    // Taille de page par défaut du compte connecté (page /preferences). Injecté par l'hôte, qui
+    // seul connaît le modèle d'utilisateur — voir IUserPreferences.
+    [Inject]
+    private IUserPreferences UserPreferences { get; set; } = null!;
+
     private int _pageSize = 25;
     private int _currentPage = 1;
     private Enclosure _newItem = NewBlank();
@@ -52,7 +58,11 @@ public partial class Index : ComponentBase
     private bool AllSelected => _paged.Count > 0 && _selectedIds.IsSupersetOf(_paged.Select(item => item.Id));
     private int TotalPages => _filtered.Count == 0 ? 1 : (int)Math.Ceiling(_filtered.Count / (double)_pageSize);
 
-    protected override async Task OnInitializedAsync() => await LoadAsync();
+    protected override async Task OnInitializedAsync()
+    {
+        _pageSize = (await UserPreferences.GetAsync()).ItemsPerPage;
+        await LoadAsync();
+    }
 
     private async Task LoadAsync()
     {

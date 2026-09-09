@@ -1,3 +1,4 @@
+﻿using GlpiNg.Modules.Abstractions.Preferences;
 using System.Security.Claims;
 using GlpiNg.Modules.Inventory.Models;
 using Microsoft.AspNetCore.Components;
@@ -33,6 +34,11 @@ public partial class Index : ComponentBase
     private string _itemTypeFilter = string.Empty;
     private SortField _sortField = SortField.Name;
     private bool _sortDescending;
+    // Taille de page par défaut du compte connecté (page /preferences). Injecté par l'hôte, qui
+    // seul connaît le modèle d'utilisateur — voir IUserPreferences.
+    [Inject]
+    private IUserPreferences UserPreferences { get; set; } = null!;
+
     private int _pageSize = 25;
     private int _currentPage = 1;
     private int? _currentUserId;
@@ -41,6 +47,8 @@ public partial class Index : ComponentBase
 
     protected override async Task OnInitializedAsync()
     {
+        _pageSize = (await UserPreferences.GetAsync()).ItemsPerPage;
+
         if (AuthStateTask is not null)
         {
             AuthenticationState authState = await AuthStateTask;
