@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using GlpiNg.Modules.Abstractions.Import;
+using System.Runtime.CompilerServices;
 using GlpiNg.Modules.Inventory.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -210,10 +211,15 @@ public class GlpiMySqlImportService(DbContext db, IOptions<GlpiImportOptions> op
     /// composants puissent être rattachés : voir la résolution de <c>glpiComputerIdToLocalId</c>
     /// ci-dessous, qui retombe sur les postes déjà connus en base plutôt que de les réimporter.
     /// </param>
+    /// <param name="progress">
+    /// Rapporteur d'avancement, optionnel. Chaque phase annonce le nombre d'éléments qu'elle a
+    /// traités ; l'appelant sait seul combien elle en contient, c'est son analyse qui l'a compté.
+    /// </param>
     public async Task<GlpiImportResult> RunAsync(
         CancellationToken cancellationToken = default,
         string? connectionStringOverride = null,
-        GlpiImportSelection? selection = null)
+        GlpiImportSelection? selection = null,
+        IProgress<GlpiImportProgress>? progress = null)
     {
         selection ??= new GlpiImportSelection();
 
@@ -263,8 +269,12 @@ public class GlpiMySqlImportService(DbContext db, IOptions<GlpiImportOptions> op
                 result.Warnings.Add($"Import des systèmes d'exploitation ignoré : {ex.Message}");
             }
 
+            int computersSeen = 0;
+
             await foreach (GlpiComputerRow row in ReadComputersAsync(connection, cancellationToken))
             {
+                progress?.Report(new GlpiImportProgress(GlpiImportPhases.Computers, ++computersSeen));
+
                 Computer? computer = await db.Set<Computer>().FirstOrDefaultAsync(c => c.SourceGlpiId == row.Id, cancellationToken);
                 bool isNew = computer is null;
                 computer ??= new Computer { Name = row.Name ?? $"glpi-{row.Id}", SourceGlpiId = row.Id };
@@ -332,7 +342,7 @@ public class GlpiMySqlImportService(DbContext db, IOptions<GlpiImportOptions> op
         {
             try
             {
-                await ImportAgentsAsync(connection, glpiComputerIdToLocalId, result, cancellationToken);
+                await ImportAgentsAsync(connection, glpiComputerIdToLocalId, result, progress, cancellationToken);
             }
             catch (MySqlException ex)
             {
@@ -344,7 +354,7 @@ public class GlpiMySqlImportService(DbContext db, IOptions<GlpiImportOptions> op
         {
             try
             {
-                result.ComponentsImported += await ImportComponentsAsync(connection, glpiComputerIdToLocalId, cancellationToken);
+                result.ComponentsImported += await ImportComponentsAsync(connection, glpiComputerIdToLocalId, progress, cancellationToken);
             }
             catch (MySqlException ex)
             {
@@ -356,7 +366,7 @@ public class GlpiMySqlImportService(DbContext db, IOptions<GlpiImportOptions> op
         {
             try
             {
-                result.MonitorsImported += await ImportMonitorsAsync(connection, manufacturers, states, glpiComputerIdToLocalId, statusCache, cancellationToken);
+                result.MonitorsImported += await ImportMonitorsAsync(connection, manufacturers, states, glpiComputerIdToLocalId, statusCache, progress, cancellationToken);
             }
             catch (MySqlException ex)
             {
@@ -368,7 +378,7 @@ public class GlpiMySqlImportService(DbContext db, IOptions<GlpiImportOptions> op
         {
             try
             {
-                result.SoftwaresImported += await ImportSoftwaresAsync(connection, glpiComputerIdToLocalId, cancellationToken);
+                result.SoftwaresImported += await ImportSoftwaresAsync(connection, glpiComputerIdToLocalId, progress, cancellationToken);
             }
             catch (MySqlException ex)
             {
@@ -382,7 +392,8 @@ public class GlpiMySqlImportService(DbContext db, IOptions<GlpiImportOptions> op
             {
                 result.PrintersImported += await ImportPeripheralItemsAsync(
                     connection, manufacturers, states, glpiComputerIdToLocalId, statusCache,
-                    PeripheralKind.Printer, glpiItemType: "Printer", table: "glpi_printers", cancellationToken);
+                    PeripheralKind.Printer, glpiItemType: "Printer", table: "glpi_printers",
+                    GlpiImportPhases.Printers, progress, cancellationToken);
             }
             catch (MySqlException ex)
             {
@@ -396,7 +407,8 @@ public class GlpiMySqlImportService(DbContext db, IOptions<GlpiImportOptions> op
             {
                 result.PeripheralsImported += await ImportPeripheralItemsAsync(
                     connection, manufacturers, states, glpiComputerIdToLocalId, statusCache,
-                    PeripheralKind.Other, glpiItemType: "Peripheral", table: "glpi_peripherals", cancellationToken);
+                    PeripheralKind.Other, glpiItemType: "Peripheral", table: "glpi_peripherals",
+                    GlpiImportPhases.Peripherals, progress, cancellationToken);
             }
             catch (MySqlException ex)
             {
@@ -408,7 +420,7 @@ public class GlpiMySqlImportService(DbContext db, IOptions<GlpiImportOptions> op
         {
             try
             {
-                result.VolumesImported += await ImportVolumesAsync(connection, glpiComputerIdToLocalId, cancellationToken);
+                result.VolumesImported += await ImportVolumesAsync(connection, glpiComputerIdToLocalId, progress, cancellationToken);
             }
             catch (MySqlException ex)
             {
@@ -420,7 +432,7 @@ public class GlpiMySqlImportService(DbContext db, IOptions<GlpiImportOptions> op
         {
             try
             {
-                result.BatteriesImported += await ImportBatteriesAsync(connection, manufacturers, glpiComputerIdToLocalId, cancellationToken);
+                result.BatteriesImported += await ImportBatteriesAsync(connection, manufacturers, glpiComputerIdToLocalId, progress, cancellationToken);
             }
             catch (MySqlException ex)
             {
@@ -432,10 +444,23 @@ public class GlpiMySqlImportService(DbContext db, IOptions<GlpiImportOptions> op
         return result;
     }
 
+    /// <summary>
+    /// Compte les éléments d'une phase et les rapporte au fur et à mesure. Porté par un objet
+    /// plutôt que par une variable locale parce qu'une phase peut s'étaler sur plusieurs requêtes
+    /// — les composants en font quatre — et que son avancement doit rester continu.
+    /// </summary>
+    private sealed class PhaseCounter(IProgress<GlpiImportProgress>? progress, string phase)
+    {
+        private int _done;
+
+        public void Step() => progress?.Report(new GlpiImportProgress(phase, ++_done));
+    }
+
     private async Task ImportAgentsAsync(
         MySqlConnection connection,
         Dictionary<int, int> glpiComputerIdToLocalId,
         GlpiImportResult result,
+        IProgress<GlpiImportProgress>? progress,
         CancellationToken cancellationToken)
     {
         const string sql = """
@@ -449,8 +474,12 @@ public class GlpiMySqlImportService(DbContext db, IOptions<GlpiImportOptions> op
         await using (MySqlCommand command = new(sql, connection))
         await using (MySqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken))
         {
+            PhaseCounter counter = new(progress, GlpiImportPhases.Agents);
+
             while (await reader.ReadAsync(cancellationToken))
             {
+                counter.Step();
+
                 rows.Add(new GlpiAgentRow(
                     reader.GetString("deviceid"),
                     reader.IsDBNull(reader.GetOrdinal("name")) ? null : reader.GetString("name"),
@@ -501,32 +530,38 @@ public class GlpiMySqlImportService(DbContext db, IOptions<GlpiImportOptions> op
     private async Task<int> ImportComponentsAsync(
         MySqlConnection connection,
         Dictionary<int, int> glpiComputerIdToLocalId,
+        IProgress<GlpiImportProgress>? progress,
         CancellationToken cancellationToken)
     {
         int total = 0;
+        PhaseCounter counter = new(progress, GlpiImportPhases.Components);
 
         total += await ImportComponentGroupAsync(
             connection, glpiComputerIdToLocalId, ComponentType.Cpu,
             linkTable: "glpi_items_deviceprocessors", refTable: "glpi_deviceprocessors", linkFk: "deviceprocessors_id",
             designationCandidates: ["designation"], capacityCandidates: ["frequency", "frequence"],
+            counter: counter,
             cancellationToken: cancellationToken);
 
         total += await ImportComponentGroupAsync(
             connection, glpiComputerIdToLocalId, ComponentType.Ram,
             linkTable: "glpi_items_devicememories", refTable: "glpi_devicememories", linkFk: "devicememories_id",
             designationCandidates: ["designation"], capacityCandidates: ["size", "frequence"],
+            counter: counter,
             cancellationToken: cancellationToken);
 
         total += await ImportComponentGroupAsync(
             connection, glpiComputerIdToLocalId, ComponentType.Disk,
             linkTable: "glpi_items_deviceharddrives", refTable: "glpi_deviceharddrives", linkFk: "deviceharddrives_id",
             designationCandidates: ["designation"], capacityCandidates: ["capacity"],
+            counter: counter,
             cancellationToken: cancellationToken);
 
         total += await ImportComponentGroupAsync(
             connection, glpiComputerIdToLocalId, ComponentType.NetworkCard,
             linkTable: "glpi_items_devicenetworkcards", refTable: "glpi_devicenetworkcards", linkFk: "devicenetworkcards_id",
             designationCandidates: ["designation"], capacityCandidates: ["bandwidth"],
+            counter: counter,
             cancellationToken: cancellationToken);
 
         return total;
@@ -541,6 +576,7 @@ public class GlpiMySqlImportService(DbContext db, IOptions<GlpiImportOptions> op
         string linkFk,
         string[] designationCandidates,
         string[] capacityCandidates,
+        PhaseCounter counter,
         CancellationToken cancellationToken)
     {
         HashSet<string> linkColumns = await GetColumnsAsync(connection, linkTable, cancellationToken);
@@ -566,6 +602,8 @@ public class GlpiMySqlImportService(DbContext db, IOptions<GlpiImportOptions> op
 
             while (await reader.ReadAsync(cancellationToken))
             {
+                counter.Step();
+
                 if (designationOrdinal == -1)
                 {
                     designationOrdinal = reader.GetOrdinal("designation");
@@ -631,6 +669,7 @@ public class GlpiMySqlImportService(DbContext db, IOptions<GlpiImportOptions> op
         Dictionary<int, string> states,
         Dictionary<int, int> glpiComputerIdToLocalId,
         Dictionary<string, int> statusCache,
+        IProgress<GlpiImportProgress>? progress,
         CancellationToken cancellationToken)
     {
         string typesLabelColumn = await PreferredLabelColumnAsync(connection, "glpi_monitortypes", cancellationToken);
@@ -651,8 +690,12 @@ public class GlpiMySqlImportService(DbContext db, IOptions<GlpiImportOptions> op
         await using (MySqlCommand command = new(sql, connection))
         await using (MySqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken))
         {
+            PhaseCounter counter = new(progress, GlpiImportPhases.Monitors);
+
             while (await reader.ReadAsync(cancellationToken))
             {
+                counter.Step();
+
                 int computerId = reader.GetInt32("computer_id");
                 GlpiMonitorRow row = new(
                     reader.IsDBNull(reader.GetOrdinal("name")) ? null : reader.GetString("name"),
@@ -729,6 +772,7 @@ public class GlpiMySqlImportService(DbContext db, IOptions<GlpiImportOptions> op
     private async Task<int> ImportSoftwaresAsync(
         MySqlConnection connection,
         Dictionary<int, int> glpiComputerIdToLocalId,
+        IProgress<GlpiImportProgress>? progress,
         CancellationToken cancellationToken)
     {
         const string sql = """
@@ -745,8 +789,12 @@ public class GlpiMySqlImportService(DbContext db, IOptions<GlpiImportOptions> op
         await using (MySqlCommand command = new(sql, connection))
         await using (MySqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken))
         {
+            PhaseCounter counter = new(progress, GlpiImportPhases.Softwares);
+
             while (await reader.ReadAsync(cancellationToken))
             {
+                counter.Step();
+
                 int computerId = reader.GetInt32("computer_id");
                 string name = ReadNullableString(reader, "software_name") ?? "(inconnu)";
                 string? version = ReadNullableString(reader, "version_name");
@@ -808,6 +856,8 @@ public class GlpiMySqlImportService(DbContext db, IOptions<GlpiImportOptions> op
         PeripheralKind kind,
         string glpiItemType,
         string table,
+        string phase,
+        IProgress<GlpiImportProgress>? progress,
         CancellationToken cancellationToken)
     {
         string sql = $"""
@@ -823,8 +873,12 @@ public class GlpiMySqlImportService(DbContext db, IOptions<GlpiImportOptions> op
         {
             command.Parameters.AddWithValue("@itemType", glpiItemType);
             await using MySqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
+            PhaseCounter counter = new(progress, phase);
+
             while (await reader.ReadAsync(cancellationToken))
             {
+                counter.Step();
+
                 int computerId = reader.GetInt32("computer_id");
                 GlpiPeripheralRow row = new(
                     ReadNullableString(reader, "name"),
@@ -885,6 +939,7 @@ public class GlpiMySqlImportService(DbContext db, IOptions<GlpiImportOptions> op
     private async Task<int> ImportVolumesAsync(
         MySqlConnection connection,
         Dictionary<int, int> glpiComputerIdToLocalId,
+        IProgress<GlpiImportProgress>? progress,
         CancellationToken cancellationToken)
     {
         Dictionary<int, string> filesystems = await LoadLookupAsync(connection, "glpi_filesystems", "name", cancellationToken);
@@ -900,8 +955,12 @@ public class GlpiMySqlImportService(DbContext db, IOptions<GlpiImportOptions> op
         await using (MySqlCommand command = new(sql, connection))
         await using (MySqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken))
         {
+            PhaseCounter counter = new(progress, GlpiImportPhases.Volumes);
+
             while (await reader.ReadAsync(cancellationToken))
             {
+                counter.Step();
+
                 int computerId = reader.GetInt32("computer_id");
                 GlpiVolumeRow row = new(
                     ReadNullableString(reader, "name"),
@@ -965,6 +1024,7 @@ public class GlpiMySqlImportService(DbContext db, IOptions<GlpiImportOptions> op
         MySqlConnection connection,
         Dictionary<int, string> manufacturers,
         Dictionary<int, int> glpiComputerIdToLocalId,
+        IProgress<GlpiImportProgress>? progress,
         CancellationToken cancellationToken)
     {
         HashSet<string> linkColumns = await GetColumnsAsync(connection, "glpi_items_devicebatteries", cancellationToken);
@@ -992,8 +1052,12 @@ public class GlpiMySqlImportService(DbContext db, IOptions<GlpiImportOptions> op
         await using (MySqlCommand command = new(sql, connection))
         await using (MySqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken))
         {
+            PhaseCounter counter = new(progress, GlpiImportPhases.Batteries);
+
             while (await reader.ReadAsync(cancellationToken))
             {
+                counter.Step();
+
                 int computerId = reader.GetInt32("computer_id");
                 GlpiBatteryRow row = new(
                     ReadNullableString(reader, "designation"),

@@ -347,6 +347,32 @@
                 Un import est en cours (peut-être déclenché par un autre administrateur) — cette page se
                 mettra à jour automatiquement pour tous les admins connectés dès qu'il sera terminé.
             </div>
+
+            <div class="d-flex justify-content-between align-items-baseline mb-1">
+                <span class="fw-medium">
+                    <i class="ti ti-loader-2 glpi-spin me-1"></i>@(State.CurrentPhase ?? "Préparation…")
+                </span>
+                @if (State.ProgressTotal > 0)
+                {
+                    <span class="text-secondary small">
+                        @State.ProgressCompleted.ToString("N0") / @State.ProgressTotal.ToString("N0") élément(s) — @State.ProgressPercent&nbsp;%
+                    </span>
+                }
+            </div>
+
+            @* Barre déterminée tant que l'analyse a pu chiffrer le travail, indéterminée sinon : une
+               barre qui affiche un pourcentage inventé serait pire qu'une barre qui ne promet rien. *@
+            <div class="progress mb-3" style="height: 0.75rem;">
+                @if (State.ProgressTotal > 0)
+                {
+                    <div class="progress-bar" role="progressbar" style="width: @(State.ProgressPercent)%"
+                         aria-valuenow="@State.ProgressPercent" aria-valuemin="0" aria-valuemax="100"></div>
+                }
+                else
+                {
+                    <div class="progress-bar glpi-progress-indeterminate"></div>
+                }
+            </div>
         }
 
         @if (State.LastError is not null)

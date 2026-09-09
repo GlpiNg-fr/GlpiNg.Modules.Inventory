@@ -1,4 +1,4 @@
-using GlpiNg.Modules.Abstractions.Import;
+﻿using GlpiNg.Modules.Abstractions.Import;
 using GlpiNg.Modules.Inventory.Import;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -33,7 +33,7 @@ public class GlpiImportController(
     {
         GlpiImportResult inventoryResult = await importService.RunAsync(cancellationToken);
         GlpiAdminImportResult adminResult = await adminImportService.RunAsync(
-            options.Value.ConnectionString, new GlpiAdminImportSelection(), cancellationToken);
+            options.Value.ConnectionString, new GlpiAdminImportSelection(), progress: null, cancellationToken);
 
         return Ok(new GlpiFullImportResult { Inventory = inventoryResult, Administration = adminResult });
     }
