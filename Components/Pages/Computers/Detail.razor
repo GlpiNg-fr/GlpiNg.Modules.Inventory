@@ -36,6 +36,15 @@ else
                 <ul class="dropdown-menu dropdown-menu-end">
                     <li><button type="button" class="dropdown-item" @onclick="EnterEditModeAsync"><i class="ti ti-pencil me-1"></i>Modifier</button></li>
                     <li><a class="dropdown-item" href="#"><i class="ti ti-copy me-1"></i>Dupliquer</a></li>
+                    <li>
+                        <button type="button" class="dropdown-item" disabled="@(_isWaking || !HasWakeableMac)"
+                                title="@(HasWakeableMac
+                                           ? "Diffuse un magic packet sur toutes les adresses MAC connues du poste, depuis le serveur."
+                                           : "Aucune adresse MAC connue : l'inventaire réseau de ce poste n'a rien remonté.")"
+                                @onclick="SendWakeOnLanAsync">
+                            <i class="ti @(_isWaking ? "ti-loader-2 glpi-spin" : "ti-power") me-1"></i>Réveiller (Wake-on-LAN)
+                        </button>
+                    </li>
                     <li><hr class="dropdown-divider" /></li>
                     <li><a class="dropdown-item text-danger" href="#"><i class="ti ti-trash me-1"></i>Mettre à la corbeille</a></li>
                 </ul>
@@ -52,6 +61,22 @@ else
             }
         </div>
     </div>
+
+    @if (_wakeOnLanMessage is { } wakeMessage)
+    {
+        <div class="alert @(_wakeOnLanFailed ? "alert-danger" : "alert-success") alert-dismissible py-2 px-3 mb-2" role="alert">
+            <i class="ti @(_wakeOnLanFailed ? "ti-alert-triangle" : "ti-power") me-1"></i>@wakeMessage
+            @if (_wakeOnLanDetail is { } wakeDetail)
+            {
+                @* Le détail est affiché même en cas de succès : un magic packet part sans accusé de
+                   réception, donc « envoyé » ne veut pas dire « réveillé ». Savoir sur quelles MAC et
+                   quelles adresses de diffusion il est parti est la seule prise pour diagnostiquer un
+                   poste qui ne se rallume pas. *@
+                <div class="small text-muted mt-1">@wakeDetail</div>
+            }
+            <button type="button" class="btn-close" aria-label="Fermer" @onclick="DismissWakeOnLanMessage"></button>
+        </div>
+    }
 
     <div class="glpi-fiche-layout">
         <aside class="glpi-fiche-sidebar">

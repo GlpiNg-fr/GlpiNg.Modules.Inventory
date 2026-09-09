@@ -42,6 +42,9 @@ public partial class Detail : ComponentBase, IDisposable
     private IDeploymentTargetDirectory? UserDirectory { get; set; }
 
     [Inject]
+    private WakeOnLanSender WakeOnLan { get; set; } = null!;
+
+    [Inject]
     private ComputerListStateService ListState { get; set; } = null!;
 
     [Inject]
@@ -74,6 +77,11 @@ public partial class Detail : ComponentBase, IDisposable
     private static readonly int[] HistoryPageSizeOptions = [25, 50, 100, 200];
     /// <summary>Champs verrouillés de ce poste : l'inventaire ne les met plus à jour (voir LockedField).</summary>
     private HashSet<string> _lockedFields = new(StringComparer.Ordinal);
+
+    private bool _isWaking;
+    private string? _wakeOnLanMessage;
+    private string? _wakeOnLanDetail;
+    private bool _wakeOnLanFailed;
 
     private List<ComputerHistoryEntry> _historySorted = [];
     private List<ComputerHistoryEntry> _historyFiltered = [];
@@ -160,6 +168,8 @@ public partial class Detail : ComponentBase, IDisposable
         _historyFilter = "";
         _importHistoryFilter = "";
         _agentStatus = null;
+        _wakeOnLanMessage = null;
+        _wakeOnLanDetail = null;
         _inventoryRequestResult = null;
         _hostTasksRequestResult = null;
         _selectedPackagesToAssign = [];
@@ -266,15 +276,7 @@ public partial class Detail : ComponentBase, IDisposable
             return;
         }
 
-        string userName = "Système";
-        if (AuthStateTask is not null)
-        {
-            AuthenticationState authState = await AuthStateTask;
-            if (authState.User.Identity?.Name is { Length: > 0 } name)
-            {
-                userName = name;
-            }
-        }
+        string userName = await CurrentUserNameAsync();
 
         await using DbContext db = await DbFactory.CreateDbContextAsync();
 
@@ -312,6 +314,93 @@ public partial class Detail : ComponentBase, IDisposable
 
         await db.SaveChangesAsync();
         await ReloadComputerAsync();
+    }
+
+    /// <summary>Le réveil n'a de sens que si l'inventaire réseau a remonté au moins une MAC valide.</summary>
+    private bool HasWakeableMac => _computer is not null
+        && _computer.NetworkPorts.Any(port => WakeOnLanSender.NormalizeMac(port.MacAddress) is not null);
+
+    private async Task<string> CurrentUserNameAsync()
+    {
+        if (AuthStateTask is null)
+        {
+            return "Système";
+        }
+
+        AuthenticationState authState = await AuthStateTask;
+        return authState.User.Identity?.Name is { Length: > 0 } name ? name : "Système";
+    }
+
+    /// <summary>
+    /// Envoie un magic packet sur toutes les MAC connues du poste, depuis le serveur.
+    ///
+    /// Le résultat est affiché en clair (MAC visées, adresses de diffusion) parce qu'un réveil qui
+    /// échoue ne se voit pas : la trame part sans accusé de réception, et une machine qui ne se
+    /// rallume pas ne dit pas si c'est le routeur qui a filtré le broadcast, la carte réseau qui
+    /// n'est pas armée, ou le BIOS. Sans ce détail, le bouton serait indébogable.
+    /// </summary>
+    private async Task SendWakeOnLanAsync()
+    {
+        if (_computer is null || _isWaking)
+        {
+            return;
+        }
+
+        _isWaking = true;
+        _wakeOnLanMessage = null;
+        _wakeOnLanDetail = null;
+        _wakeOnLanFailed = false;
+
+        try
+        {
+            List<WakeOnLanNic> nics = [.. _computer.NetworkPorts
+                .Select(port => new WakeOnLanNic(port.MacAddress, port.IpAddress, port.IpMask))];
+
+            WakeOnLanSendResult result = await WakeOnLan.SendAsync(nics);
+
+            if (result.Macs.Count == 0)
+            {
+                _wakeOnLanFailed = true;
+                _wakeOnLanMessage = "Aucune adresse MAC exploitable sur ce poste : le réveil est impossible tant que l'inventaire réseau n'a rien remonté.";
+                return;
+            }
+
+            _wakeOnLanFailed = !result.Sent;
+            _wakeOnLanMessage = result.Sent
+                ? $"Magic packet envoyé sur {result.Macs.Count} adresse(s) MAC ({result.PacketsSent} datagramme(s))."
+                : "Aucun datagramme n'a pu être émis.";
+            _wakeOnLanDetail = $"MAC : {string.Join(", ", result.Macs)} — diffusion : {string.Join(", ", result.Broadcasts)}"
+                + (result.Errors.Count > 0 ? $" — erreurs : {string.Join(" ; ", result.Errors)}" : string.Empty);
+
+            string userName = await CurrentUserNameAsync();
+
+            await using DbContext db = await DbFactory.CreateDbContextAsync();
+            db.Set<ComputerHistoryEntry>().Add(new ComputerHistoryEntry
+            {
+                ComputerId = _computer.Id,
+                User = userName,
+                Field = "Wake-on-LAN",
+                Description = result.Sent
+                    ? $"Réveil demandé depuis le serveur sur {result.Macs.Count} adresse(s) MAC : {string.Join(", ", result.Macs)}."
+                    : $"Réveil tenté sans succès : {string.Join(" ; ", result.Errors)}",
+            });
+            await db.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            _wakeOnLanFailed = true;
+            _wakeOnLanMessage = $"Échec de l'envoi du magic packet : {ex.Message}";
+        }
+        finally
+        {
+            _isWaking = false;
+        }
+    }
+
+    private void DismissWakeOnLanMessage()
+    {
+        _wakeOnLanMessage = null;
+        _wakeOnLanDetail = null;
     }
 
     private async Task ReloadComputerAsync()

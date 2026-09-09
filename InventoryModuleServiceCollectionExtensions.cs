@@ -1,7 +1,8 @@
-using GlpiNg.Modules.Abstractions.Cron;
+﻿using GlpiNg.Modules.Abstractions.Cron;
 using GlpiNg.Modules.Abstractions.Menu;
 using GlpiNg.Modules.Inventory.Controllers;
 using GlpiNg.Modules.Inventory.Import;
+using GlpiNg.Modules.Inventory.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -45,6 +46,11 @@ public static class InventoryModuleServiceCollectionExtensions
         services.AddSingleton<IMenuProvider, InventoryMenuProvider>();
 
         services.AddScoped<ComputerListStateService>();
+
+        // Réveil immédiat depuis la fiche ordinateur (bouton « Actions »). Sans état, donc
+        // singleton. À ne pas confondre avec les tâches Wake-on-LAN du module Déploiement, qui
+        // font relayer le réveil par un agent — voir la doc de WakeOnLanSender.
+        services.AddSingleton<WakeOnLanSender>();
 
         // Permet à ASP.NET Core de découvrir les contrôleurs de ce module (assembly
         // distincte de celle du projet hôte).
