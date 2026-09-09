@@ -129,6 +129,14 @@ public partial class Detail : ComponentBase, IDisposable
     private List<string> _operatingSystemVersionOptions = [];
     private List<DropdownItem> _statusOptions = [];
     private List<LocationOption> _locationOptions = [];
+
+    /// <summary>
+    /// Chemin complet de l'emplacement du poste (« Ingénierie &gt; Office »), calculé au
+    /// chargement. Computer.LocationItem ne porte que le lieu lui-même : ses parents ne sont pas
+    /// chargés avec lui, et un « Office » seul ne dit pas de quel site il s'agit — d'autant que
+    /// deux lieux homonymes peuvent coexister sous des parents différents.
+    /// </summary>
+    private string? _locationPath;
     private List<string> _userOptions = [];
 
     private ComputerDeploymentTasksInfo? _deploymentTasksInfo;
@@ -196,6 +204,7 @@ public partial class Detail : ComponentBase, IDisposable
         ApplyHistoryFilter();
 
         await LoadLocksAsync(db);
+        await LoadLocationPathAsync(db);
 
         _importHistorySorted = _computer.ImportHistories.OrderByDescending(e => e.OccurredAt).ToList();
         ApplyImportHistoryFilter();
@@ -266,6 +275,34 @@ public partial class Detail : ComponentBase, IDisposable
     private bool IsFieldLocked(string field) => _locks.ContainsKey(field);
 
     private LockedField? LockOf(string field) => _locks.GetValueOrDefault(field);
+
+    /// <summary>
+    /// Résout le chemin complet de l'emplacement en chargeant l'arborescence des Lieux. Une seule
+    /// requête, et seulement quand le poste a un emplacement : remonter les parents un par un en
+    /// coûterait une par niveau.
+    ///
+    /// Le cloisonnement par entité s'applique à cette lecture comme aux autres : un parent hors du
+    /// périmètre de l'utilisateur interrompt la remontée, et le chemin affiché commence au premier
+    /// niveau visible — le même comportement que la liste déroulante d'édition.
+    /// </summary>
+    private async Task LoadLocationPathAsync(DbContext db)
+    {
+        _locationPath = null;
+
+        if (_computer?.LocationItem is not { } location)
+        {
+            return;
+        }
+
+        List<DropdownItem> locations = await db.Set<DropdownItem>()
+            .AsNoTracking()
+            .Where(item => item.Type == DropdownType.Location)
+            .ToListAsync();
+
+        _locationPath = LocationHierarchy.PathLabel(
+            location,
+            locations.GroupBy(item => item.Id).ToDictionary(group => group.Key, group => group.First()));
+    }
 
     private async Task LoadLocksAsync(DbContext db)
     {
@@ -484,6 +521,7 @@ public partial class Detail : ComponentBase, IDisposable
                 // d'état : ToggleFieldLockAsync passe par ici, et la fiche continuait d'afficher
                 // les verrous lus à l'ouverture de la page.
                 await LoadLocksAsync(db);
+                await LoadLocationPathAsync(db);
 
                 _deploymentTasksInfo = DeploymentTasksProvider is null
                     ? null
@@ -1082,9 +1120,11 @@ public partial class Detail : ComponentBase, IDisposable
 
     // Priorité à l'Emplacement choisi manuellement (LocationItem, Intitulé) sur Site/Building/Room
     // (renseignés par l'inventaire automatique) : voir Computer.LocationId.
-    private static string? LocationLabel(Computer computer)
+    private string? LocationLabel(Computer computer)
     {
-        if (computer.LocationItem is { } location) return location.Name;
+        // _locationPath vaut null tant que LoadLocationPathAsync n'a pas tourné : on retombe alors
+        // sur le nom seul plutôt que d'afficher un tiret à la place d'un emplacement renseigné.
+        if (computer.LocationItem is { } location) return _locationPath ?? location.Name;
 
         var parts = new[] { computer.Site, computer.Building, computer.Room }
             .Where(part => !string.IsNullOrWhiteSpace(part));
