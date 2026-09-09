@@ -1,4 +1,4 @@
-@page "/parc/peripherals"
+﻿@page "/parc/peripherals"
 @rendermode InteractiveServer
 
 <PageTitle>GlpiNg — Périphériques</PageTitle>
@@ -171,7 +171,13 @@
         <table class="table table-vcenter card-table">
             <thead>
                 <tr>
-                    <th style="width: 2.5rem;"></th>
+                    <th style="width: 2.5rem;">
+                        @* Ne coche que les lignes affichées — la page courante là où le tableau est
+                           paginé : cocher ici ne doit jamais engager plus que ce qu'on voit. *@
+                        <input class="form-check-input m-0" type="checkbox" title="Sélectionner les éléments visibles"
+                               checked="@AllSelected"
+                               @onchange="@((ChangeEventArgs e) => ToggleSelectAll((bool)(e.Value ?? false)))" />
+                    </th>
                     @foreach ((SortField sortField, string sortLabel) in SortableColumns)
                     {
                         SortCriterion? active = GetSortCriterion(sortField);

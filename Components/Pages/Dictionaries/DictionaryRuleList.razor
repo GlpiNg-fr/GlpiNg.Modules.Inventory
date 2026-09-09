@@ -1,4 +1,4 @@
-@page "/admin/dictionaries"
+﻿@page "/admin/dictionaries"
 @page "/admin/dictionaries/{TypeSlug}"
 @rendermode InteractiveServer
 
@@ -56,7 +56,13 @@ else
             <table class="table table-vcenter card-table">
                 <thead>
                     <tr>
-                        <th style="width: 2.5rem;"></th>
+                        <th style="width: 2.5rem;">
+                            @* Ne coche que les lignes affichées — la page courante là où le tableau est
+                               paginé : cocher ici ne doit jamais engager plus que ce qu'on voit. *@
+                            <input class="form-check-input m-0" type="checkbox" title="Sélectionner les éléments visibles"
+                                   checked="@AllSelected"
+                                   @onchange="@((ChangeEventArgs e) => ToggleSelectAll((bool)(e.Value ?? false)))" />
+                        </th>
                         <th>Nom</th>
                         <th>Critères</th>
                         <th>Action</th>

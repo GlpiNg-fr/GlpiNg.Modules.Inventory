@@ -529,6 +529,28 @@ public partial class Index : ComponentBase
             .ToList();
     }
 
+    /// <summary>
+    /// Vrai quand toutes les lignes visibles sont cochées. Compare la page courante et non le
+    /// résultat filtré : au-delà d'une page, la case ne se cocherait jamais.
+    /// </summary>
+    private bool AllSelected => _pagedComputers.Count > 0
+        && _selectedIds.IsSupersetOf(_pagedComputers.Select(computer => computer.Id));
+
+    private void ToggleSelectAll(bool selectAll)
+    {
+        foreach (Computer computer in _pagedComputers)
+        {
+            if (selectAll)
+            {
+                _selectedIds.Add(computer.Id);
+            }
+            else
+            {
+                _selectedIds.Remove(computer.Id);
+            }
+        }
+    }
+
     private void ToggleSelect(int computerId, bool selected)
     {
         if (selected)
