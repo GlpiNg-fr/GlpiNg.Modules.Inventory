@@ -1317,6 +1317,10 @@ public partial class Detail : ComponentBase, IDisposable
         ComponentType.NetworkCard => "Cartes réseau",
         ComponentType.Gpu => "Cartes graphiques",
         ComponentType.Motherboard => "Cartes mères",
+        ComponentType.Controller => "Contrôleurs",
+        ComponentType.SoundCard => "Cartes son",
+        ComponentType.Modem => "Modems",
+        ComponentType.Firmware => "BIOS",
         _ => type.ToString()
     };
 
@@ -1328,7 +1332,22 @@ public partial class Detail : ComponentBase, IDisposable
         ComponentType.NetworkCard => "ti-network",
         ComponentType.Gpu => "ti-device-gamepad",
         ComponentType.Motherboard => "ti-circuit-board",
+        ComponentType.Controller => "ti-adjustments",
+        ComponentType.SoundCard => "ti-volume",
+        ComponentType.Modem => "ti-antenna",
+        ComponentType.Firmware => "ti-chip",
         _ => "ti-puzzle"
+    };
+
+    /// <summary>
+    /// Intitulé de la colonne centrale du tableau des composants. « Capacité » ne veut rien dire
+    /// pour un BIOS, dont la valeur affichée est une version : la colonne prend le nom de ce
+    /// qu'elle contient plutôt que d'imposer celui de la majorité.
+    /// </summary>
+    private static string ComponentValueColumnLabel(ComponentType type) => type switch
+    {
+        ComponentType.Firmware => "Version",
+        _ => "Capacité"
     };
 
     private static IEnumerable<IGrouping<PeripheralKind, ComputerPeripheral>> PeripheralGroups(Computer computer)

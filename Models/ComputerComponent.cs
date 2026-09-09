@@ -16,7 +16,14 @@ public enum ComponentType
     SoundCard,
 
     /// <summary>Modem — section "modems".</summary>
-    Modem
+    Modem,
+
+    /// <summary>
+    /// Firmware de la machine (BIOS/UEFI) — section "bios". Équivalent du composant Firmware de
+    /// GLPI. Nouvelle valeur ajoutée en fin d'énumération, jamais insérée : Type est persisté
+    /// comme entier.
+    /// </summary>
+    Firmware
 }
 
 public class ComputerComponent
