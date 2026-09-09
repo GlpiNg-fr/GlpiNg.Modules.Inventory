@@ -1,6 +1,7 @@
 ﻿@page "/parc/computer/{ComputerId:int}"
 @using GlpiNg.Modules.Abstractions.Deployment
 @using GlpiNg.Modules.Inventory.Models
+@using GlpiNg.Modules.Inventory.Services
 @rendermode InteractiveServer
 
 <PageTitle>GlpiNg — @(_computer?.Name ?? "Ordinateur")</PageTitle>
@@ -767,6 +768,61 @@ else
                             </div>
                         </div>
                     }
+                    break;
+
+                case "locks":
+                    @* Vue d'ensemble des verrous, que les cadenas dispersés dans la fiche ne
+                       donnent pas : ils répondent « ce champ est-il verrouillé ? », pas « qu'est-ce
+                       qui est verrouillé sur ce poste, par qui, depuis quand ». L'onglet liste tout
+                       le catalogue et pas seulement les champs verrouillés, sinon il serait vide au
+                       moment précis où l'on cherche quoi verrouiller. *@
+                    <div class="glpi-fiche-block">
+                        <div class="glpi-fiche-block-title"><i class="ti ti-lock"></i>Verrous (@_locks.Count / @ComputerLockableFields.All.Count)</div>
+                        <p class="text-muted small px-3 pt-2 mb-0">
+                            Un champ verrouillé n'est plus mis à jour par les remontées d'agent : la valeur
+                            saisie à la main est conservée. Les champs non verrouillés sont réécrits au
+                            prochain inventaire.
+                        </p>
+                        <div class="table-responsive">
+                            <table class="table table-vcenter card-table mb-0">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 1%"></th>
+                                        <th>Champ</th>
+                                        <th>Valeur actuelle</th>
+                                        <th>État</th>
+                                        <th>Verrouillé par</th>
+                                        <th>Depuis</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ((string key, string label) in ComputerLockableFields.All)
+                                    {
+                                        LockedField? lockRow = LockOf(key);
+                                        <tr>
+                                            <td>
+                                                <FieldLockToggle Field="@key" IsLocked="@(lockRow is not null)" OnToggle="ToggleFieldLockAsync" />
+                                            </td>
+                                            <td>@label</td>
+                                            <td>@CurrentFieldValue(key)</td>
+                                            <td>
+                                                @if (lockRow is not null)
+                                                {
+                                                    <span class="badge bg-warning-lt"><i class="ti ti-lock me-1"></i>Verrouillé</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary-lt"><i class="ti ti-lock-open me-1"></i>Mis à jour par l'inventaire</span>
+                                                }
+                                            </td>
+                                            <td>@(lockRow?.LockedBy ?? "—")</td>
+                                            <td>@(lockRow is null ? "—" : lockRow.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm"))</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                     break;
 
                 case "domains":

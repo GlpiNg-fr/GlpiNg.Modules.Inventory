@@ -75,8 +75,12 @@ public partial class Detail : ComponentBase, IDisposable
     private static readonly HashSet<string> FillPanelTabKeys = ["software", "importinfo", "history"];
 
     private static readonly int[] HistoryPageSizeOptions = [25, 50, 100, 200];
-    /// <summary>Champs verrouillés de ce poste : l'inventaire ne les met plus à jour (voir LockedField).</summary>
-    private HashSet<string> _lockedFields = new(StringComparer.Ordinal);
+    /// <summary>
+    /// Verrous du poste, indexés par champ : l'inventaire ne met plus à jour ces champs (voir
+    /// LockedField). La ligne entière est conservée, et pas seulement le nom du champ, parce que
+    /// l'onglet « Verrous » affiche aussi qui a posé le verrou et depuis quand.
+    /// </summary>
+    private Dictionary<string, LockedField> _locks = new(StringComparer.Ordinal);
 
     private bool _isWaking;
     private string? _wakeOnLanMessage;
@@ -191,11 +195,7 @@ public partial class Detail : ComponentBase, IDisposable
         _historySorted = _computer.HistoryEntries.OrderByDescending(e => e.OccurredAt).ThenByDescending(e => e.Id).ToList();
         ApplyHistoryFilter();
 
-        _lockedFields = [.. await db.Set<LockedField>()
-            .AsNoTracking()
-            .Where(locked => locked.ItemType == ComputerLockableFields.ItemType && locked.ItemId == _computer.Id)
-            .Select(locked => locked.Field)
-            .ToListAsync()];
+        await LoadLocksAsync(db);
 
         _importHistorySorted = _computer.ImportHistories.OrderByDescending(e => e.OccurredAt).ToList();
         ApplyImportHistoryFilter();
@@ -208,7 +208,7 @@ public partial class Detail : ComponentBase, IDisposable
             ? null
             : await DeploymentTasksProvider.GetForComputerAsync(ComputerId);
         await LoadDeploymentAssignmentsAsync();
-        _tabs = BuildTabs(_computer, _deploymentTasksInfo, _deploymentAssignments.Count);
+        _tabs = BuildTabs(_computer, _deploymentTasksInfo, _deploymentAssignments.Count, _locks.Count);
 
         _agentStatusPollCts?.Cancel();
         _agentStatusPollCts?.Dispose();
@@ -262,7 +262,59 @@ public partial class Detail : ComponentBase, IDisposable
     // Recharge la fiche depuis la base sans réinitialiser l'onglet actif ni la pagination des
     // logiciels, contrairement à OnParametersSetAsync (qui, lui, correspond à une navigation vers
     // un autre poste). Déclenché par le bouton de rechargement manuel de la barre du haut.
-    private bool IsFieldLocked(string field) => _lockedFields.Contains(field);
+    private bool IsFieldLocked(string field) => _locks.ContainsKey(field);
+
+    private LockedField? LockOf(string field) => _locks.GetValueOrDefault(field);
+
+    private async Task LoadLocksAsync(DbContext db)
+    {
+        if (_computer is null)
+        {
+            return;
+        }
+
+        _locks = (await db.Set<LockedField>()
+                .AsNoTracking()
+                .Where(locked => locked.ItemType == ComputerLockableFields.ItemType && locked.ItemId == _computer.Id)
+                .ToListAsync())
+            .ToDictionary(locked => locked.Field, StringComparer.Ordinal);
+    }
+
+    /// <summary>
+    /// Valeur courante d'un champ verrouillable, telle qu'affichée dans l'onglet « Verrous ».
+    /// Sans elle, la liste des verrous ne dirait pas ce qu'ils protègent — or c'est précisément
+    /// la question qu'on se pose en les relisant.
+    /// </summary>
+    private string CurrentFieldValue(string field)
+    {
+        if (_computer is null)
+        {
+            return "—";
+        }
+
+        string? value = field switch
+        {
+            "Name" => _computer.Name,
+            "SerialNumber" => _computer.SerialNumber,
+            "Manufacturer" => _computer.Manufacturer,
+            "Model" => _computer.Model,
+            "OperatingSystem" => _computer.OperatingSystem,
+            "OsVersion" => _computer.OsVersion,
+            "OsKernelVersion" => _computer.OsKernelVersion,
+            "ChassisType" => _computer.ChassisType,
+            "HardwareUuid" => _computer.HardwareUuid,
+            "Domain" => _computer.Domain,
+            "VmSystem" => _computer.VmSystem,
+            "LastLoggedUser" => _computer.LastLoggedUser,
+            "TotalMemoryMb" => _computer.TotalMemoryMb is { } mb ? $"{mb} Mo" : null,
+            "RemoteManagement" => _computer.RemoteManagementId is { Length: > 0 } id
+                ? (_computer.RemoteManagementType is { Length: > 0 } type ? $"{type} : {id}" : id)
+                : null,
+            _ => null,
+        };
+
+        return string.IsNullOrWhiteSpace(value) ? "—" : value;
+    }
 
     /// <summary>
     /// Pose ou retire le verrou d'un champ. La bascule est tracée dans l'historique du poste : un
@@ -427,11 +479,16 @@ public partial class Detail : ComponentBase, IDisposable
                 _importHistorySorted = _computer.ImportHistories.OrderByDescending(e => e.OccurredAt).ToList();
                 ApplyImportHistoryFilter();
 
+                // Sans ce rechargement, poser un verrou l'enregistrait sans que le cadenas change
+                // d'état : ToggleFieldLockAsync passe par ici, et la fiche continuait d'afficher
+                // les verrous lus à l'ouverture de la page.
+                await LoadLocksAsync(db);
+
                 _deploymentTasksInfo = DeploymentTasksProvider is null
                     ? null
                     : await DeploymentTasksProvider.GetForComputerAsync(ComputerId);
                 await LoadDeploymentAssignmentsAsync();
-                _tabs = BuildTabs(_computer, _deploymentTasksInfo, _deploymentAssignments.Count);
+                _tabs = BuildTabs(_computer, _deploymentTasksInfo, _deploymentAssignments.Count, _locks.Count);
             }
         }
         finally
@@ -598,7 +655,7 @@ public partial class Detail : ComponentBase, IDisposable
                 await InvokeAsync(async () =>
                 {
                     await LoadDeploymentAssignmentsAsync();
-                    _tabs = BuildTabs(_computer!, _deploymentTasksInfo, _deploymentAssignments.Count);
+                    _tabs = BuildTabs(_computer!, _deploymentTasksInfo, _deploymentAssignments.Count, _locks.Count);
                     StateHasChanged();
                 });
 
@@ -665,7 +722,7 @@ public partial class Detail : ComponentBase, IDisposable
             {
                 _selectedPackagesToAssign = [];
                 await LoadDeploymentAssignmentsAsync();
-                _tabs = BuildTabs(_computer!, _deploymentTasksInfo, _deploymentAssignments.Count);
+                _tabs = BuildTabs(_computer!, _deploymentTasksInfo, _deploymentAssignments.Count, _locks.Count);
 
                 _prepareInstallError = _wakeMode switch
                 {
@@ -754,7 +811,7 @@ public partial class Detail : ComponentBase, IDisposable
 
         await DeploymentAssignmentService.CancelAssignmentAsync(jobId);
         await LoadDeploymentAssignmentsAsync();
-        _tabs = BuildTabs(_computer!, _deploymentTasksInfo, _deploymentAssignments.Count);
+        _tabs = BuildTabs(_computer!, _deploymentTasksInfo, _deploymentAssignments.Count, _locks.Count);
         StateHasChanged();
     }
 
@@ -783,7 +840,7 @@ public partial class Detail : ComponentBase, IDisposable
             }
 
             await LoadDeploymentAssignmentsAsync();
-            _tabs = BuildTabs(_computer!, _deploymentTasksInfo, _deploymentAssignments.Count);
+            _tabs = BuildTabs(_computer!, _deploymentTasksInfo, _deploymentAssignments.Count, _locks.Count);
 
             _prepareInstallError = _wakeMode switch
             {
@@ -875,10 +932,10 @@ public partial class Detail : ComponentBase, IDisposable
 
     // Reprend la liste et l'ordre des onglets de la fiche "Ordinateur" de GLPI. Seuls
     // "computer", "os", "components", "batteries", "volumes", "software", "connections",
-    // "networkports", "antivirus", "domains", "importinfo", "history", "tasks" et "deploy" ont un
+    // "networkports", "antivirus", "domains", "locks", "importinfo", "history", "tasks" et "deploy" ont un
     // contenu réel pour l'instant (voir le @switch de Detail.razor) ; les autres affichent un
     // placeholder en attendant d'être alimentés au fur et à mesure des besoins.
-    private static List<FicheTab> BuildTabs(Computer computer, ComputerDeploymentTasksInfo? deploymentTasksInfo, int deploymentAssignmentsCount) =>
+    private static List<FicheTab> BuildTabs(Computer computer, ComputerDeploymentTasksInfo? deploymentTasksInfo, int deploymentAssignmentsCount, int lockedFieldsCount) =>
     [
         new("computer", "ti-device-desktop", "Ordinateur", null),
         new("os", "ti-settings-cog", "Systèmes d'exploitation", computer.OperatingSystem is null ? 0 : 1),
@@ -891,7 +948,7 @@ public partial class Detail : ComponentBase, IDisposable
         new("connectors", "ti-usb", "Connecteurs", null),
         new("remotecontrol", "ti-device-desktop-share", "Contrôle à distance", null),
         new("antivirus", "ti-shield-check", "Antivirus", computer.Antiviruses.Count),
-        new("locks", "ti-lock", "Verrous", null),
+        new("locks", "ti-lock", "Verrous", lockedFieldsCount),
         new("domains", "ti-world-www", "Domaines", computer.Domain is null ? 0 : 1),
         new("importinfo", "ti-file-import", "Informations d'import", computer.ImportHistories.Count),
         new("history", "ti-history", "Historique", computer.HistoryEntries.Count),
