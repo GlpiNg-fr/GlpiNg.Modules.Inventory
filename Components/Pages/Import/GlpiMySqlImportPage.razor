@@ -287,134 +287,141 @@
 
             @if (_tab == ImportTab.Plugin)
             {
-                @* Plugin d'inventaire de la base source : c'est lui qui porte, côté GLPI, le domaine
-                   que GlpiNg réimplémente en propre (déploiement, découverte réseau). Le signaler ici
-                   évite à l'administrateur de découvrir après coup que ces données ne sont pas
-                   reprises par l'import. *@
-                @if (plugin.IsPresent)
-                {
-                    <div class="alert @(plugin.DataCount > 0 ? "alert-info" : "alert-secondary") mt-3" role="alert">
-                        <h4 class="alert-title">
-                            <i class="ti ti-plug"></i>
-                            Plugin d'inventaire détecté : @(plugin.Name ?? plugin.Directory)
-                            @if (plugin.Version is { Length: > 0 } version)
-                            {
-                                <span class="badge bg-blue-lt ms-1">@version</span>
-                            }
-                            @if (plugin.State is not null && !plugin.IsActive)
-                            {
-                                <span class="badge bg-orange-lt ms-1" title="Le plugin est installé mais désactivé côté GLPI : ses données restent en base.">désactivé</span>
-                            }
-                        </h4>
-
-                        @if (plugin.IsRegisteredWithoutTables)
-                        {
-                            <p class="mb-0">
-                                Déclaré dans <code>glpi_plugins</code> mais aucune de ses tables n'est présente :
-                                plugin désinstallé, ou export partiel de la base. Rien à reprendre.
-                            </p>
-                        }
-                        else
-                        {
-                            <p class="mb-1">
-                                @plugin.TableCount table(s) <code>@plugin.TablePrefix*</code> dans la base source.
-                            </p>
-
-                            @if (plugin.DataCount > 0)
-                            {
-                                <p class="mb-1">
-                                    Paquets de déploiement : @plugin.DeployPackagesCount ·
-                                    Tâches : @plugin.TasksCount ·
-                                    Agents : @plugin.AgentsCount ·
-                                    Plages IP : @plugin.IpRangesCount ·
-                                    Identifiants SNMP : @plugin.SnmpCredentialsCount ·
-                                    Actifs non gérés : @plugin.UnmanagedDevicesCount
-                                </p>
-                            }
-
-                            <p class="mb-2 text-secondary">
-                                GlpiNg gère ce domaine en propre (Outils &gt; Déploiements). Cochez ce que vous
-                                souhaitez reprendre : rien n'est importé sans choix explicite.
-                            </p>
-
-                            <div class="glpi-config-field-grid">
-                                <div class="glpi-config-field checkbox">
-                                    <label for="glpi-import-sel-ipranges"><i class="ti ti-network me-2"></i>Plages IP (@plugin.IpRangesCount)</label>
-                                    <label class="glpi-switch">
-                                        <input id="glpi-import-sel-ipranges" type="checkbox" @bind="State.PluginSelection.ImportIpRanges"
-                                               disabled="@(State.IsRunning || plugin.IpRangesCount == 0)" />
-                                        <span class="glpi-switch-slider"></span>
-                                    </label>
-                                </div>
-
-                                <div class="glpi-config-field checkbox">
-                                    <label for="glpi-import-sel-snmp"><i class="ti ti-key me-2"></i>Identifiants SNMP (@plugin.SnmpCredentialsCount)</label>
-                                    <label class="glpi-switch">
-                                        <input id="glpi-import-sel-snmp" type="checkbox" @bind="State.PluginSelection.ImportSnmpCredentials"
-                                               disabled="@(State.IsRunning || plugin.SnmpCredentialsCount == 0)" />
-                                        <span class="glpi-switch-slider"></span>
-                                    </label>
-                                </div>
-
-                                <div class="glpi-config-field checkbox">
-                                    <label for="glpi-import-sel-packages"><i class="ti ti-package me-2"></i>Paquets de déploiement (@plugin.DeployPackagesCount)</label>
-                                    <label class="glpi-switch">
-                                        <input id="glpi-import-sel-packages" type="checkbox" @bind="State.PluginSelection.ImportDeployPackages"
-                                               disabled="@(State.IsRunning || plugin.DeployPackagesCount == 0)" />
-                                        <span class="glpi-switch-slider"></span>
-                                    </label>
-                                </div>
-
-                                @if (State.PluginSelection.ImportDeployPackages)
-                                {
-                                    @* Les octets des fichiers de paquets ne sont pas en base : sans l'une de
-                                       ces deux sources, l'import ne peut que déclarer les fichiers, à
-                                       téléverser ensuite à la main depuis la fiche du paquet. *@
-                                    <div class="glpi-config-field">
-                                        <label for="glpi-import-files-path">Répertoire des fichiers GLPI</label>
-                                        <input id="glpi-import-files-path" type="text" class="glpi-config-input"
-                                               placeholder="ex. \serveur-glpi\glpiiles\_plugins\glpiinventoryiles"
-                                               @bind="State.DeployFilesPath" disabled="@State.IsRunning" />
-                                    </div>
-                                    <div class="glpi-config-field">
-                                        <label for="glpi-import-base-url">URL de GLPI (repli)</label>
-                                        <input id="glpi-import-base-url" type="text" class="glpi-config-input"
-                                               placeholder="ex. https://glpi.exemple.local"
-                                               @bind="State.GlpiBaseUrl" disabled="@State.IsRunning" />
-                                    </div>
-                                    <p class="hint">
-                                        Le contenu des fichiers d'un paquet vit sur le serveur GLPI, pas dans sa base.
-                                        Indiquez le répertoire du plugin (chemin local ou partage réseau) pour que
-                                        l'import le rapatrie ; l'URL sert de repli quand ce répertoire n'est pas
-                                        joignable. Les deux vides, les fichiers sont seulement déclarés et le paquet
-                                        reste non déployable tant qu'ils n'ont pas été téléversés. Chaque contenu
-                                        récupéré est vérifié par son empreinte avant d'être enregistré.
-                                    </p>
-                                }
-
-                                <div class="glpi-config-field checkbox">
-                                    <label for="glpi-import-sel-unmanaged"><i class="ti ti-help me-2"></i>Actifs non gérés (@plugin.UnmanagedDevicesCount)</label>
-                                    <label class="glpi-switch">
-                                        <input id="glpi-import-sel-unmanaged" type="checkbox" @bind="State.PluginSelection.ImportUnmanagedDevices"
-                                               disabled="@(State.IsRunning || plugin.UnmanagedDevicesCount == 0)" />
-                                        <span class="glpi-switch-slider"></span>
-                                    </label>
-                                </div>
-                            </div>
-
-                            <p class="hint mt-2 mb-0">
-                                Non repris : tâches et agents du plugin. Les agents sont déjà couverts par la catégorie
-                                « Agents » ci-dessus (<code>glpi_agents</code>, table du cœur de GLPI).
-                            </p>
-                        }
-                    </div>
-                }
+                @* Le plugin porte, côté GLPI, le domaine que GlpiNg réimplémente en propre
+                   (déploiement, découverte réseau). L'onglet dit d'abord ce qui a été trouvé, puis
+                   propose de le reprendre — dans cet ordre, parce qu'on ne choisit pas avant de
+                   savoir ce qu'il y a. *@
                 @if (!plugin.IsPresent)
                 {
                     <div class="glpi-config-placeholder">
                         <i class="ti ti-plug-off"></i>
                         <p class="mb-0">Aucun plugin d'inventaire (GLPI Inventory ou FusionInventory) sur cette base.</p>
                     </div>
+                }
+                else
+                {
+                    <div class="glpi-import-plugin-head">
+                        <i class="ti ti-plug"></i>
+                        <div>
+                            <div class="glpi-import-plugin-name">
+                                @(plugin.Name ?? plugin.Directory)
+                                @if (plugin.Version is { Length: > 0 } version)
+                                {
+                                    <span class="badge bg-blue-lt">@version</span>
+                                }
+                                @if (plugin.State is not null && !plugin.IsActive)
+                                {
+                                    <span class="badge bg-orange-lt" title="Installé mais désactivé côté GLPI : ses données restent en base.">désactivé</span>
+                                }
+                            </div>
+                            <div class="text-secondary small">
+                                @plugin.TableCount table(s) <code>@plugin.TablePrefix*</code> dans la base source.
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (plugin.IsRegisteredWithoutTables)
+                    {
+                        <p class="text-secondary">
+                            Déclaré dans <code>glpi_plugins</code> mais aucune de ses tables n'est présente :
+                            plugin désinstallé, ou export partiel de la base. Rien à reprendre.
+                        </p>
+                    }
+                    else
+                    {
+                        <p class="hint" style="margin-left:0;">
+                            GlpiNg gère ce domaine en propre (Outils &gt; Déploiements). Rien n'est repris sans
+                            choix explicite, contrairement au parc et à l'administration.
+                        </p>
+
+                        @* Les quatre catégories d'un bloc, sans rien qui les sépare : la liste doit se
+                           lire d'un coup d'œil. Ce que la sélection des paquets ouvre en plus vient
+                           après, dans sa propre section. *@
+                        <div class="glpi-config-field-grid">
+                            <div class="glpi-config-field checkbox">
+                                <label for="glpi-import-sel-ipranges"><i class="ti ti-network me-2"></i>Plages IP (@plugin.IpRangesCount)</label>
+                                <label class="glpi-switch">
+                                    <input id="glpi-import-sel-ipranges" type="checkbox" @bind="State.PluginSelection.ImportIpRanges"
+                                           disabled="@(State.IsRunning || plugin.IpRangesCount == 0)" />
+                                    <span class="glpi-switch-slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="glpi-config-field checkbox">
+                                <label for="glpi-import-sel-snmp"><i class="ti ti-key me-2"></i>Identifiants SNMP (@plugin.SnmpCredentialsCount)</label>
+                                <label class="glpi-switch">
+                                    <input id="glpi-import-sel-snmp" type="checkbox" @bind="State.PluginSelection.ImportSnmpCredentials"
+                                           disabled="@(State.IsRunning || plugin.SnmpCredentialsCount == 0)" />
+                                    <span class="glpi-switch-slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="glpi-config-field checkbox">
+                                <label for="glpi-import-sel-packages"><i class="ti ti-package me-2"></i>Paquets de déploiement (@plugin.DeployPackagesCount)</label>
+                                <label class="glpi-switch">
+                                    <input id="glpi-import-sel-packages" type="checkbox" @bind="State.PluginSelection.ImportDeployPackages"
+                                           disabled="@(State.IsRunning || plugin.DeployPackagesCount == 0)" />
+                                    <span class="glpi-switch-slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="glpi-config-field checkbox">
+                                <label for="glpi-import-sel-unmanaged"><i class="ti ti-help me-2"></i>Actifs non gérés (@plugin.UnmanagedDevicesCount)</label>
+                                <label class="glpi-switch">
+                                    <input id="glpi-import-sel-unmanaged" type="checkbox" @bind="State.PluginSelection.ImportUnmanagedDevices"
+                                           disabled="@(State.IsRunning || plugin.UnmanagedDevicesCount == 0)" />
+                                    <span class="glpi-switch-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        @if (State.PluginSelection.ImportDeployPackages)
+                        {
+                            @* Section à part, et non deux champs glissés dans la grille des
+                               interrupteurs : ce ne sont pas des catégories à cocher mais le
+                               réglage d'une seule d'entre elles, et les mêler couperait la liste
+                               en deux. *@
+                            <div class="glpi-config-divider">
+                                <span><i class="ti ti-file-download"></i> Contenu des fichiers de paquets</span>
+                            </div>
+
+                            <p class="hint" style="margin-left:0;">
+                                Les octets d'un fichier de paquet ne sont pas dans la base GLPI : ils vivent sur le
+                                disque de son serveur. Sans l'une de ces deux sources, les fichiers sont seulement
+                                déclarés, et le paquet reste non déployable tant qu'ils n'ont pas été téléversés
+                                depuis sa fiche.
+                            </p>
+
+                            <div class="glpi-config-field">
+                                <label for="glpi-import-files-path">Répertoire des fichiers du plugin</label>
+                                <input id="glpi-import-files-path" type="text" class="glpi-config-input"
+                                       placeholder="\\serveur-glpi\glpi\files\_plugins\glpiinventory\files"
+                                       @bind="State.DeployFilesPath" disabled="@State.IsRunning" />
+                            </div>
+                            <p class="hint">Chemin local ou partage réseau, vu depuis la machine GlpiNg. Route principale.</p>
+
+                            <div class="glpi-config-field">
+                                <label for="glpi-import-base-url">URL de GLPI</label>
+                                <input id="glpi-import-base-url" type="text" class="glpi-config-input"
+                                       placeholder="https://glpi.exemple.local"
+                                       @bind="State.GlpiBaseUrl" disabled="@State.IsRunning" />
+                            </div>
+                            <p class="hint">
+                                Essayée en repli, fichier par fichier, quand le répertoire ne rend rien. Chaque contenu
+                                récupéré est vérifié par son empreinte avant d'être enregistré.
+                            </p>
+                        }
+
+                        <div class="glpi-config-divider">
+                            <span><i class="ti ti-ban"></i> Non repris</span>
+                        </div>
+
+                        <p class="hint" style="margin-left:0;">
+                            Tâches du plugin (@plugin.TasksCount) : sans équivalent direct, à recréer dans
+                            Outils &gt; Déploiements. Agents (@plugin.AgentsCount) : déjà couverts par la catégorie
+                            « Agents » de l'onglet Parc (<code>glpi_agents</code>, table du cœur de GLPI).
+                        </p>
+                    }
                 }
             }
 
