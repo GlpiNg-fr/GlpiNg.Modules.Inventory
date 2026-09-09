@@ -73,276 +73,350 @@
             <h3 class="card-title"><i class="ti ti-list-check me-1"></i>Éléments trouvés — que faut-il importer ?</h3>
         </div>
         <div class="card-body">
-            <div class="glpi-config-field-grid">
-                <div class="glpi-config-field checkbox">
-                    <label for="glpi-import-sel-computers"><i class="ti ti-device-desktop me-2"></i>Ordinateurs (@analysis.ComputersCount)</label>
-                    <label class="glpi-switch">
-                        <input id="glpi-import-sel-computers" type="checkbox" @bind="State.Selection.ImportComputers"
-                               disabled="@(State.IsRunning || analysis.ComputersCount == 0)" />
-                        <span class="glpi-switch-slider"></span>
-                    </label>
-                </div>
-
-                <div class="glpi-config-field checkbox">
-                    <label for="glpi-import-sel-monitors"><i class="ti ti-device-tv me-2"></i>Moniteurs (@analysis.MonitorsCount)</label>
-                    <label class="glpi-switch">
-                        <input id="glpi-import-sel-monitors" type="checkbox" @bind="State.Selection.ImportMonitors"
-                               disabled="@(State.IsRunning || analysis.MonitorsCount == 0)" />
-                        <span class="glpi-switch-slider"></span>
-                    </label>
-                </div>
-
-                <div class="glpi-config-field checkbox">
-                    <label for="glpi-import-sel-agents"><i class="ti ti-robot me-2"></i>Agents (@analysis.AgentsCount)</label>
-                    <label class="glpi-switch">
-                        <input id="glpi-import-sel-agents" type="checkbox" @bind="State.Selection.ImportAgents"
-                               disabled="@(State.IsRunning || analysis.AgentsCount == 0)" />
-                        <span class="glpi-switch-slider"></span>
-                    </label>
-                </div>
-
-                <div class="glpi-config-field checkbox">
-                    <label for="glpi-import-sel-components"><i class="ti ti-cpu me-2"></i>Composants matériels (@analysis.ComponentsCount)</label>
-                    <label class="glpi-switch">
-                        <input id="glpi-import-sel-components" type="checkbox" @bind="State.Selection.ImportComponents"
-                               disabled="@(State.IsRunning || analysis.ComponentsCount == 0)" />
-                        <span class="glpi-switch-slider"></span>
-                    </label>
-                </div>
-
-                <div class="glpi-config-field checkbox">
-                    <label for="glpi-import-sel-softwares"><i class="ti ti-apps me-2"></i>Logiciels (@analysis.SoftwaresCount)</label>
-                    <label class="glpi-switch">
-                        <input id="glpi-import-sel-softwares" type="checkbox" @bind="State.Selection.ImportSoftwares"
-                               disabled="@(State.IsRunning || analysis.SoftwaresCount == 0)" />
-                        <span class="glpi-switch-slider"></span>
-                    </label>
-                </div>
-
-                <div class="glpi-config-field checkbox">
-                    <label for="glpi-import-sel-printers"><i class="ti ti-printer me-2"></i>Imprimantes (@analysis.PrintersCount)</label>
-                    <label class="glpi-switch">
-                        <input id="glpi-import-sel-printers" type="checkbox" @bind="State.Selection.ImportPrinters"
-                               disabled="@(State.IsRunning || analysis.PrintersCount == 0)" />
-                        <span class="glpi-switch-slider"></span>
-                    </label>
-                </div>
-
-                <div class="glpi-config-field checkbox">
-                    <label for="glpi-import-sel-peripherals"><i class="ti ti-mouse me-2"></i>Périphériques (@analysis.PeripheralsCount)</label>
-                    <label class="glpi-switch">
-                        <input id="glpi-import-sel-peripherals" type="checkbox" @bind="State.Selection.ImportPeripherals"
-                               disabled="@(State.IsRunning || analysis.PeripheralsCount == 0)" />
-                        <span class="glpi-switch-slider"></span>
-                    </label>
-                </div>
-
-                <div class="glpi-config-field checkbox">
-                    <label for="glpi-import-sel-volumes"><i class="ti ti-server-2 me-2"></i>Volumes (@analysis.VolumesCount)</label>
-                    <label class="glpi-switch">
-                        <input id="glpi-import-sel-volumes" type="checkbox" @bind="State.Selection.ImportVolumes"
-                               disabled="@(State.IsRunning || analysis.VolumesCount == 0)" />
-                        <span class="glpi-switch-slider"></span>
-                    </label>
-                </div>
-
-                <div class="glpi-config-field checkbox">
-                    <label for="glpi-import-sel-batteries"><i class="ti ti-battery me-2"></i>Batteries (@analysis.BatteriesCount)</label>
-                    <label class="glpi-switch">
-                        <input id="glpi-import-sel-batteries" type="checkbox" @bind="State.Selection.ImportBatteries"
-                               disabled="@(State.IsRunning || analysis.BatteriesCount == 0)" />
-                        <span class="glpi-switch-slider"></span>
-                    </label>
-                </div>
-            </div>
-
-            <p class="hint mt-2">
-                CPU : @analysis.CpuCount · RAM : @analysis.RamCount · Disques : @analysis.DiskCount ·
-                Cartes réseau : @analysis.NetworkCardCount
-            </p>
-
-            @* Plugin d'inventaire de la base source : c'est lui qui porte, côté GLPI, le domaine
-               que GlpiNg réimplémente en propre (déploiement, découverte réseau). Le signaler ici
-               évite à l'administrateur de découvrir après coup que ces données ne sont pas
-               reprises par l'import. *@
             @{
                 GlpiNg.Modules.Inventory.Import.GlpiInventoryPluginInfo plugin = analysis.InventoryPlugin;
             }
-            @if (plugin.IsPresent)
-            {
-                <div class="alert @(plugin.DataCount > 0 ? "alert-info" : "alert-secondary") mt-3" role="alert">
-                    <h4 class="alert-title">
+
+            @* Trois onglets pour trois services d'import distincts (parc, administration, plugin
+               d'inventaire), chacun avec son propre interrupteur de titre. Sans lui, cocher une
+               dizaine d'éléments un par un est le passage obligé de chaque import. *@
+            @{
+                (int Selected, int Available) parcTally = ParcTally(analysis);
+                (int Selected, int Available) adminTally = AdminTally(adminAnalysis);
+                (int Selected, int Available) pluginTally = PluginTally(plugin);
+            }
+
+            <ul class="nav nav-tabs glpi-import-tabs mb-3">
+                <li class="nav-item">
+                    <span class="nav-link @(_tab == ImportTab.Parc ? "active" : "")" role="button" @onclick="() => _tab = ImportTab.Parc">
+                        <i class="ti ti-device-desktop"></i>
+                        <span>Parc</span>
+                        <span class="badge bg-secondary-lt">@parcTally.Selected / @parcTally.Available</span>
+                        <label class="glpi-switch" title="Tout activer ou désactiver dans cet onglet"
+                               @onclick="() => { }" @onclick:stopPropagation="true">
+                            <input type="checkbox" checked="@(parcTally.Available > 0 && parcTally.Selected == parcTally.Available)"
+                                   disabled="@(State.IsRunning || parcTally.Available == 0)"
+                                   @onchange="@((ChangeEventArgs e) => SetAllParc(analysis, (bool)(e.Value ?? false)))" />
+                            <span class="glpi-switch-slider"></span>
+                        </label>
+                    </span>
+                </li>
+                <li class="nav-item">
+                    <span class="nav-link @(_tab == ImportTab.Administration ? "active" : "")" role="button" @onclick="() => _tab = ImportTab.Administration">
+                        <i class="ti ti-users-group"></i>
+                        <span>Administration</span>
+                        <span class="badge bg-secondary-lt">@adminTally.Selected / @adminTally.Available</span>
+                        <label class="glpi-switch" title="Tout activer ou désactiver dans cet onglet"
+                               @onclick="() => { }" @onclick:stopPropagation="true">
+                            <input type="checkbox" checked="@(adminTally.Available > 0 && adminTally.Selected == adminTally.Available)"
+                                   disabled="@(State.IsRunning || adminTally.Available == 0)"
+                                   @onchange="@((ChangeEventArgs e) => SetAllAdmin(adminAnalysis, (bool)(e.Value ?? false)))" />
+                            <span class="glpi-switch-slider"></span>
+                        </label>
+                    </span>
+                </li>
+                <li class="nav-item">
+                    <span class="nav-link @(_tab == ImportTab.Plugin ? "active" : "")" role="button" @onclick="() => _tab = ImportTab.Plugin">
                         <i class="ti ti-plug"></i>
-                        Plugin d'inventaire détecté : @(plugin.Name ?? plugin.Directory)
-                        @if (plugin.Version is { Length: > 0 } version)
+                        <span>Plugin d'inventaire</span>
+                        @if (plugin.IsPresent)
                         {
-                            <span class="badge bg-blue-lt ms-1">@version</span>
+                            <span class="badge bg-secondary-lt">@pluginTally.Selected / @pluginTally.Available</span>
+                            <label class="glpi-switch" title="Tout activer ou désactiver dans cet onglet"
+                                   @onclick="() => { }" @onclick:stopPropagation="true">
+                                <input type="checkbox" checked="@(pluginTally.Available > 0 && pluginTally.Selected == pluginTally.Available)"
+                                       disabled="@(State.IsRunning || pluginTally.Available == 0)"
+                                       @onchange="@((ChangeEventArgs e) => SetAllPlugin(plugin, (bool)(e.Value ?? false)))" />
+                                <span class="glpi-switch-slider"></span>
+                            </label>
                         }
-                        @if (plugin.State is not null && !plugin.IsActive)
+                        else
                         {
-                            <span class="badge bg-orange-lt ms-1" title="Le plugin est installé mais désactivé côté GLPI : ses données restent en base.">désactivé</span>
+                            <span class="badge bg-secondary-lt">absent</span>
                         }
-                    </h4>
+                    </span>
+                </li>
+            </ul>
 
-                    @if (plugin.IsRegisteredWithoutTables)
-                    {
-                        <p class="mb-0">
-                            Déclaré dans <code>glpi_plugins</code> mais aucune de ses tables n'est présente :
-                            plugin désinstallé, ou export partiel de la base. Rien à reprendre.
-                        </p>
-                    }
-                    else
-                    {
-                        <p class="mb-1">
-                            @plugin.TableCount table(s) <code>@plugin.TablePrefix*</code> dans la base source.
-                        </p>
+            @if (_tab == ImportTab.Parc)
+            {
+                <div class="glpi-config-field-grid">
+                    <div class="glpi-config-field checkbox">
+                        <label for="glpi-import-sel-computers"><i class="ti ti-device-desktop me-2"></i>Ordinateurs (@analysis.ComputersCount)</label>
+                        <label class="glpi-switch">
+                            <input id="glpi-import-sel-computers" type="checkbox" @bind="State.Selection.ImportComputers"
+                                   disabled="@(State.IsRunning || analysis.ComputersCount == 0)" />
+                            <span class="glpi-switch-slider"></span>
+                        </label>
+                    </div>
 
-                        @if (plugin.DataCount > 0)
+                    <div class="glpi-config-field checkbox">
+                        <label for="glpi-import-sel-monitors"><i class="ti ti-device-tv me-2"></i>Moniteurs (@analysis.MonitorsCount)</label>
+                        <label class="glpi-switch">
+                            <input id="glpi-import-sel-monitors" type="checkbox" @bind="State.Selection.ImportMonitors"
+                                   disabled="@(State.IsRunning || analysis.MonitorsCount == 0)" />
+                            <span class="glpi-switch-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="glpi-config-field checkbox">
+                        <label for="glpi-import-sel-agents"><i class="ti ti-robot me-2"></i>Agents (@analysis.AgentsCount)</label>
+                        <label class="glpi-switch">
+                            <input id="glpi-import-sel-agents" type="checkbox" @bind="State.Selection.ImportAgents"
+                                   disabled="@(State.IsRunning || analysis.AgentsCount == 0)" />
+                            <span class="glpi-switch-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="glpi-config-field checkbox">
+                        <label for="glpi-import-sel-components"><i class="ti ti-cpu me-2"></i>Composants matériels (@analysis.ComponentsCount)</label>
+                        <label class="glpi-switch">
+                            <input id="glpi-import-sel-components" type="checkbox" @bind="State.Selection.ImportComponents"
+                                   disabled="@(State.IsRunning || analysis.ComponentsCount == 0)" />
+                            <span class="glpi-switch-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="glpi-config-field checkbox">
+                        <label for="glpi-import-sel-softwares"><i class="ti ti-apps me-2"></i>Logiciels (@analysis.SoftwaresCount)</label>
+                        <label class="glpi-switch">
+                            <input id="glpi-import-sel-softwares" type="checkbox" @bind="State.Selection.ImportSoftwares"
+                                   disabled="@(State.IsRunning || analysis.SoftwaresCount == 0)" />
+                            <span class="glpi-switch-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="glpi-config-field checkbox">
+                        <label for="glpi-import-sel-printers"><i class="ti ti-printer me-2"></i>Imprimantes (@analysis.PrintersCount)</label>
+                        <label class="glpi-switch">
+                            <input id="glpi-import-sel-printers" type="checkbox" @bind="State.Selection.ImportPrinters"
+                                   disabled="@(State.IsRunning || analysis.PrintersCount == 0)" />
+                            <span class="glpi-switch-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="glpi-config-field checkbox">
+                        <label for="glpi-import-sel-peripherals"><i class="ti ti-mouse me-2"></i>Périphériques (@analysis.PeripheralsCount)</label>
+                        <label class="glpi-switch">
+                            <input id="glpi-import-sel-peripherals" type="checkbox" @bind="State.Selection.ImportPeripherals"
+                                   disabled="@(State.IsRunning || analysis.PeripheralsCount == 0)" />
+                            <span class="glpi-switch-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="glpi-config-field checkbox">
+                        <label for="glpi-import-sel-volumes"><i class="ti ti-server-2 me-2"></i>Volumes (@analysis.VolumesCount)</label>
+                        <label class="glpi-switch">
+                            <input id="glpi-import-sel-volumes" type="checkbox" @bind="State.Selection.ImportVolumes"
+                                   disabled="@(State.IsRunning || analysis.VolumesCount == 0)" />
+                            <span class="glpi-switch-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="glpi-config-field checkbox">
+                        <label for="glpi-import-sel-batteries"><i class="ti ti-battery me-2"></i>Batteries (@analysis.BatteriesCount)</label>
+                        <label class="glpi-switch">
+                            <input id="glpi-import-sel-batteries" type="checkbox" @bind="State.Selection.ImportBatteries"
+                                   disabled="@(State.IsRunning || analysis.BatteriesCount == 0)" />
+                            <span class="glpi-switch-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <p class="hint mt-2">
+                    CPU : @analysis.CpuCount · RAM : @analysis.RamCount · Disques : @analysis.DiskCount ·
+                    Cartes réseau : @analysis.NetworkCardCount
+                </p>
+            }
+
+            @if (_tab == ImportTab.Administration)
+            {
+                <div class="glpi-config-field-grid">
+                    <div class="glpi-config-field checkbox">
+                        <label for="glpi-import-sel-entities"><i class="ti ti-building me-2"></i>Entités (@adminAnalysis.EntitiesCount)</label>
+                        <label class="glpi-switch">
+                            <input id="glpi-import-sel-entities" type="checkbox" @bind="State.AdminSelection.ImportEntities"
+                                   disabled="@(State.IsRunning || adminAnalysis.EntitiesCount == 0)" />
+                            <span class="glpi-switch-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="glpi-config-field checkbox">
+                        <label for="glpi-import-sel-groups"><i class="ti ti-users me-2"></i>Groupes (@adminAnalysis.GroupsCount)</label>
+                        <label class="glpi-switch">
+                            <input id="glpi-import-sel-groups" type="checkbox" @bind="State.AdminSelection.ImportGroups"
+                                   disabled="@(State.IsRunning || adminAnalysis.GroupsCount == 0)" />
+                            <span class="glpi-switch-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="glpi-config-field checkbox">
+                        <label for="glpi-import-sel-profiles"><i class="ti ti-shield-lock me-2"></i>Profils (@adminAnalysis.ProfilesCount)</label>
+                        <label class="glpi-switch">
+                            <input id="glpi-import-sel-profiles" type="checkbox" @bind="State.AdminSelection.ImportProfiles"
+                                   disabled="@(State.IsRunning || adminAnalysis.ProfilesCount == 0)" />
+                            <span class="glpi-switch-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="glpi-config-field checkbox">
+                        <label for="glpi-import-sel-users"><i class="ti ti-user me-2"></i>Utilisateurs (@adminAnalysis.UsersCount)</label>
+                        <label class="glpi-switch">
+                            <input id="glpi-import-sel-users" type="checkbox" @bind="State.AdminSelection.ImportUsers"
+                                   disabled="@(State.IsRunning || adminAnalysis.UsersCount == 0)" />
+                            <span class="glpi-switch-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="glpi-config-field checkbox">
+                        <label for="glpi-import-sel-config"><i class="ti ti-settings me-2"></i>Configuration générale</label>
+                        <label class="glpi-switch">
+                            <input id="glpi-import-sel-config" type="checkbox" @bind="State.AdminSelection.ImportGeneralConfig"
+                                   disabled="@(State.IsRunning || !adminAnalysis.GeneralConfigAvailable)" />
+                            <span class="glpi-switch-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <p class="hint mt-2">
+                    Profils : seuls le nom, le commentaire et le statut par défaut sont importés (les droits fins par
+                    module ne le sont pas — à configurer manuellement). Configuration générale : uniquement les
+                    réglages ayant un équivalent direct dans "Configuration générale" &gt; "Général".
+                </p>
+            }
+
+            @if (_tab == ImportTab.Plugin)
+            {
+                @* Plugin d'inventaire de la base source : c'est lui qui porte, côté GLPI, le domaine
+                   que GlpiNg réimplémente en propre (déploiement, découverte réseau). Le signaler ici
+                   évite à l'administrateur de découvrir après coup que ces données ne sont pas
+                   reprises par l'import. *@
+                @if (plugin.IsPresent)
+                {
+                    <div class="alert @(plugin.DataCount > 0 ? "alert-info" : "alert-secondary") mt-3" role="alert">
+                        <h4 class="alert-title">
+                            <i class="ti ti-plug"></i>
+                            Plugin d'inventaire détecté : @(plugin.Name ?? plugin.Directory)
+                            @if (plugin.Version is { Length: > 0 } version)
+                            {
+                                <span class="badge bg-blue-lt ms-1">@version</span>
+                            }
+                            @if (plugin.State is not null && !plugin.IsActive)
+                            {
+                                <span class="badge bg-orange-lt ms-1" title="Le plugin est installé mais désactivé côté GLPI : ses données restent en base.">désactivé</span>
+                            }
+                        </h4>
+
+                        @if (plugin.IsRegisteredWithoutTables)
                         {
-                            <p class="mb-1">
-                                Paquets de déploiement : @plugin.DeployPackagesCount ·
-                                Tâches : @plugin.TasksCount ·
-                                Agents : @plugin.AgentsCount ·
-                                Plages IP : @plugin.IpRangesCount ·
-                                Identifiants SNMP : @plugin.SnmpCredentialsCount ·
-                                Actifs non gérés : @plugin.UnmanagedDevicesCount
+                            <p class="mb-0">
+                                Déclaré dans <code>glpi_plugins</code> mais aucune de ses tables n'est présente :
+                                plugin désinstallé, ou export partiel de la base. Rien à reprendre.
                             </p>
                         }
+                        else
+                        {
+                            <p class="mb-1">
+                                @plugin.TableCount table(s) <code>@plugin.TablePrefix*</code> dans la base source.
+                            </p>
 
-                        <p class="mb-2 text-secondary">
-                            GlpiNg gère ce domaine en propre (Outils &gt; Déploiements). Cochez ce que vous
-                            souhaitez reprendre : rien n'est importé sans choix explicite.
-                        </p>
-
-                        <div class="glpi-config-field-grid">
-                            <div class="glpi-config-field checkbox">
-                                <label for="glpi-import-sel-ipranges"><i class="ti ti-network me-2"></i>Plages IP (@plugin.IpRangesCount)</label>
-                                <label class="glpi-switch">
-                                    <input id="glpi-import-sel-ipranges" type="checkbox" @bind="State.PluginSelection.ImportIpRanges"
-                                           disabled="@(State.IsRunning || plugin.IpRangesCount == 0)" />
-                                    <span class="glpi-switch-slider"></span>
-                                </label>
-                            </div>
-
-                            <div class="glpi-config-field checkbox">
-                                <label for="glpi-import-sel-snmp"><i class="ti ti-key me-2"></i>Identifiants SNMP (@plugin.SnmpCredentialsCount)</label>
-                                <label class="glpi-switch">
-                                    <input id="glpi-import-sel-snmp" type="checkbox" @bind="State.PluginSelection.ImportSnmpCredentials"
-                                           disabled="@(State.IsRunning || plugin.SnmpCredentialsCount == 0)" />
-                                    <span class="glpi-switch-slider"></span>
-                                </label>
-                            </div>
-
-                            <div class="glpi-config-field checkbox">
-                                <label for="glpi-import-sel-packages"><i class="ti ti-package me-2"></i>Paquets de déploiement (@plugin.DeployPackagesCount)</label>
-                                <label class="glpi-switch">
-                                    <input id="glpi-import-sel-packages" type="checkbox" @bind="State.PluginSelection.ImportDeployPackages"
-                                           disabled="@(State.IsRunning || plugin.DeployPackagesCount == 0)" />
-                                    <span class="glpi-switch-slider"></span>
-                                </label>
-                            </div>
-
-                            @if (State.PluginSelection.ImportDeployPackages)
+                            @if (plugin.DataCount > 0)
                             {
-                                @* Les octets des fichiers de paquets ne sont pas en base : sans l'une de
-                                   ces deux sources, l'import ne peut que déclarer les fichiers, à
-                                   téléverser ensuite à la main depuis la fiche du paquet. *@
-                                <div class="glpi-config-field">
-                                    <label for="glpi-import-files-path">Répertoire des fichiers GLPI</label>
-                                    <input id="glpi-import-files-path" type="text" class="glpi-config-input"
-                                           placeholder="ex. \serveur-glpi\glpiiles\_plugins\glpiinventoryiles"
-                                           @bind="State.DeployFilesPath" disabled="@State.IsRunning" />
-                                </div>
-                                <div class="glpi-config-field">
-                                    <label for="glpi-import-base-url">URL de GLPI (repli)</label>
-                                    <input id="glpi-import-base-url" type="text" class="glpi-config-input"
-                                           placeholder="ex. https://glpi.exemple.local"
-                                           @bind="State.GlpiBaseUrl" disabled="@State.IsRunning" />
-                                </div>
-                                <p class="hint">
-                                    Le contenu des fichiers d'un paquet vit sur le serveur GLPI, pas dans sa base.
-                                    Indiquez le répertoire du plugin (chemin local ou partage réseau) pour que
-                                    l'import le rapatrie ; l'URL sert de repli quand ce répertoire n'est pas
-                                    joignable. Les deux vides, les fichiers sont seulement déclarés et le paquet
-                                    reste non déployable tant qu'ils n'ont pas été téléversés. Chaque contenu
-                                    récupéré est vérifié par son empreinte avant d'être enregistré.
+                                <p class="mb-1">
+                                    Paquets de déploiement : @plugin.DeployPackagesCount ·
+                                    Tâches : @plugin.TasksCount ·
+                                    Agents : @plugin.AgentsCount ·
+                                    Plages IP : @plugin.IpRangesCount ·
+                                    Identifiants SNMP : @plugin.SnmpCredentialsCount ·
+                                    Actifs non gérés : @plugin.UnmanagedDevicesCount
                                 </p>
                             }
 
-                            <div class="glpi-config-field checkbox">
-                                <label for="glpi-import-sel-unmanaged"><i class="ti ti-help me-2"></i>Actifs non gérés (@plugin.UnmanagedDevicesCount)</label>
-                                <label class="glpi-switch">
-                                    <input id="glpi-import-sel-unmanaged" type="checkbox" @bind="State.PluginSelection.ImportUnmanagedDevices"
-                                           disabled="@(State.IsRunning || plugin.UnmanagedDevicesCount == 0)" />
-                                    <span class="glpi-switch-slider"></span>
-                                </label>
+                            <p class="mb-2 text-secondary">
+                                GlpiNg gère ce domaine en propre (Outils &gt; Déploiements). Cochez ce que vous
+                                souhaitez reprendre : rien n'est importé sans choix explicite.
+                            </p>
+
+                            <div class="glpi-config-field-grid">
+                                <div class="glpi-config-field checkbox">
+                                    <label for="glpi-import-sel-ipranges"><i class="ti ti-network me-2"></i>Plages IP (@plugin.IpRangesCount)</label>
+                                    <label class="glpi-switch">
+                                        <input id="glpi-import-sel-ipranges" type="checkbox" @bind="State.PluginSelection.ImportIpRanges"
+                                               disabled="@(State.IsRunning || plugin.IpRangesCount == 0)" />
+                                        <span class="glpi-switch-slider"></span>
+                                    </label>
+                                </div>
+
+                                <div class="glpi-config-field checkbox">
+                                    <label for="glpi-import-sel-snmp"><i class="ti ti-key me-2"></i>Identifiants SNMP (@plugin.SnmpCredentialsCount)</label>
+                                    <label class="glpi-switch">
+                                        <input id="glpi-import-sel-snmp" type="checkbox" @bind="State.PluginSelection.ImportSnmpCredentials"
+                                               disabled="@(State.IsRunning || plugin.SnmpCredentialsCount == 0)" />
+                                        <span class="glpi-switch-slider"></span>
+                                    </label>
+                                </div>
+
+                                <div class="glpi-config-field checkbox">
+                                    <label for="glpi-import-sel-packages"><i class="ti ti-package me-2"></i>Paquets de déploiement (@plugin.DeployPackagesCount)</label>
+                                    <label class="glpi-switch">
+                                        <input id="glpi-import-sel-packages" type="checkbox" @bind="State.PluginSelection.ImportDeployPackages"
+                                               disabled="@(State.IsRunning || plugin.DeployPackagesCount == 0)" />
+                                        <span class="glpi-switch-slider"></span>
+                                    </label>
+                                </div>
+
+                                @if (State.PluginSelection.ImportDeployPackages)
+                                {
+                                    @* Les octets des fichiers de paquets ne sont pas en base : sans l'une de
+                                       ces deux sources, l'import ne peut que déclarer les fichiers, à
+                                       téléverser ensuite à la main depuis la fiche du paquet. *@
+                                    <div class="glpi-config-field">
+                                        <label for="glpi-import-files-path">Répertoire des fichiers GLPI</label>
+                                        <input id="glpi-import-files-path" type="text" class="glpi-config-input"
+                                               placeholder="ex. \serveur-glpi\glpiiles\_plugins\glpiinventoryiles"
+                                               @bind="State.DeployFilesPath" disabled="@State.IsRunning" />
+                                    </div>
+                                    <div class="glpi-config-field">
+                                        <label for="glpi-import-base-url">URL de GLPI (repli)</label>
+                                        <input id="glpi-import-base-url" type="text" class="glpi-config-input"
+                                               placeholder="ex. https://glpi.exemple.local"
+                                               @bind="State.GlpiBaseUrl" disabled="@State.IsRunning" />
+                                    </div>
+                                    <p class="hint">
+                                        Le contenu des fichiers d'un paquet vit sur le serveur GLPI, pas dans sa base.
+                                        Indiquez le répertoire du plugin (chemin local ou partage réseau) pour que
+                                        l'import le rapatrie ; l'URL sert de repli quand ce répertoire n'est pas
+                                        joignable. Les deux vides, les fichiers sont seulement déclarés et le paquet
+                                        reste non déployable tant qu'ils n'ont pas été téléversés. Chaque contenu
+                                        récupéré est vérifié par son empreinte avant d'être enregistré.
+                                    </p>
+                                }
+
+                                <div class="glpi-config-field checkbox">
+                                    <label for="glpi-import-sel-unmanaged"><i class="ti ti-help me-2"></i>Actifs non gérés (@plugin.UnmanagedDevicesCount)</label>
+                                    <label class="glpi-switch">
+                                        <input id="glpi-import-sel-unmanaged" type="checkbox" @bind="State.PluginSelection.ImportUnmanagedDevices"
+                                               disabled="@(State.IsRunning || plugin.UnmanagedDevicesCount == 0)" />
+                                        <span class="glpi-switch-slider"></span>
+                                    </label>
+                                </div>
                             </div>
-                        </div>
 
-                        <p class="hint mt-2 mb-0">
-                            Non repris : tâches et agents du plugin. Les agents sont déjà couverts par la catégorie
-                            « Agents » ci-dessus (<code>glpi_agents</code>, table du cœur de GLPI).
-                        </p>
-                    }
-                </div>
+                            <p class="hint mt-2 mb-0">
+                                Non repris : tâches et agents du plugin. Les agents sont déjà couverts par la catégorie
+                                « Agents » ci-dessus (<code>glpi_agents</code>, table du cœur de GLPI).
+                            </p>
+                        }
+                    </div>
+                }
+                @if (!plugin.IsPresent)
+                {
+                    <div class="glpi-config-placeholder">
+                        <i class="ti ti-plug-off"></i>
+                        <p class="mb-0">Aucun plugin d'inventaire (GLPI Inventory ou FusionInventory) sur cette base.</p>
+                    </div>
+                }
             }
-
-            <div class="glpi-config-divider">
-                <span><i class="ti ti-users-group"></i> Administration &amp; configuration</span>
-            </div>
-
-            <div class="glpi-config-field-grid">
-                <div class="glpi-config-field checkbox">
-                    <label for="glpi-import-sel-entities"><i class="ti ti-building me-2"></i>Entités (@adminAnalysis.EntitiesCount)</label>
-                    <label class="glpi-switch">
-                        <input id="glpi-import-sel-entities" type="checkbox" @bind="State.AdminSelection.ImportEntities"
-                               disabled="@(State.IsRunning || adminAnalysis.EntitiesCount == 0)" />
-                        <span class="glpi-switch-slider"></span>
-                    </label>
-                </div>
-
-                <div class="glpi-config-field checkbox">
-                    <label for="glpi-import-sel-groups"><i class="ti ti-users me-2"></i>Groupes (@adminAnalysis.GroupsCount)</label>
-                    <label class="glpi-switch">
-                        <input id="glpi-import-sel-groups" type="checkbox" @bind="State.AdminSelection.ImportGroups"
-                               disabled="@(State.IsRunning || adminAnalysis.GroupsCount == 0)" />
-                        <span class="glpi-switch-slider"></span>
-                    </label>
-                </div>
-
-                <div class="glpi-config-field checkbox">
-                    <label for="glpi-import-sel-profiles"><i class="ti ti-shield-lock me-2"></i>Profils (@adminAnalysis.ProfilesCount)</label>
-                    <label class="glpi-switch">
-                        <input id="glpi-import-sel-profiles" type="checkbox" @bind="State.AdminSelection.ImportProfiles"
-                               disabled="@(State.IsRunning || adminAnalysis.ProfilesCount == 0)" />
-                        <span class="glpi-switch-slider"></span>
-                    </label>
-                </div>
-
-                <div class="glpi-config-field checkbox">
-                    <label for="glpi-import-sel-users"><i class="ti ti-user me-2"></i>Utilisateurs (@adminAnalysis.UsersCount)</label>
-                    <label class="glpi-switch">
-                        <input id="glpi-import-sel-users" type="checkbox" @bind="State.AdminSelection.ImportUsers"
-                               disabled="@(State.IsRunning || adminAnalysis.UsersCount == 0)" />
-                        <span class="glpi-switch-slider"></span>
-                    </label>
-                </div>
-
-                <div class="glpi-config-field checkbox">
-                    <label for="glpi-import-sel-config"><i class="ti ti-settings me-2"></i>Configuration générale</label>
-                    <label class="glpi-switch">
-                        <input id="glpi-import-sel-config" type="checkbox" @bind="State.AdminSelection.ImportGeneralConfig"
-                               disabled="@(State.IsRunning || !adminAnalysis.GeneralConfigAvailable)" />
-                        <span class="glpi-switch-slider"></span>
-                    </label>
-                </div>
-            </div>
-
-            <p class="hint mt-2">
-                Profils : seuls le nom, le commentaire et le statut par défaut sont importés (les droits fins par
-                module ne le sont pas — à configurer manuellement). Configuration générale : uniquement les
-                réglages ayant un équivalent direct dans "Configuration générale" &gt; "Général".
-            </p>
 
             <button type="button" class="glpi-config-save mt-2" disabled="@(!State.CanRun)" @onclick="RunImportAsync">
                 @if (State.IsRunning)
