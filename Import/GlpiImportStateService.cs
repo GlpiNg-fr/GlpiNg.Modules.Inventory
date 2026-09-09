@@ -30,6 +30,16 @@ public sealed class GlpiImportStateService
     public string Username { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Répertoire des fichiers du plugin d'inventaire sur l'installation GLPI source, vu depuis la
+    /// machine GlpiNg. Renseigné, l'import rapatrie le contenu des fichiers de paquets ; sinon ils
+    /// sont seulement déclarés, à téléverser à la main.
+    /// </summary>
+    public string DeployFilesPath { get; set; } = string.Empty;
+
+    /// <summary>Racine HTTP de GLPI, essayée en repli quand le répertoire n'est pas joignable.</summary>
+    public string GlpiBaseUrl { get; set; } = string.Empty;
+
     public bool IsAnalyzing { get; private set; }
     public string? AnalysisError { get; private set; }
     public GlpiImportAnalysis? Analysis { get; private set; }
@@ -373,6 +383,9 @@ public sealed class GlpiImportStateService
                 {
                     IGlpiInventoryPluginImportService pluginImportService =
                         scope.ServiceProvider.GetRequiredService<IGlpiInventoryPluginImportService>();
+
+                    PluginSelection.DeployFilesPath = string.IsNullOrWhiteSpace(DeployFilesPath) ? null : DeployFilesPath.Trim();
+                    PluginSelection.GlpiBaseUrl = string.IsNullOrWhiteSpace(GlpiBaseUrl) ? null : GlpiBaseUrl.Trim();
 
                     LastPluginResult = await pluginImportService.RunAsync(connectionString, tablePrefix, PluginSelection, progress);
                 }

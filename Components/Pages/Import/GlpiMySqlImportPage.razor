@@ -242,6 +242,33 @@
                                 </label>
                             </div>
 
+                            @if (State.PluginSelection.ImportDeployPackages)
+                            {
+                                @* Les octets des fichiers de paquets ne sont pas en base : sans l'une de
+                                   ces deux sources, l'import ne peut que déclarer les fichiers, à
+                                   téléverser ensuite à la main depuis la fiche du paquet. *@
+                                <div class="glpi-config-field">
+                                    <label for="glpi-import-files-path">Répertoire des fichiers GLPI</label>
+                                    <input id="glpi-import-files-path" type="text" class="glpi-config-input"
+                                           placeholder="ex. \serveur-glpi\glpiiles\_plugins\glpiinventoryiles"
+                                           @bind="State.DeployFilesPath" disabled="@State.IsRunning" />
+                                </div>
+                                <div class="glpi-config-field">
+                                    <label for="glpi-import-base-url">URL de GLPI (repli)</label>
+                                    <input id="glpi-import-base-url" type="text" class="glpi-config-input"
+                                           placeholder="ex. https://glpi.exemple.local"
+                                           @bind="State.GlpiBaseUrl" disabled="@State.IsRunning" />
+                                </div>
+                                <p class="hint">
+                                    Le contenu des fichiers d'un paquet vit sur le serveur GLPI, pas dans sa base.
+                                    Indiquez le répertoire du plugin (chemin local ou partage réseau) pour que
+                                    l'import le rapatrie ; l'URL sert de repli quand ce répertoire n'est pas
+                                    joignable. Les deux vides, les fichiers sont seulement déclarés et le paquet
+                                    reste non déployable tant qu'ils n'ont pas été téléversés. Chaque contenu
+                                    récupéré est vérifié par son empreinte avant d'être enregistré.
+                                </p>
+                            }
+
                             <div class="glpi-config-field checkbox">
                                 <label for="glpi-import-sel-unmanaged"><i class="ti ti-help me-2"></i>Actifs non gérés (@plugin.UnmanagedDevicesCount)</label>
                                 <label class="glpi-switch">
@@ -592,6 +619,12 @@
                             {
                                 <div class="text-secondary small">
                                     @(pluginResult.DeployPackageFilesCreated + pluginResult.DeployPackageFilesUpdated) fichier(s)
+                                </div>
+                            }
+                            @if (pluginResult.DeployPackageFilesDownloaded > 0)
+                            {
+                                <div class="text-success small">
+                                    <i class="ti ti-download me-1"></i>@pluginResult.DeployPackageFilesDownloaded contenu(s) récupéré(s)
                                 </div>
                             }
                             @if (pluginResult.DeployPackageFilesPending > 0)
