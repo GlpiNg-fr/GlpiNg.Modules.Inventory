@@ -557,6 +557,17 @@
                         <div class="card-body text-center">
                             <div class="fs-2 fw-bold">@(pluginResult.DeployPackagesCreated + pluginResult.DeployPackagesUpdated)</div>
                             <div class="text-secondary">Paquets (@pluginResult.DeployPackagesCreated créés)</div>
+                            @* Le contenu repris compte autant que le nombre de paquets : c'est lui
+                               qu'on ne veut pas ressaisir. *@
+                            <div class="text-secondary small mt-1">
+                                @pluginResult.DeployPackageChecksImported vérification(s), @pluginResult.DeployPackageActionsImported action(s)
+                            </div>
+                            @if (pluginResult.DeployPackageFilesPending > 0)
+                            {
+                                <div class="text-warning small">
+                                    <i class="ti ti-upload me-1"></i>@pluginResult.DeployPackageFilesPending fichier(s) à téléverser
+                                </div>
+                            }
                         </div>
                     </div>
                 </div>
