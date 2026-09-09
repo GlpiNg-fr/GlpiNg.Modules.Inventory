@@ -1,9 +1,11 @@
-using System.Net;
+﻿using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 using GlpiNg.Modules.Abstractions.Deployment;
 using GlpiNg.Modules.Inventory.Models;
+using GlpiNg.Modules.Inventory.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
@@ -18,6 +20,9 @@ public partial class Detail : ComponentBase, IDisposable
 
     [Inject]
     private IDbContextFactory<DbContext> DbFactory { get; set; } = null!;
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
 
     // Optionnel : seul GlpiNg.Web l'enregistre (voir Program.cs), pour ne pas faire dépendre ce
     // module du module Déploiement — voir IComputerDeploymentTasksProvider.
@@ -67,6 +72,9 @@ public partial class Detail : ComponentBase, IDisposable
     private static readonly HashSet<string> FillPanelTabKeys = ["software", "importinfo", "history"];
 
     private static readonly int[] HistoryPageSizeOptions = [25, 50, 100, 200];
+    /// <summary>Champs verrouillés de ce poste : l'inventaire ne les met plus à jour (voir LockedField).</summary>
+    private HashSet<string> _lockedFields = new(StringComparer.Ordinal);
+
     private List<ComputerHistoryEntry> _historySorted = [];
     private List<ComputerHistoryEntry> _historyFiltered = [];
     private List<ComputerHistoryEntry> _historyPaged = [];
@@ -173,6 +181,12 @@ public partial class Detail : ComponentBase, IDisposable
         _historySorted = _computer.HistoryEntries.OrderByDescending(e => e.OccurredAt).ThenByDescending(e => e.Id).ToList();
         ApplyHistoryFilter();
 
+        _lockedFields = [.. await db.Set<LockedField>()
+            .AsNoTracking()
+            .Where(locked => locked.ItemType == ComputerLockableFields.ItemType && locked.ItemId == _computer.Id)
+            .Select(locked => locked.Field)
+            .ToListAsync()];
+
         _importHistorySorted = _computer.ImportHistories.OrderByDescending(e => e.OccurredAt).ToList();
         ApplyImportHistoryFilter();
 
@@ -238,6 +252,68 @@ public partial class Detail : ComponentBase, IDisposable
     // Recharge la fiche depuis la base sans réinitialiser l'onglet actif ni la pagination des
     // logiciels, contrairement à OnParametersSetAsync (qui, lui, correspond à une navigation vers
     // un autre poste). Déclenché par le bouton de rechargement manuel de la barre du haut.
+    private bool IsFieldLocked(string field) => _lockedFields.Contains(field);
+
+    /// <summary>
+    /// Pose ou retire le verrou d'un champ. La bascule est tracée dans l'historique du poste : un
+    /// champ qui cesse d'être alimenté par l'inventaire doit pouvoir s'expliquer des mois plus
+    /// tard, sans quoi la fiche semble simplement ne plus se mettre à jour.
+    /// </summary>
+    private async Task ToggleFieldLockAsync(string field)
+    {
+        if (_computer is null || !ComputerLockableFields.IsLockable(field))
+        {
+            return;
+        }
+
+        string userName = "Système";
+        if (AuthStateTask is not null)
+        {
+            AuthenticationState authState = await AuthStateTask;
+            if (authState.User.Identity?.Name is { Length: > 0 } name)
+            {
+                userName = name;
+            }
+        }
+
+        await using DbContext db = await DbFactory.CreateDbContextAsync();
+
+        LockedField? existing = await db.Set<LockedField>()
+            .FirstOrDefaultAsync(locked => locked.ItemType == ComputerLockableFields.ItemType
+                                           && locked.ItemId == _computer.Id
+                                           && locked.Field == field);
+
+        string label = ComputerLockableFields.Label(field);
+
+        if (existing is not null)
+        {
+            db.Set<LockedField>().Remove(existing);
+        }
+        else
+        {
+            db.Set<LockedField>().Add(new LockedField
+            {
+                ItemType = ComputerLockableFields.ItemType,
+                ItemId = _computer.Id,
+                Field = field,
+                LockedBy = userName,
+            });
+        }
+
+        db.Set<ComputerHistoryEntry>().Add(new ComputerHistoryEntry
+        {
+            ComputerId = _computer.Id,
+            User = userName,
+            Field = "Verrou",
+            Description = existing is not null
+                ? $"Verrou retiré sur « {label} » : l'inventaire peut de nouveau le mettre à jour."
+                : $"Verrou posé sur « {label} » : l'inventaire ne le met plus à jour.",
+        });
+
+        await db.SaveChangesAsync();
+        await ReloadComputerAsync();
+    }
+
     private async Task ReloadComputerAsync()
     {
         if (_isReloading) return;

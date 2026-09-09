@@ -1,4 +1,4 @@
-@page "/parc/computer/{ComputerId:int}"
+﻿@page "/parc/computer/{ComputerId:int}"
 @using GlpiNg.Modules.Abstractions.Deployment
 @using GlpiNg.Modules.Inventory.Models
 @rendermode InteractiveServer
@@ -85,7 +85,7 @@ else
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="glpi-fiche-field">
-                                    <label>Nom</label>
+                                    <label>Nom<FieldLockToggle Field="Name" IsLocked='@IsFieldLocked("Name")' OnToggle="ToggleFieldLockAsync" /></label>
                                     <div class="glpi-fiche-value-box">@_computer.Name</div>
                                 </div>
                                 <div class="glpi-fiche-field">
@@ -124,11 +124,11 @@ else
                                     }
                                 </div>
                                 <div class="glpi-fiche-field">
-                                    <label>Dernier utilisateur connecté</label>
+                                    <label>Dernier utilisateur connecté<FieldLockToggle Field="LastLoggedUser" IsLocked='@IsFieldLocked("LastLoggedUser")' OnToggle="ToggleFieldLockAsync" /></label>
                                     <div class="glpi-fiche-value-box">@(_computer.LastLoggedUser ?? "—")</div>
                                 </div>
                                 <div class="glpi-fiche-field">
-                                    <label>UUID matériel</label>
+                                    <label>UUID matériel<FieldLockToggle Field="HardwareUuid" IsLocked='@IsFieldLocked("HardwareUuid")' OnToggle="ToggleFieldLockAsync" /></label>
                                     <div class="glpi-fiche-value-box"><code>@(_computer.HardwareUuid ?? "—")</code></div>
                                 </div>
                             </div>
@@ -154,7 +154,7 @@ else
                                     }
                                 </div>
                                 <div class="glpi-fiche-field">
-                                    <label>Type</label>
+                                    <label>Type<FieldLockToggle Field="ChassisType" IsLocked='@IsFieldLocked("ChassisType")' OnToggle="ToggleFieldLockAsync" /></label>
                                     @if (_editMode)
                                     {
                                         <input class="form-control" list="computerTypeOptions" @bind="_editChassisType" @bind:event="oninput" />
@@ -171,7 +171,7 @@ else
                                     }
                                 </div>
                                 <div class="glpi-fiche-field">
-                                    <label>Fabricant</label>
+                                    <label>Fabricant<FieldLockToggle Field="Manufacturer" IsLocked='@IsFieldLocked("Manufacturer")' OnToggle="ToggleFieldLockAsync" /></label>
                                     @if (_editMode)
                                     {
                                         <input class="form-control" list="manufacturerOptions" @bind="_editManufacturer" @bind:event="oninput" />
@@ -188,7 +188,7 @@ else
                                     }
                                 </div>
                                 <div class="glpi-fiche-field">
-                                    <label>Modèle</label>
+                                    <label>Modèle<FieldLockToggle Field="Model" IsLocked='@IsFieldLocked("Model")' OnToggle="ToggleFieldLockAsync" /></label>
                                     @if (_editMode)
                                     {
                                         <input class="form-control" list="computerModelOptions" @bind="_editModel" @bind:event="oninput" />
@@ -205,11 +205,11 @@ else
                                     }
                                 </div>
                                 <div class="glpi-fiche-field">
-                                    <label>N° de série</label>
+                                    <label>N° de série<FieldLockToggle Field="SerialNumber" IsLocked='@IsFieldLocked("SerialNumber")' OnToggle="ToggleFieldLockAsync" /></label>
                                     <div class="glpi-fiche-value-box">@(_computer.SerialNumber ?? "—")</div>
                                 </div>
                                 <div class="glpi-fiche-field">
-                                    <label>Virtualisation</label>
+                                    <label>Virtualisation<FieldLockToggle Field="VmSystem" IsLocked='@IsFieldLocked("VmSystem")' OnToggle="ToggleFieldLockAsync" /></label>
                                     <div class="glpi-fiche-value-box">@(_computer.VmSystem is { Length: > 0 } vm && vm != "Physical" ? vm : "Machine physique")</div>
                                 </div>
                             </div>
@@ -297,7 +297,7 @@ else
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="glpi-fiche-field">
-                                    <label>Système d'exploitation</label>
+                                    <label>Système d'exploitation<FieldLockToggle Field="OperatingSystem" IsLocked='@IsFieldLocked("OperatingSystem")' OnToggle="ToggleFieldLockAsync" /></label>
                                     @if (_editMode)
                                     {
                                         <input class="form-control" list="operatingSystemOptions" @bind="_editOperatingSystem" @bind:event="oninput" />
@@ -314,7 +314,7 @@ else
                                     }
                                 </div>
                                 <div class="glpi-fiche-field">
-                                    <label>Version</label>
+                                    <label>Version<FieldLockToggle Field="OsVersion" IsLocked='@IsFieldLocked("OsVersion")' OnToggle="ToggleFieldLockAsync" /></label>
                                     @if (_editMode)
                                     {
                                         <input class="form-control" list="operatingSystemVersionOptions" @bind="_editOsVersion" @bind:event="oninput" />
@@ -331,13 +331,13 @@ else
                                     }
                                 </div>
                                 <div class="glpi-fiche-field">
-                                    <label>Version du noyau</label>
+                                    <label>Version du noyau<FieldLockToggle Field="OsKernelVersion" IsLocked='@IsFieldLocked("OsKernelVersion")' OnToggle="ToggleFieldLockAsync" /></label>
                                     <div class="glpi-fiche-value-box">@(_computer.OsKernelVersion ?? "—")</div>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="glpi-fiche-field">
-                                    <label>Mémoire totale</label>
+                                    <label>Mémoire totale<FieldLockToggle Field="TotalMemoryMb" IsLocked='@IsFieldLocked("TotalMemoryMb")' OnToggle="ToggleFieldLockAsync" /></label>
                                     <div class="glpi-fiche-value-box">@(_computer.TotalMemoryMb is { } mb ? $"{mb} Mo" : "—")</div>
                                 </div>
                                 <div class="glpi-fiche-field">
