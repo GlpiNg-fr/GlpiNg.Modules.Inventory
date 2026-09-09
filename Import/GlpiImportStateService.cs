@@ -37,6 +37,16 @@ public sealed class GlpiImportStateService
     /// </summary>
     public string DeployFilesPath { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Identifiants du partage réseau hébergeant <see cref="DeployFilesPath"/>, quand le compte
+    /// sous lequel tourne GlpiNg n'y a pas accès. Gardés en mémoire le temps de la session, comme
+    /// le mot de passe MySQL du même formulaire, et jamais persistés.
+    /// </summary>
+    public string DeployFilesUserName { get; set; } = string.Empty;
+
+    /// <inheritdoc cref="DeployFilesUserName"/>
+    public string DeployFilesPassword { get; set; } = string.Empty;
+
     /// <summary>Racine HTTP de GLPI, essayée en repli quand le répertoire n'est pas joignable.</summary>
     public string GlpiBaseUrl { get; set; } = string.Empty;
 
@@ -385,6 +395,8 @@ public sealed class GlpiImportStateService
                         scope.ServiceProvider.GetRequiredService<IGlpiInventoryPluginImportService>();
 
                     PluginSelection.DeployFilesPath = string.IsNullOrWhiteSpace(DeployFilesPath) ? null : DeployFilesPath.Trim();
+                    PluginSelection.DeployFilesUserName = string.IsNullOrWhiteSpace(DeployFilesUserName) ? null : DeployFilesUserName.Trim();
+                    PluginSelection.DeployFilesPassword = string.IsNullOrEmpty(DeployFilesPassword) ? null : DeployFilesPassword;
                     PluginSelection.GlpiBaseUrl = string.IsNullOrWhiteSpace(GlpiBaseUrl) ? null : GlpiBaseUrl.Trim();
 
                     LastPluginResult = await pluginImportService.RunAsync(connectionString, tablePrefix, PluginSelection, progress);

@@ -400,6 +400,27 @@
                             </div>
                             <p class="hint">Chemin local ou partage réseau, vu depuis la machine GlpiNg. Route principale.</p>
 
+                            @* Optionnels : un partage déjà accessible au compte sous lequel tourne
+                               GlpiNg n'en a pas besoin. Ils ne servent qu'aux chemins UNC — sur un
+                               chemin local ils sont simplement ignorés. *@
+                            <div class="glpi-config-field">
+                                <label for="glpi-import-files-user">Identifiant du partage <span class="text-secondary">(optionnel)</span></label>
+                                <input id="glpi-import-files-user" type="text" class="glpi-config-input"
+                                       placeholder="DOMAINE\utilisateur"
+                                       @bind="State.DeployFilesUserName" disabled="@State.IsRunning" />
+                            </div>
+
+                            <div class="glpi-config-field">
+                                <label for="glpi-import-files-password">Mot de passe du partage</label>
+                                <input id="glpi-import-files-password" type="password" class="glpi-config-input"
+                                       autocomplete="new-password"
+                                       @bind="State.DeployFilesPassword" disabled="@State.IsRunning" />
+                            </div>
+                            <p class="hint">
+                                À renseigner seulement si le compte sous lequel tourne GlpiNg n'a pas accès au
+                                partage. Utilisés le temps de l'import et jamais enregistrés.
+                            </p>
+
                             <div class="glpi-config-field">
                                 <label for="glpi-import-base-url">URL de GLPI</label>
                                 <input id="glpi-import-base-url" type="text" class="glpi-config-input"
