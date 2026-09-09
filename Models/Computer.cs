@@ -73,6 +73,7 @@ public class Computer : IEntityScoped
     public List<ComputerVolume> Volumes { get; set; } = [];
     public List<ComputerBattery> Batteries { get; set; } = [];
     public List<ComputerNetworkPort> NetworkPorts { get; set; } = [];
+    public List<ComputerConnector> Connectors { get; set; } = [];
     public List<ComputerAntivirus> Antiviruses { get; set; } = [];
     public List<ComputerImportHistory> ImportHistories { get; set; } = [];
     public List<ComputerHistoryEntry> HistoryEntries { get; set; } = [];
@@ -176,6 +177,30 @@ public class ComputerAntivirus
     /// <summary>Date de création de la base de signatures, telle que remontée par l'agent (format libre).</summary>
     public string? BaseCreationDate { get; set; }
     public string? BaseVersion { get; set; }
+}
+
+/// <summary>
+/// Connecteur physique du poste, remonté par content.ports : port USB, série, parallèle, vidéo,
+/// audio, eSATA...
+///
+/// À ne pas confondre avec <see cref="ComputerNetworkPort"/>, qui est une interface réseau
+/// configurée (IP, masque, MAC), ni avec <see cref="ComputerPeripheral"/>, qui est un appareil
+/// branché. Un connecteur est une prise du châssis, occupée ou non : il décrit ce que la machine
+/// peut recevoir, pas ce qu'elle a reçu.
+/// </summary>
+public class ComputerConnector
+{
+    public int Id { get; set; }
+    public int ComputerId { get; set; }
+
+    /// <summary>Libellé du connecteur, tel que remonté ("USB1", "COM1", ...).</summary>
+    public required string Designation { get; set; }
+
+    /// <summary>Type de connecteur : "USB", "Serial", "Video", ... — champ libre côté agent.</summary>
+    public string? Type { get; set; }
+
+    public string? Caption { get; set; }
+    public string? Description { get; set; }
 }
 
 /// <summary>Port/interface réseau (configuration IP) remonté par content.networks.</summary>

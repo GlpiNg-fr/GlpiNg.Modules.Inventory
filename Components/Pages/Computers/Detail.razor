@@ -723,6 +723,48 @@ else
                     }
                     break;
 
+                case "connectors":
+                    @* Connecteurs physiques du châssis (section "ports" de l'inventaire) : ce que
+                       la machine peut recevoir. À distinguer de « Connexions » (ce qui y est
+                       branché) et de « Ports réseau » (les interfaces IP configurées). *@
+                    @if (_computer.Connectors.Count == 0)
+                    {
+                        <div class="glpi-config-placeholder">
+                            <i class="ti ti-usb"></i>
+                            <p class="mb-0">Aucun connecteur remonté par l'inventaire.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="glpi-fiche-block">
+                            <div class="glpi-fiche-block-title"><i class="ti ti-usb"></i>Connecteurs (@_computer.Connectors.Count)</div>
+                            <div class="table-responsive">
+                                <table class="table table-vcenter card-table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Désignation</th>
+                                            <th>Type</th>
+                                            <th>Libellé</th>
+                                            <th>Description</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (ComputerConnector connector in _computer.Connectors.OrderBy(c => c.Type).ThenBy(c => c.Designation))
+                                        {
+                                            <tr>
+                                                <td>@connector.Designation</td>
+                                                <td>@(connector.Type ?? "—")</td>
+                                                <td>@(connector.Caption ?? "—")</td>
+                                                <td>@(connector.Description ?? "—")</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    }
+                    break;
+
                 case "antivirus":
                     @if (_computer.Antiviruses.Count == 0)
                     {

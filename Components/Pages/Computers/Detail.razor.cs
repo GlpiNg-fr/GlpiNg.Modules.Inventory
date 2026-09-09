@@ -251,6 +251,7 @@ public partial class Detail : ComponentBase, IDisposable
             .Include(computer => computer.Volumes)
             .Include(computer => computer.Batteries)
             .Include(computer => computer.NetworkPorts)
+            .Include(computer => computer.Connectors)
             .Include(computer => computer.Antiviruses)
             .Include(computer => computer.ImportHistories)
             .Include(computer => computer.HistoryEntries)
@@ -932,9 +933,10 @@ public partial class Detail : ComponentBase, IDisposable
 
     // Reprend la liste et l'ordre des onglets de la fiche "Ordinateur" de GLPI. Seuls
     // "computer", "os", "components", "batteries", "volumes", "software", "connections",
-    // "networkports", "antivirus", "domains", "locks", "importinfo", "history", "tasks" et "deploy" ont un
-    // contenu réel pour l'instant (voir le @switch de Detail.razor) ; les autres affichent un
-    // placeholder en attendant d'être alimentés au fur et à mesure des besoins.
+    // "networkports", "connectors", "antivirus", "locks", "domains", "importinfo", "history",
+    // "tasks" et "deploy" ont un contenu réel pour l'instant (voir le @switch de Detail.razor) ;
+    // les autres affichent un placeholder en attendant d'être alimentés au fur et à mesure des
+    // besoins.
     private static List<FicheTab> BuildTabs(Computer computer, ComputerDeploymentTasksInfo? deploymentTasksInfo, int deploymentAssignmentsCount, int lockedFieldsCount) =>
     [
         new("computer", "ti-device-desktop", "Ordinateur", null),
@@ -945,7 +947,7 @@ public partial class Detail : ComponentBase, IDisposable
         new("software", "ti-apps", "Logiciels", computer.Softwares.Count),
         new("connections", "ti-plug-connected", "Connexions", computer.Peripherals.Count),
         new("networkports", "ti-network", "Ports réseau", computer.NetworkPorts.Count),
-        new("connectors", "ti-usb", "Connecteurs", null),
+        new("connectors", "ti-usb", "Connecteurs", computer.Connectors.Count),
         new("remotecontrol", "ti-device-desktop-share", "Contrôle à distance", null),
         new("antivirus", "ti-shield-check", "Antivirus", computer.Antiviruses.Count),
         new("locks", "ti-lock", "Verrous", lockedFieldsCount),
