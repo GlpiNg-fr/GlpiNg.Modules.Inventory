@@ -1,4 +1,5 @@
 ﻿using GlpiNg.Modules.Inventory.Models;
+using GlpiNg.Modules.Inventory.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.JSInterop;
@@ -67,35 +68,12 @@ public partial class DropdownList : ComponentBase
     /// Réordonne _items (déjà trié par nom) en ordre d'arborescence — chaque parent suivi
     /// immédiatement de ses enfants — pour que l'indentation (Depth ci-dessus) forme une vraie
     /// arborescence visuelle plutôt qu'une liste plate triée alphabétiquement.
+    ///
+    /// Le tri lui-même vit dans <see cref="LocationHierarchy"/> : les selects de Lieu des fiches
+    /// d'actifs en ont le même besoin, et deux implémentations divergeraient.
     /// </summary>
-    private static List<DropdownItem> SortHierarchically(List<DropdownItem> items)
-    {
-        // 0 comme clé "racine" : sans danger, les Id générés par la base démarrent à 1.
-        Dictionary<int, List<DropdownItem>> byParent = items
-            .GroupBy(i => i.ParentId ?? 0)
-            .ToDictionary(g => g.Key, g => g.ToList());
-
-        List<DropdownItem> result = [];
-        void Walk(int parentId, int depthGuard)
-        {
-            if (depthGuard > 20 || !byParent.TryGetValue(parentId, out List<DropdownItem>? children)) return;
-            foreach (DropdownItem child in children)
-            {
-                result.Add(child);
-                Walk(child.Id, depthGuard + 1);
-            }
-        }
-        Walk(0, 0);
-
-        // Garde-fou : un ParentId invalide (cycle, ou pointant vers un Id absent) laisserait des
-        // éléments hors de l'arbre parcouru — on les rattache en fin de liste plutôt que de les perdre.
-        if (result.Count != items.Count)
-        {
-            result.AddRange(items.Except(result));
-        }
-
-        return result;
-    }
+    private static List<DropdownItem> SortHierarchically(List<DropdownItem> items) =>
+        LocationHierarchy.Sort(items);
 
     /// <summary>Libellé indenté d'un Lieu candidat comme parent — exclut l'élément lui-même (pas de cycle direct) dans le select "Lieu parent".</summary>
     private static string ParentOptionLabel(DropdownItem item, int depth) =>

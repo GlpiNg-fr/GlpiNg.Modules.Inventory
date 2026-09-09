@@ -121,9 +121,9 @@ else
                                         <select class="form-select" value="@(_editLocationId?.ToString() ?? "")"
                                                 @onchange="@((ChangeEventArgs e) => _editLocationId = string.IsNullOrEmpty((string?)e.Value) ? null : int.Parse((string)e.Value!))">
                                             <option value="">—</option>
-                                            @foreach (DropdownItem location in _locationOptions)
+                                            @foreach (LocationOption location in _locationOptions)
                                             {
-                                                <option value="@location.Id">@LocationOptionLabel(location, _locationOptions)</option>
+                                                <option value="@location.Id">@location.Path</option>
                                             }
                                         </select>
                                     }

@@ -128,7 +128,7 @@ public partial class Detail : ComponentBase, IDisposable
     private List<string> _operatingSystemOptions = [];
     private List<string> _operatingSystemVersionOptions = [];
     private List<DropdownItem> _statusOptions = [];
-    private List<DropdownItem> _locationOptions = [];
+    private List<LocationOption> _locationOptions = [];
     private List<string> _userOptions = [];
 
     private ComputerDeploymentTasksInfo? _deploymentTasksInfo;
@@ -536,7 +536,7 @@ public partial class Detail : ComponentBase, IDisposable
         _operatingSystemOptions = items.Where(i => i.Type == DropdownType.OperatingSystem).Select(i => i.Name).ToList();
         _operatingSystemVersionOptions = items.Where(i => i.Type == DropdownType.OperatingSystemVersion).Select(i => i.Name).ToList();
         _statusOptions = items.Where(i => i.Type == DropdownType.Status).ToList();
-        _locationOptions = items.Where(i => i.Type == DropdownType.Location).ToList();
+        _locationOptions = LocationHierarchy.BuildOptions(items.Where(i => i.Type == DropdownType.Location));
 
         _editMode = true;
     }
@@ -1092,24 +1092,6 @@ public partial class Detail : ComponentBase, IDisposable
         return label.Length > 0 ? label : null;
     }
 
-    // Chemin complet ("Site > Bâtiment > Salle") d'un Lieu dans le select d'édition, en remontant
-    // ParentId au sein de la liste déjà chargée (all) — jamais de requête supplémentaire, borné à
-    // 20 niveaux comme garde-fou contre un cycle accidentel (voir aussi DropdownList.razor.cs.Depth).
-    private static string LocationOptionLabel(DropdownItem item, List<DropdownItem> all)
-    {
-        Dictionary<int, DropdownItem> byId = all.ToDictionary(i => i.Id);
-        List<string> parts = [item.Name];
-        int? parentId = item.ParentId;
-        int guard = 0;
-
-        while (parentId is int pid && byId.TryGetValue(pid, out DropdownItem? parent) && guard++ < 20)
-        {
-            parts.Insert(0, parent.Name);
-            parentId = parent.ParentId;
-        }
-
-        return string.Join(" > ", parts);
-    }
 
     /// <summary>Port par défaut de l'interface web locale de GLPI-Agent (httpd-trust).</summary>
     private const int AgentWebPort = 62354;
