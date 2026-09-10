@@ -50,6 +50,16 @@ public sealed class GlpiImportStateService
     /// <summary>Racine HTTP de GLPI, essayée en repli quand le répertoire n'est pas joignable.</summary>
     public string GlpiBaseUrl { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Compte GLPI ouvrant une session web sur l'installation source. Le seul point d'accès qui
+    /// rend un fichier de paquet entier vérifie un droit : sans session, la route HTTP ne peut
+    /// récupérer que ce qu'un miroir statique expose. Gardé en mémoire, jamais persisté.
+    /// </summary>
+    public string GlpiUserName { get; set; } = string.Empty;
+
+    /// <inheritdoc cref="GlpiUserName"/>
+    public string GlpiPassword { get; set; } = string.Empty;
+
     public bool IsAnalyzing { get; private set; }
     public string? AnalysisError { get; private set; }
     public GlpiImportAnalysis? Analysis { get; private set; }
@@ -406,6 +416,8 @@ public sealed class GlpiImportStateService
                     PluginSelection.DeployFilesUserName = string.IsNullOrWhiteSpace(DeployFilesUserName) ? null : DeployFilesUserName.Trim();
                     PluginSelection.DeployFilesPassword = string.IsNullOrEmpty(DeployFilesPassword) ? null : DeployFilesPassword;
                     PluginSelection.GlpiBaseUrl = string.IsNullOrWhiteSpace(GlpiBaseUrl) ? null : GlpiBaseUrl.Trim();
+                    PluginSelection.GlpiUserName = string.IsNullOrWhiteSpace(GlpiUserName) ? null : GlpiUserName.Trim();
+                    PluginSelection.GlpiPassword = string.IsNullOrEmpty(GlpiPassword) ? null : GlpiPassword;
                     PluginSelection.DeployMirrorUrls = Analysis?.InventoryPlugin.MirrorUrls ?? [];
 
                     LastPluginResult = await pluginImportService.RunAsync(connectionString, tablePrefix, PluginSelection, progress);

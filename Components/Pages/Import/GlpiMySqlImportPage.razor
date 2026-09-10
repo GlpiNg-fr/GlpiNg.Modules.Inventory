@@ -434,8 +434,28 @@
                                        douter de ce qu'il contient. *@
                                     <text>Pré-remplie depuis la base source (<code>glpi_configs.url_base</code>), modifiable. </text>
                                 }
-                                Essayée en repli, fichier par fichier, quand le répertoire ne rend rien. Chaque contenu
-                                récupéré est vérifié par son empreinte avant d'être enregistré.
+                                Essayée en repli, fichier par fichier, quand le répertoire ne rend rien.
+                            </p>
+
+                            @* Le point d'accès qui rend un fichier entier (front/deployfile_download.php)
+                               vérifie un droit GLPI : sans compte, la route HTTP ne peut rien récupérer
+                               d'autre que ce qu'un miroir statique expose. *@
+                            <div class="glpi-config-field">
+                                <label for="glpi-import-web-user">Compte GLPI <span class="text-secondary">(optionnel)</span></label>
+                                <input id="glpi-import-web-user" type="text" class="glpi-config-input"
+                                       placeholder="compte ayant le droit de lecture sur les paquets"
+                                       @bind="State.GlpiUserName" disabled="@State.IsRunning" />
+                            </div>
+
+                            <div class="glpi-config-field">
+                                <label for="glpi-import-web-password">Mot de passe GLPI</label>
+                                <input id="glpi-import-web-password" type="password" class="glpi-config-input"
+                                       autocomplete="new-password"
+                                       @bind="State.GlpiPassword" disabled="@State.IsRunning" />
+                            </div>
+                            <p class="hint">
+                                Ouvre une session web le temps de l'import. Sans lui, l'URL ci-dessus ne sert qu'aux
+                                miroirs. Utilisés le temps de l'import et jamais enregistrés.
                             </p>
 
                             @if (plugin.MirrorUrls.Count > 0)
@@ -443,11 +463,14 @@
                                 <p class="hint">
                                     <i class="ti ti-server me-1"></i>
                                     @plugin.MirrorUrls.Count serveur(s) de miroir déclaré(s) dans le plugin, essayé(s)
-                                    avant l'URL ci-dessus : @string.Join(", ", plugin.MirrorUrls.Take(3))@(plugin.MirrorUrls.Count > 3 ? ", …" : "").
-                                    Ce sont les adresses depuis lesquelles les agents de cette installation
-                                    téléchargent déjà.
+                                    avant la session GLPI : @string.Join(", ", plugin.MirrorUrls.Take(3))@(plugin.MirrorUrls.Count > 3 ? ", …" : "").
                                 </p>
                             }
+
+                            <p class="hint">
+                                Chaque contenu récupéré, par quelque route que ce soit, est vérifié par son empreinte
+                                avant d'être enregistré.
+                            </p>
                         }
 
                         <div class="glpi-config-divider">
