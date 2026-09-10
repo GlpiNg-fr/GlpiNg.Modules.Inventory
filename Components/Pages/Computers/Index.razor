@@ -132,6 +132,17 @@
                 <span class="glpi-switch-slider"></span>
             </label>
 
+            @if (_showTrash)
+            {
+                @* La corbeille n'avait qu'une sortie : la suppression définitive. Un poste mis au
+                   rebut par erreur était perdu avec tout son historique, alors que le rebut est
+                   justement l'étape censée être réversible. *@
+                <button type="button" class="btn btn-icon" disabled="@(_selectedIds.Count == 0)"
+                        title="Sortir de la corbeille" @onclick="RestoreSelectedAsync">
+                    <i class="ti ti-arrow-back-up"></i>
+                </button>
+            }
+
             <div class="dropdown">
                 <button type="button" class="btn btn-icon text-danger" data-bs-toggle="dropdown" aria-expanded="false"
                         disabled="@(_selectedIds.Count == 0)" title="@(_showTrash ? "Supprimer définitivement" : "Mettre à la corbeille")">

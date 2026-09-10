@@ -563,6 +563,41 @@ public partial class Index : ComponentBase
         }
     }
 
+    /// <summary>
+    /// Sort de la corbeille les postes sélectionnés.
+    ///
+    /// Sans elle, la corbeille n'avait qu'une sortie : la suppression définitive. Un poste mis au
+    /// rebut par erreur était perdu avec tout son historique, alors que le rebut est justement
+    /// l'étape censée être réversible.
+    /// </summary>
+    private async Task RestoreSelectedAsync()
+    {
+        if (_selectedIds.Count == 0) return;
+
+        await using DbContext db = await DbFactory.CreateDbContextAsync();
+        List<Computer> toRestore = await db.Set<Computer>()
+            .Where(computer => _selectedIds.Contains(computer.Id))
+            .ToListAsync();
+
+        foreach (Computer computer in toRestore)
+        {
+            computer.IsDeleted = false;
+
+            db.Set<ComputerHistoryEntry>().Add(new ComputerHistoryEntry
+            {
+                ComputerId = computer.Id,
+                User = _currentUserName ?? "Système",
+                Field = "Corbeille",
+                Description = "Poste sorti de la corbeille.",
+            });
+        }
+
+        await db.SaveChangesAsync();
+
+        _selectedIds.Clear();
+        await LoadAsync();
+    }
+
     private async Task DeleteSelectedAsync()
     {
         if (_selectedIds.Count == 0) return;
