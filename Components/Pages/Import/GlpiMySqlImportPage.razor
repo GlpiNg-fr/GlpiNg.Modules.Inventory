@@ -518,8 +518,14 @@
             </div>
 
             <div class="d-flex justify-content-between align-items-baseline mb-1">
-                <span class="fw-medium">
+                <span class="fw-medium text-truncate">
                     <i class="ti ti-loader-2 glpi-spin me-1"></i>@(State.CurrentPhase ?? "Préparation…")
+                    @if (State.CurrentDetail is { Length: > 0 } detail)
+                    {
+                        @* Ce qui se passe quand le compteur, lui, ne bouge pas — le téléchargement
+                           d'un fichier de paquet peut durer des minutes. *@
+                        <span class="text-secondary fw-normal ms-1">— @detail</span>
+                    }
                 </span>
                 @if (State.ProgressTotal > 0)
                 {

@@ -89,6 +89,9 @@ public sealed class GlpiImportStateService
     /// <summary>Phase en cours, telle que nommée par <see cref="GlpiImportPhases"/>. Null hors import.</summary>
     public string? CurrentPhase { get; private set; }
 
+    /// <summary>Ce sur quoi la phase en cours travaille — voir GlpiImportProgress.Detail.</summary>
+    public string? CurrentDetail { get; private set; }
+
     /// <summary>Éléments déjà traités, toutes phases confondues.</summary>
     public int ProgressCompleted { get; private set; }
 
@@ -323,7 +326,10 @@ public sealed class GlpiImportStateService
     /// </summary>
     private void OnProgress(GlpiImportProgress progress)
     {
-        if (progress.Phase != CurrentPhase)
+        bool phaseChanged = progress.Phase != CurrentPhase;
+        bool detailChanged = progress.Detail != CurrentDetail;
+
+        if (phaseChanged)
         {
             int index = _plan.FindIndex(step => step.Phase == progress.Phase);
             _completedBeforeCurrentPhase = index < 0
@@ -332,13 +338,18 @@ public sealed class GlpiImportStateService
             CurrentPhase = progress.Phase;
         }
 
+        CurrentDetail = progress.Detail;
+
         int planned = _plan.FirstOrDefault(step => step.Phase == progress.Phase).Count;
         int withinPhase = planned > 0 ? Math.Min(progress.Completed, planned) : progress.Completed;
 
         ProgressCompleted = _completedBeforeCurrentPhase + withinPhase;
 
+        // L'étranglement ne vaut que pour le défilement d'éléments, qui peut être très rapide. Un
+        // changement de phase ou de détail est rare et porteur de sens : le retenir laisserait
+        // l'écran muet pendant tout un téléchargement.
         DateTime now = DateTime.UtcNow;
-        if (now - _lastProgressNotifiedAt < ProgressNotifyInterval)
+        if (!phaseChanged && !detailChanged && now - _lastProgressNotifiedAt < ProgressNotifyInterval)
         {
             return;
         }
@@ -368,6 +379,7 @@ public sealed class GlpiImportStateService
             ProgressTotal = _plan.Sum(step => step.Count);
             ProgressCompleted = 0;
             CurrentPhase = _plan.Count > 0 ? _plan[0].Phase : null;
+            CurrentDetail = null;
 
             SynchronousProgress progress = new(OnProgress);
             Changed?.Invoke();
@@ -432,6 +444,7 @@ public sealed class GlpiImportStateService
             LastRunAt = DateTime.UtcNow;
             ProgressCompleted = ProgressTotal;
             CurrentPhase = null;
+            CurrentDetail = null;
         }
         finally
         {
