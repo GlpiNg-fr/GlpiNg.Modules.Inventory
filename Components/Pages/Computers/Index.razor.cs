@@ -2,6 +2,7 @@
 using System.Security.Claims;
 using System.Text.Json;
 using GlpiNg.Modules.Inventory.Models;
+using GlpiNg.Modules.Inventory.Services;
 using GlpiNg.Modules.Inventory.Search;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -609,6 +610,18 @@ public partial class Index : ComponentBase
 
         if (_showTrash)
         {
+            // Les verrous de champ ne sont pas rattachés au poste par une clé étrangère (voir
+            // LockedField : ItemType + ItemId, comme glpi_lockedfields), donc rien ne les emporte
+            // avec lui. Sans ce nettoyage ils s'accumulent indéfiniment, et un poste qui hériterait
+            // un jour de l'identifiant libéré — restauration de sauvegarde, réamorçage de la
+            // séquence — se retrouverait avec des champs figés sans explication.
+            List<int> deletedIds = [.. toDelete.Select(computer => computer.Id)];
+            List<LockedField> orphanLocks = await db.Set<LockedField>()
+                .Where(locked => locked.ItemType == ComputerLockableFields.ItemType
+                                 && deletedIds.Contains(locked.ItemId))
+                .ToListAsync();
+
+            db.Set<LockedField>().RemoveRange(orphanLocks);
             db.Set<Computer>().RemoveRange(toDelete);
         }
         else
