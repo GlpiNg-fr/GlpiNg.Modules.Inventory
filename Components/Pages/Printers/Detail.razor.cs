@@ -10,7 +10,10 @@ public partial class Detail : ComponentBase, IAsyncDisposable
     private sealed record Snapshot(
         string Name, int? StatusId, int? LocationId, string? Type, string? Manufacturer, string? Model,
         string? SerialNumber, string? InventoryNumber, string? Uuid, string? TechnicianInCharge,
-        string? AssignedUser, int? InitialPageCount, int? CurrentPageCount, string? Comment);
+        string? AssignedUser, int? InitialPageCount, int? CurrentPageCount, string? Comment,
+        string? IpAddress, PrinterSnmpVersion SnmpVersion, int SnmpPort, string? SnmpCommunity,
+        string? SnmpUsername, PrinterSnmpAuthProtocol SnmpAuthProtocol, PrinterSnmpPrivProtocol SnmpPrivProtocol,
+        bool HasAuthPassphrase, bool HasPrivPassphrase);
 
     [Parameter]
     public int ItemId { get; set; }
@@ -223,13 +226,34 @@ public partial class Detail : ComponentBase, IAsyncDisposable
         await _db.Entry(_item).Collection(printer => printer.HistoryEntries).LoadAsync();
     }
 
+    /// <summary>
+    /// Les phrases secrètes n'entrent dans l'instantané que sous forme de « renseignée ou non » :
+    /// l'historique dirait sinon en clair, et pour toujours, un secret que la fiche elle-même
+    /// masque à l'écran.
+    /// </summary>
     private static Snapshot ToSnapshot(Printer i) => new(
         i.Name, i.StatusId, i.LocationId, i.Type, i.Manufacturer, i.Model,
-        i.SerialNumber, i.InventoryNumber, i.Uuid, i.TechnicianInCharge, i.AssignedUser,
-        i.InitialPageCount, i.CurrentPageCount, i.Comment);
+        i.SerialNumber, i.InventoryNumber, i.Uuid, i.TechnicianInCharge,
+        i.AssignedUser, i.InitialPageCount, i.CurrentPageCount, i.Comment,
+        i.IpAddress, i.SnmpVersion, i.SnmpPort, i.SnmpCommunity,
+        i.SnmpUsername, i.SnmpAuthProtocol, i.SnmpPrivProtocol,
+        !string.IsNullOrEmpty(i.SnmpAuthPassphrase), !string.IsNullOrEmpty(i.SnmpPrivPassphrase));
 
     private string StatusLabel(int? statusId) => statusId is { } id ? _statusOptions.FirstOrDefault(s => s.Id == id)?.Name ?? "—" : "—";
     private string LocationLabel(int? locationId) => locationId is { } id ? _locationOptions.FirstOrDefault(l => l.Id == id)?.Name ?? "—" : "—";
+
+    private static string VersionLabel(PrinterSnmpVersion version) => version switch
+    {
+        PrinterSnmpVersion.None => "aucune",
+        PrinterSnmpVersion.V2c => "v2c",
+        _ => version.ToString().ToLowerInvariant(),
+    };
+
+    /// <summary>Une communauté est un secret partagé : sa valeur n'a pas sa place dans un journal
+    /// que tout lecteur de la fiche peut consulter.</summary>
+    private static string Secret(string? value) => string.IsNullOrEmpty(value) ? "vide" : "renseignée";
+
+    private static string Presence(bool present) => present ? "renseignée" : "vide";
 
     private static string FormatChange(string? oldValue, string? newValue) =>
         $"{(string.IsNullOrEmpty(oldValue) ? "vide" : oldValue)} → {(string.IsNullOrEmpty(newValue) ? "vide" : newValue)}";
@@ -250,6 +274,15 @@ public partial class Detail : ComponentBase, IAsyncDisposable
         if (before.InitialPageCount != after.InitialPageCount) yield return ("Compteur de page initial", before.InitialPageCount?.ToString(), after.InitialPageCount?.ToString());
         if (before.CurrentPageCount != after.CurrentPageCount) yield return ("Compteur de page actuel", before.CurrentPageCount?.ToString(), after.CurrentPageCount?.ToString());
         if (before.Comment != after.Comment) yield return ("Commentaires", before.Comment, after.Comment);
+        if (before.IpAddress != after.IpAddress) yield return ("Adresse IP", before.IpAddress, after.IpAddress);
+        if (before.SnmpVersion != after.SnmpVersion) yield return ("Version SNMP", VersionLabel(before.SnmpVersion), VersionLabel(after.SnmpVersion));
+        if (before.SnmpPort != after.SnmpPort) yield return ("Port SNMP", before.SnmpPort.ToString(), after.SnmpPort.ToString());
+        if (before.SnmpCommunity != after.SnmpCommunity) yield return ("Communauté SNMP", Secret(before.SnmpCommunity), Secret(after.SnmpCommunity));
+        if (before.SnmpUsername != after.SnmpUsername) yield return ("Nom de sécurité SNMP", before.SnmpUsername, after.SnmpUsername);
+        if (before.SnmpAuthProtocol != after.SnmpAuthProtocol) yield return ("Authentification SNMP", before.SnmpAuthProtocol.ToString(), after.SnmpAuthProtocol.ToString());
+        if (before.SnmpPrivProtocol != after.SnmpPrivProtocol) yield return ("Chiffrement SNMP", before.SnmpPrivProtocol.ToString(), after.SnmpPrivProtocol.ToString());
+        if (before.HasAuthPassphrase != after.HasAuthPassphrase) yield return ("Phrase d'authentification SNMP", Presence(before.HasAuthPassphrase), Presence(after.HasAuthPassphrase));
+        if (before.HasPrivPassphrase != after.HasPrivPassphrase) yield return ("Phrase de chiffrement SNMP", Presence(before.HasPrivPassphrase), Presence(after.HasPrivPassphrase));
     }
 
     private async Task SaveAsync()

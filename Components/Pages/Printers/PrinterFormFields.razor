@@ -81,9 +81,242 @@
 
 <hr class="my-3" />
 
+@* Interrogation SNMP. Les champs suivent la version choisie : montrer une communauté à côté d'une
+   passphrase v3 laisserait croire que les deux servent, alors qu'elles s'excluent. *@
+<div class="glpi-config-divider">
+    <span><i class="ti ti-network"></i> Interrogation SNMP</span>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="glpi-fiche-field">
+            <label>Adresse IP</label>
+            <input class="form-control @(IpLooksValid ? "" : "is-invalid")" placeholder="192.168.1.50"
+                   @bind="Item.IpAddress" @bind:event="oninput" />
+        </div>
+        @if (!IpLooksValid)
+        {
+            <div class="glpi-fiche-field">
+                <label></label>
+                <div class="text-danger small">Adresse IPv4 ou IPv6 attendue.</div>
+            </div>
+        }
+        <div class="glpi-fiche-field">
+            <label>Version SNMP</label>
+            <select class="form-select" value="@((int)Item.SnmpVersion)"
+                    @onchange="@((ChangeEventArgs e) => SetVersion(int.Parse((string)e.Value!)))">
+                <option value="0">Aucune (pas d'interrogation)</option>
+                <option value="1">v1</option>
+                <option value="2">v2c</option>
+                <option value="3">v3</option>
+            </select>
+        </div>
+        @if (Item.SnmpVersion != PrinterSnmpVersion.None)
+        {
+            <div class="glpi-fiche-field">
+                <label>Port</label>
+                <input type="number" class="form-control" value="@Item.SnmpPort"
+                       @onchange="@((ChangeEventArgs e) => Item.SnmpPort = int.TryParse((string?)e.Value, out int port) ? port : 161)" />
+            </div>
+        }
+    </div>
+
+    <div class="col-md-6">
+        @if (Item.SnmpVersion is PrinterSnmpVersion.V1 or PrinterSnmpVersion.V2c)
+        {
+            <div class="glpi-fiche-field">
+                <label>Communauté <span class="text-danger">*</span></label>
+                <input class="form-control @(string.IsNullOrWhiteSpace(Item.SnmpCommunity) ? "is-invalid" : "")"
+                       placeholder="public" @bind="Item.SnmpCommunity" @bind:event="oninput" />
+            </div>
+            <div class="glpi-fiche-field">
+                <label></label>
+                <div class="text-secondary small">Requise en v1 et v2c : c'est le seul secret que ces versions connaissent.</div>
+            </div>
+        }
+        else if (Item.SnmpVersion == PrinterSnmpVersion.V3)
+        {
+            <div class="glpi-fiche-field">
+                <label>Nom de sécurité <span class="text-danger">*</span></label>
+                <input class="form-control @(string.IsNullOrWhiteSpace(Item.SnmpUsername) ? "is-invalid" : "")"
+                       @bind="Item.SnmpUsername" @bind:event="oninput" />
+            </div>
+
+            <div class="glpi-fiche-field">
+                <label>Authentification</label>
+                <select class="form-select" value="@((int)Item.SnmpAuthProtocol)"
+                        @onchange="@((ChangeEventArgs e) => SetAuthProtocol(int.Parse((string)e.Value!)))">
+                    <option value="0">Aucune (noAuthNoPriv)</option>
+                    <option value="1">MD5</option>
+                    <option value="2">SHA</option>
+                    <option value="3">SHA-224</option>
+                    <option value="4">SHA-256</option>
+                    <option value="5">SHA-384</option>
+                    <option value="6">SHA-512</option>
+                </select>
+            </div>
+
+            @if (Item.SnmpAuthProtocol != PrinterSnmpAuthProtocol.None)
+            {
+                <div class="glpi-fiche-field">
+                    <label>Phrase d'authentification <span class="text-danger">*</span></label>
+                    <input type="password" class="form-control @(string.IsNullOrEmpty(Item.SnmpAuthPassphrase) ? "is-invalid" : "")"
+                           autocomplete="new-password" @bind="Item.SnmpAuthPassphrase" @bind:event="oninput" />
+                </div>
+
+                @* Le chiffrement n'est proposé qu'une fois l'authentification choisie : authPriv
+                   suppose authNoPriv, il n'existe pas de mode chiffré sans authentification. *@
+                <div class="glpi-fiche-field">
+                    <label>Chiffrement</label>
+                    <select class="form-select" value="@((int)Item.SnmpPrivProtocol)"
+                            @onchange="@((ChangeEventArgs e) => SetPrivProtocol(int.Parse((string)e.Value!)))">
+                        <option value="0">Aucun (authNoPriv)</option>
+                        <option value="1">DES</option>
+                        <option value="2">AES-128</option>
+                        <option value="3">Triple DES</option>
+                        <option value="4">Cisco AES-192</option>
+                        <option value="5">Cisco AES-256</option>
+                        <option value="6">AES-192 (IETF)</option>
+                        <option value="7">AES-256 (IETF)</option>
+                    </select>
+                </div>
+
+                @if (Item.SnmpPrivProtocol != PrinterSnmpPrivProtocol.None)
+                {
+                    <div class="glpi-fiche-field">
+                        <label>Phrase de chiffrement <span class="text-danger">*</span></label>
+                        <input type="password" class="form-control @(string.IsNullOrEmpty(Item.SnmpPrivPassphrase) ? "is-invalid" : "")"
+                               autocomplete="new-password" @bind="Item.SnmpPrivPassphrase" @bind:event="oninput" />
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="glpi-fiche-field">
+                    <label></label>
+                    <div class="text-secondary small">
+                        Sans authentification, le chiffrement n'est pas possible : SNMPv3 n'a pas de mode
+                        « chiffré mais anonyme ».
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@if (SnmpIncomplete is { } missing)
+{
+    <div class="alert alert-warning py-2 px-3" role="alert">
+        <i class="ti ti-alert-triangle me-1"></i>
+        Interrogation SNMP incomplète : @missing. Tant qu'il manque quelque chose, l'imprimante ne sera pas
+        interrogée — l'enregistrement reste possible.
+    </div>
+}
+
+<hr class="my-3" />
+
 <EntityScopeFields Item="Item" />
 
 @code {
+    /// <summary>
+    /// Ce qui manque pour que l'imprimante soit interrogeable, ou <c>null</c> si tout y est.
+    ///
+    /// Signalé sans bloquer l'enregistrement : une fiche d'imprimante vaut d'être conservée même
+    /// incomplète côté SNMP, et un blocage obligerait à tout ressaisir pour corriger un nom.
+    /// </summary>
+    private string? SnmpIncomplete
+    {
+        get
+        {
+            if (Item.SnmpVersion == PrinterSnmpVersion.None)
+            {
+                return null;
+            }
+
+            List<string> missing = [];
+
+            if (string.IsNullOrWhiteSpace(Item.IpAddress)) missing.Add("adresse IP");
+
+            if (Item.SnmpVersion is PrinterSnmpVersion.V1 or PrinterSnmpVersion.V2c)
+            {
+                if (string.IsNullOrWhiteSpace(Item.SnmpCommunity)) missing.Add("communauté");
+            }
+            else
+            {
+                if (string.IsNullOrWhiteSpace(Item.SnmpUsername)) missing.Add("nom de sécurité");
+                if (Item.SnmpAuthProtocol != PrinterSnmpAuthProtocol.None && string.IsNullOrEmpty(Item.SnmpAuthPassphrase))
+                {
+                    missing.Add("phrase d'authentification");
+                }
+
+                if (Item.SnmpPrivProtocol != PrinterSnmpPrivProtocol.None && string.IsNullOrEmpty(Item.SnmpPrivPassphrase))
+                {
+                    missing.Add("phrase de chiffrement");
+                }
+            }
+
+            return missing.Count == 0 ? null : string.Join(", ", missing);
+        }
+    }
+
+    /// <summary>Adresse acceptée telle que saisie, vide comprise : c'est l'avertissement qui dit
+    /// qu'elle manque, pas ce contrôle-ci, qui ne juge que la forme.</summary>
+    private bool IpLooksValid => string.IsNullOrWhiteSpace(Item.IpAddress)
+        || System.Net.IPAddress.TryParse(Item.IpAddress.Trim(), out _);
+
+    /// <summary>
+    /// Change de version en effaçant ce qui n'a plus cours. Laisser une communauté derrière un
+    /// passage en v3 la garderait en base sans qu'aucun écran ne la montre — un secret oublié.
+    /// </summary>
+    private void SetVersion(int version)
+    {
+        Item.SnmpVersion = (PrinterSnmpVersion)version;
+
+        if (Item.SnmpVersion is PrinterSnmpVersion.V1 or PrinterSnmpVersion.V2c)
+        {
+            ClearV3();
+        }
+        else if (Item.SnmpVersion == PrinterSnmpVersion.V3)
+        {
+            Item.SnmpCommunity = null;
+        }
+        else
+        {
+            Item.SnmpCommunity = null;
+            ClearV3();
+        }
+    }
+
+    private void SetAuthProtocol(int protocol)
+    {
+        Item.SnmpAuthProtocol = (PrinterSnmpAuthProtocol)protocol;
+
+        if (Item.SnmpAuthProtocol == PrinterSnmpAuthProtocol.None)
+        {
+            Item.SnmpAuthPassphrase = null;
+            SetPrivProtocol(0);
+        }
+    }
+
+    private void SetPrivProtocol(int protocol)
+    {
+        Item.SnmpPrivProtocol = (PrinterSnmpPrivProtocol)protocol;
+
+        if (Item.SnmpPrivProtocol == PrinterSnmpPrivProtocol.None)
+        {
+            Item.SnmpPrivPassphrase = null;
+        }
+    }
+
+    private void ClearV3()
+    {
+        Item.SnmpUsername = null;
+        Item.SnmpAuthProtocol = PrinterSnmpAuthProtocol.None;
+        Item.SnmpAuthPassphrase = null;
+        Item.SnmpPrivProtocol = PrinterSnmpPrivProtocol.None;
+        Item.SnmpPrivPassphrase = null;
+    }
+
     [Parameter, EditorRequired]
     public Printer Item { get; set; } = null!;
 
