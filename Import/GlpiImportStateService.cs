@@ -220,7 +220,7 @@ public sealed class GlpiImportStateService
             }
             catch (Exception ex)
             {
-                AnalysisError = ex.Message;
+                AnalysisError = Describe(ex);
             }
         }
         finally
@@ -397,7 +397,7 @@ public sealed class GlpiImportStateService
                 }
                 catch (Exception ex)
                 {
-                    LastError = ex.Message;
+                    LastError = Describe(ex);
                     LastResult = null;
                 }
             }
@@ -410,7 +410,7 @@ public sealed class GlpiImportStateService
                 }
                 catch (Exception ex)
                 {
-                    LastAdminError = ex.Message;
+                    LastAdminError = Describe(ex);
                     LastAdminResult = null;
                 }
             }
@@ -436,7 +436,7 @@ public sealed class GlpiImportStateService
                 }
                 catch (Exception ex)
                 {
-                    LastPluginError = ex.Message;
+                    LastPluginError = Describe(ex);
                     LastPluginResult = null;
                 }
             }
@@ -452,6 +452,29 @@ public sealed class GlpiImportStateService
             _gate.Release();
             Changed?.Invoke();
         }
+    }
+
+    /// <summary>
+    /// Message complet d'une exception, ses causes internes comprises.
+    ///
+    /// Sans elles, une erreur d'enregistrement se réduit à « An error occurred while saving the
+    /// entity changes. See the inner exception for details. » — une phrase qui renvoie
+    /// l'administrateur vers une exception qu'il n'a aucun moyen de consulter. Ce sont les niveaux
+    /// suivants qui nomment la table, la contrainte et la colonne en cause.
+    /// </summary>
+    private static string Describe(Exception exception)
+    {
+        List<string> messages = [];
+
+        for (Exception? current = exception; current is not null; current = current.InnerException)
+        {
+            if (!messages.Contains(current.Message, StringComparer.Ordinal))
+            {
+                messages.Add(current.Message);
+            }
+        }
+
+        return string.Join(" — ", messages);
     }
 
     private string BuildConnectionString() => new MySqlConnectionStringBuilder
