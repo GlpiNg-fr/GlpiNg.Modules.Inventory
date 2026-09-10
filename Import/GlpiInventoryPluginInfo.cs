@@ -1,4 +1,4 @@
-namespace GlpiNg.Modules.Inventory.Import;
+﻿namespace GlpiNg.Modules.Inventory.Import;
 
 /// <summary>
 /// Ce qui a été trouvé du plugin d'inventaire de la base GLPI source — GLPI Inventory
@@ -43,6 +43,21 @@ public class GlpiInventoryPluginInfo
     /// zéro et il n'y a rien à reprendre.
     /// </summary>
     public bool IsRegisteredWithoutTables => IsPresent && TableCount == 0;
+
+    /// <summary>
+    /// Racine HTTP de l'installation GLPI, lue dans <c>glpi_configs</c> (clé <c>url_base</c>) : GLPI
+    /// la connaît, puisqu'elle sert à construire les liens de ses propres courriels. Elle évite de
+    /// demander à l'administrateur une adresse que la base contient déjà.
+    /// </summary>
+    public string? UrlBase { get; set; }
+
+    /// <summary>
+    /// Serveurs de miroir déclarés dans le plugin (<c>deploymirrors</c>). Ce sont les adresses
+    /// depuis lesquelles les agents de cette installation téléchargent réellement les fichiers de
+    /// paquets : plus fiables qu'une adresse reconstruite, puisqu'elles fonctionnent déjà chez le
+    /// client.
+    /// </summary>
+    public List<string> MirrorUrls { get; set; } = [];
 
     // Comptes des seules données qui ont un équivalent dans GlpiNg. Chacun retombe à zéro si la
     // table correspondante n'existe pas sur cette version du plugin — les noms ont bougé entre

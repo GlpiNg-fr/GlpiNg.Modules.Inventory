@@ -428,9 +428,26 @@
                                        @bind="State.GlpiBaseUrl" disabled="@State.IsRunning" />
                             </div>
                             <p class="hint">
+                                @if (plugin.UrlBase is { Length: > 0 })
+                                {
+                                    @* Dire d'où vient la valeur : un champ pré-rempli sans explication laisse
+                                       douter de ce qu'il contient. *@
+                                    <text>Pré-remplie depuis la base source (<code>glpi_configs.url_base</code>), modifiable. </text>
+                                }
                                 Essayée en repli, fichier par fichier, quand le répertoire ne rend rien. Chaque contenu
                                 récupéré est vérifié par son empreinte avant d'être enregistré.
                             </p>
+
+                            @if (plugin.MirrorUrls.Count > 0)
+                            {
+                                <p class="hint">
+                                    <i class="ti ti-server me-1"></i>
+                                    @plugin.MirrorUrls.Count serveur(s) de miroir déclaré(s) dans le plugin, essayé(s)
+                                    avant l'URL ci-dessus : @string.Join(", ", plugin.MirrorUrls.Take(3))@(plugin.MirrorUrls.Count > 3 ? ", …" : "").
+                                    Ce sont les adresses depuis lesquelles les agents de cette installation
+                                    téléchargent déjà.
+                                </p>
+                            }
                         }
 
                         <div class="glpi-config-divider">

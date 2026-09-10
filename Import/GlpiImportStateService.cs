@@ -191,6 +191,14 @@ public sealed class GlpiImportStateService
                 AdminSelection.ImportUsers = adminAnalysis.UsersCount > 0;
                 AdminSelection.ImportGeneralConfig = adminAnalysis.GeneralConfigAvailable;
 
+                // L'adresse de téléchargement des fichiers de paquets vient de la base, pas de
+                // l'administrateur : GLPI y range sa propre racine HTTP, et le plugin ses miroirs.
+                // Le champ reste modifiable — on ne remplace pas une saisie existante.
+                if (string.IsNullOrWhiteSpace(GlpiBaseUrl))
+                {
+                    GlpiBaseUrl = analysis.InventoryPlugin.UrlBase ?? string.Empty;
+                }
+
                 // Volontairement décochées même quand le plugin en contient : voir PluginSelection.
                 PluginSelection.ImportIpRanges = false;
                 PluginSelection.ImportSnmpCredentials = false;
@@ -398,6 +406,7 @@ public sealed class GlpiImportStateService
                     PluginSelection.DeployFilesUserName = string.IsNullOrWhiteSpace(DeployFilesUserName) ? null : DeployFilesUserName.Trim();
                     PluginSelection.DeployFilesPassword = string.IsNullOrEmpty(DeployFilesPassword) ? null : DeployFilesPassword;
                     PluginSelection.GlpiBaseUrl = string.IsNullOrWhiteSpace(GlpiBaseUrl) ? null : GlpiBaseUrl.Trim();
+                    PluginSelection.DeployMirrorUrls = Analysis?.InventoryPlugin.MirrorUrls ?? [];
 
                     LastPluginResult = await pluginImportService.RunAsync(connectionString, tablePrefix, PluginSelection, progress);
                 }

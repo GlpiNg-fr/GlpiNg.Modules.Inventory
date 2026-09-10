@@ -127,12 +127,70 @@ public class GlpiMySqlImportService(DbContext db, IOptions<GlpiImportOptions> op
             info.SnmpCredentialsCount = await TryCountAsync(connection, $"SELECT COUNT(*) FROM `{prefix}configsecurities`", cancellationToken);
             info.UnmanagedDevicesCount = await TryCountAsync(connection, $"SELECT COUNT(*) FROM `{prefix}unmanageds`", cancellationToken);
 
+            // D'où télécharger les fichiers de paquets. Deux pistes, la base les contenant toutes
+            // les deux : les miroirs déclarés par le plugin — ce que ses agents utilisent
+            // réellement — et, à défaut, la racine de l'installation.
+            info.MirrorUrls = await ReadMirrorUrlsAsync(connection, prefix, cancellationToken);
+            info.UrlBase = await ReadUrlBaseAsync(connection, cancellationToken);
+
             // Premier trouvé : les deux plugins ne cohabitent pas sur une même instance GLPI, et
             // glpiinventory est testé en premier comme étant le successeur.
             break;
         }
 
         return info;
+    }
+
+    /// <summary>
+    /// URL des serveurs de miroir du plugin, dans l'ordre de la table. Table absente ou colonne
+    /// nommée autrement selon la version : on rend une liste vide plutôt que d'échouer, la racine
+    /// de l'installation restant disponible.
+    /// </summary>
+    private static async Task<List<string>> ReadMirrorUrlsAsync(
+        MySqlConnection connection, string prefix, CancellationToken cancellationToken)
+    {
+        List<string> urls = [];
+
+        try
+        {
+            await using MySqlCommand command = new($"SELECT url FROM `{prefix}deploymirrors`", connection);
+            await using MySqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
+
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                if (!reader.IsDBNull(0) && reader.GetString(0).Trim() is { Length: > 0 } url)
+                {
+                    urls.Add(url);
+                }
+            }
+        }
+        catch (MySqlException)
+        {
+            // Pas de miroirs déclarés, ou table d'une autre forme.
+        }
+
+        return urls;
+    }
+
+    /// <summary>
+    /// Racine HTTP de l'installation, telle que GLPI se la connaît (<c>glpi_configs</c>,
+    /// <c>url_base</c>). C'est l'adresse qu'il place dans ses propres courriels : s'il y en a une
+    /// qui fonctionne, c'est celle-là.
+    /// </summary>
+    private static async Task<string?> ReadUrlBaseAsync(MySqlConnection connection, CancellationToken cancellationToken)
+    {
+        const string sql = "SELECT value FROM glpi_configs WHERE context = 'core' AND name = 'url_base' LIMIT 1";
+
+        try
+        {
+            await using MySqlCommand command = new(sql, connection);
+            object? value = await command.ExecuteScalarAsync(cancellationToken);
+            return value?.ToString()?.Trim() is { Length: > 0 } url ? url : null;
+        }
+        catch (MySqlException)
+        {
+            return null;
+        }
     }
 
     /// <summary>
