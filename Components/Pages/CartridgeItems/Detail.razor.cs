@@ -1,4 +1,4 @@
-using GlpiNg.Modules.Inventory.Models;
+﻿using GlpiNg.Modules.Inventory.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -9,7 +9,7 @@ public partial class Detail : ComponentBase, IAsyncDisposable
 {
     private sealed record Snapshot(
         string Name, string? Type, string? Manufacturer, string? Reference, int? LocationId,
-        string? TechnicianInCharge, int AlertThreshold, string? Comment);
+        string? TechnicianInCharge, int AlertThreshold, string? SnmpLevelOid, string? Comment);
 
     [Parameter]
     public int ItemId { get; set; }
@@ -81,7 +81,8 @@ public partial class Detail : ComponentBase, IAsyncDisposable
     private void SetTab(string key) => _activeTabKey = key;
 
     private static Snapshot ToSnapshot(CartridgeItem i) => new(
-        i.Name, i.Type, i.Manufacturer, i.Reference, i.LocationId, i.TechnicianInCharge, i.AlertThreshold, i.Comment);
+        i.Name, i.Type, i.Manufacturer, i.Reference, i.LocationId, i.TechnicianInCharge, i.AlertThreshold,
+        i.SnmpLevelOid, i.Comment);
 
     private string LocationLabel(int? locationId) => locationId is { } id ? _locationOptions.FirstOrDefault(l => l.Id == id)?.Name ?? "—" : "—";
 
@@ -97,6 +98,7 @@ public partial class Detail : ComponentBase, IAsyncDisposable
         if (before.LocationId != after.LocationId) yield return ("Lieu", LocationLabel(before.LocationId), LocationLabel(after.LocationId));
         if (before.TechnicianInCharge != after.TechnicianInCharge) yield return ("Technicien responsable", before.TechnicianInCharge, after.TechnicianInCharge);
         if (before.AlertThreshold != after.AlertThreshold) yield return ("Seuil d'alerte", before.AlertThreshold.ToString(), after.AlertThreshold.ToString());
+        if (before.SnmpLevelOid != after.SnmpLevelOid) yield return ("OID SNMP du niveau", before.SnmpLevelOid, after.SnmpLevelOid);
         if (before.Comment != after.Comment) yield return ("Commentaires", before.Comment, after.Comment);
     }
 

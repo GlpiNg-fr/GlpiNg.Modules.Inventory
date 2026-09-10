@@ -1,4 +1,4 @@
-using GlpiNg.Modules.Abstractions.Entities;
+﻿using GlpiNg.Modules.Abstractions.Entities;
 
 namespace GlpiNg.Modules.Inventory.Models;
 
@@ -32,6 +32,17 @@ public class CartridgeItem : IEntityScoped
 
     /// <summary>Seuil d'alerte ("Seuil d'alerte" dans GLPI) : nombre d'unités en stock en-dessous duquel un réapprovisionnement est signalé (voir Index.razor, colonne "Stock").</summary>
     public int AlertThreshold { get; set; } = 10;
+
+    /// <summary>
+    /// OID SNMP auquel une imprimante expose le niveau restant de cette cartouche, pour que le
+    /// serveur puisse l'interroger plutôt que d'attendre une saisie.
+    ///
+    /// La norme range ces niveaux sous <c>prtMarkerSuppliesLevel</c>
+    /// (<c>1.3.6.1.2.1.43.11.1.1.9.1.<i>n</i></c>), où <i>n</i> est le rang du consommable dans
+    /// l'imprimante : c'est ce rang qui change d'un modèle à l'autre, d'où un OID par référence de
+    /// cartouche plutôt qu'un seul pour tout le parc. Vide, le niveau n'est pas relevé.
+    /// </summary>
+    public string? SnmpLevelOid { get; set; }
 
     public string? Comment { get; set; }
 
