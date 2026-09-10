@@ -64,6 +64,10 @@ public class Cartridge
     public int Id { get; set; }
     public int CartridgeItemId { get; set; }
 
+    /// <summary>Référence dont cette unité est un exemplaire. Vue depuis l'imprimante, c'est elle
+    /// qui nomme la cartouche : l'unité n'a qu'un numéro.</summary>
+    public CartridgeItem? CartridgeItem { get; set; }
+
     /// <summary>Imprimante dans laquelle cette cartouche est installée, une fois mise en service (voir DateUse).</summary>
     public int? PrinterId { get; set; }
     public Printer? Printer { get; set; }

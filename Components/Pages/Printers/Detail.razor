@@ -1,4 +1,4 @@
-@page "/parc/printers/{ItemId:int}"
+﻿@page "/parc/printers/{ItemId:int}"
 @using GlpiNg.Modules.Inventory.Models
 @rendermode InteractiveServer
 
@@ -38,6 +38,11 @@ else
                 <i class="ti ti-printer"></i>
                 <span>Imprimante</span>
             </button>
+            <button type="button" class="glpi-fiche-tab-item @(_activeTabKey == "cartridges" ? "active" : "")" @onclick='() => SetTab("cartridges")'>
+                <i class="ti ti-droplet"></i>
+                <span>Cartouches</span>
+                <span class="glpi-fiche-tab-count">@InstalledCartridges.Count()</span>
+            </button>
             <button type="button" class="glpi-fiche-tab-item @(_activeTabKey == "history" ? "active" : "")" @onclick='() => SetTab("history")'>
                 <i class="ti ti-history"></i>
                 <span>Historique</span>
@@ -61,6 +66,133 @@ else
                             </button>
                         </div>
                     </EditForm>
+                    break;
+
+                case "cartridges":
+                    @* Les deux moitiés de la question : ce qui est dans l'imprimante en ce moment,
+                       et ce qui y est passé. La seconde est ce qui permet de voir la consommation
+                       d'une imprimante sans avoir à ouvrir chaque référence de cartouche. *@
+                    <div class="glpi-fiche-block">
+                        <div class="glpi-fiche-block-title"><i class="ti ti-droplet"></i>Cartouches en service (@InstalledCartridges.Count())</div>
+
+                        @if (_cartridgeError is { } cartridgeError)
+                        {
+                            <div class="alert alert-danger py-2 px-3 mb-2" role="alert">
+                                <i class="ti ti-alert-circle me-1"></i>@cartridgeError
+                            </div>
+                        }
+
+                        @if (!InstalledCartridges.Any())
+                        {
+                            <div class="glpi-config-placeholder">
+                                <i class="ti ti-droplet-off"></i>
+                                <p class="mb-0">Aucune cartouche installée sur cette imprimante.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-vcenter card-table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Référence</th>
+                                            <th>Type</th>
+                                            <th>Unité</th>
+                                            <th>Installée le</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (Cartridge cartridge in InstalledCartridges)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <a href="/parc/cartridge-items/@cartridge.CartridgeItemId">@(cartridge.CartridgeItem?.Name ?? "—")</a>
+                                                </td>
+                                                <td>@(cartridge.CartridgeItem?.Type ?? "—")</td>
+                                                <td>#@cartridge.Id</td>
+                                                <td>@(cartridge.DateUse is { } used ? used.ToLocalTime().ToString("dd/MM/yyyy") : "—")</td>
+                                                <td class="text-end">
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => RemoveCartridgeAsync(cartridge)">
+                                                        Retirer
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+
+                        <div class="glpi-fiche-add-row">
+                            <div class="d-flex gap-2 align-items-center flex-wrap">
+                                <select class="form-select" style="max-width: 360px;" value="@_itemToInstall"
+                                        @onchange="@((ChangeEventArgs e) => _itemToInstall = int.Parse((string)e.Value!))">
+                                    <option value="0">-- Référence à installer --</option>
+                                    @foreach (CartridgeItem item in _installableItems)
+                                    {
+                                        <option value="@item.Id">@item.Name (@AvailableStock(item) en stock)</option>
+                                    }
+                                </select>
+                                <button type="button" class="btn btn-primary" disabled="@(_itemToInstall == 0)" @onclick="InstallCartridgeAsync">
+                                    <i class="ti ti-plus me-1"></i>Installer
+                                </button>
+                            </div>
+                            @if (_installableItems.Count == 0)
+                            {
+                                <p class="hint mt-2 mb-0">
+                                    Aucune référence n'a d'unité en stock. Réceptionnez-en une depuis
+                                    <a href="/parc/cartridge-items">Cartouches</a> avant de pouvoir l'installer.
+                                </p>
+                            }
+                            else
+                            {
+                                <p class="hint mt-2 mb-0">
+                                    L'unité la plus anciennement reçue est installée en premier : un consommable
+                                    se périme, et le fond de stock ne doit pas vieillir pendant qu'on entame les
+                                    arrivages.
+                                </p>
+                            }
+                        </div>
+                    </div>
+
+                    @if (PastCartridges.Any())
+                    {
+                        <div class="glpi-fiche-block">
+                            <div class="glpi-fiche-block-title"><i class="ti ti-history"></i>Cartouches retirées (@PastCartridges.Count())</div>
+                            <div class="table-responsive">
+                                <table class="table table-vcenter card-table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Référence</th>
+                                            <th>Unité</th>
+                                            <th>Installée le</th>
+                                            <th>Retirée le</th>
+                                            <th>Durée</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (Cartridge cartridge in PastCartridges.OrderByDescending(c => c.DateOut))
+                                        {
+                                            <tr class="text-secondary">
+                                                <td>
+                                                    <a href="/parc/cartridge-items/@cartridge.CartridgeItemId">@(cartridge.CartridgeItem?.Name ?? "—")</a>
+                                                </td>
+                                                <td>#@cartridge.Id</td>
+                                                <td>@(cartridge.DateUse is { } from ? from.ToLocalTime().ToString("dd/MM/yyyy") : "—")</td>
+                                                <td>@(cartridge.DateOut is { } to ? to.ToLocalTime().ToString("dd/MM/yyyy") : "—")</td>
+                                                <td>
+                                                    @(cartridge is { DateUse: { } start, DateOut: { } end }
+                                                        ? $"{(int)(end - start).TotalDays} jour(s)"
+                                                        : "—")
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    }
                     break;
 
                 case "history":

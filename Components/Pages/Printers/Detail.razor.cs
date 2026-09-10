@@ -1,4 +1,4 @@
-using GlpiNg.Modules.Inventory.Models;
+﻿using GlpiNg.Modules.Inventory.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -37,6 +37,18 @@ public partial class Detail : ComponentBase, IAsyncDisposable
     private int? _previousId;
     private int? _nextId;
     private int _loadedItemId;
+
+    /// <summary>Exemplaires de cartouche passés par cette imprimante, en service comme retirés.</summary>
+    private List<Cartridge> _cartridges = [];
+
+    /// <summary>Références ayant au moins une unité en stock : les seules installables.</summary>
+    private List<CartridgeItem> _installableItems = [];
+
+    private int _itemToInstall;
+    private string? _cartridgeError;
+
+    private IEnumerable<Cartridge> InstalledCartridges => _cartridges.Where(c => c.DateOut is null);
+    private IEnumerable<Cartridge> PastCartridges => _cartridges.Where(c => c.DateOut is not null);
 
     protected override async Task OnParametersSetAsync()
     {
@@ -80,6 +92,8 @@ public partial class Detail : ComponentBase, IAsyncDisposable
         _locationOptions = await _db.Set<DropdownItem>().AsNoTracking().Where(i => i.Type == DropdownType.Location).OrderBy(i => i.Name).ToListAsync();
         _beforeEdit = ToSnapshot(_item);
 
+        await LoadCartridgesAsync();
+
         _total = await _db.Set<Printer>().AsNoTracking().CountAsync();
         _position = await _db.Set<Printer>().AsNoTracking().CountAsync(item => item.Id <= ItemId);
         _previousId = await _db.Set<Printer>().AsNoTracking().Where(item => item.Id < ItemId).OrderByDescending(item => item.Id).Select(item => (int?)item.Id).FirstOrDefaultAsync();
@@ -87,6 +101,127 @@ public partial class Detail : ComponentBase, IAsyncDisposable
     }
 
     private void SetTab(string key) => _activeTabKey = key;
+
+    private async Task LoadCartridgesAsync()
+    {
+        if (_db is null)
+        {
+            return;
+        }
+
+        _cartridges = await _db.Set<Cartridge>()
+            .Include(cartridge => cartridge.CartridgeItem)
+            .Where(cartridge => cartridge.PrinterId == ItemId)
+            .OrderByDescending(cartridge => cartridge.DateUse)
+            .ToListAsync();
+
+        // Une référence n'est proposée que si elle a une unité disponible : proposer d'installer
+        // ce qui n'est pas en stock reviendrait à créer l'unité au passage, ce que la gestion des
+        // consommables ne doit pas faire dans le dos du magasinier.
+        _installableItems = await _db.Set<CartridgeItem>()
+            .Where(item => item.Cartridges.Any(unit => unit.DateUse == null && unit.DateOut == null))
+            .OrderBy(item => item.Name)
+            .ToListAsync();
+    }
+
+    private int AvailableStock(CartridgeItem item) =>
+        item.Cartridges.Count(unit => unit.DateUse is null && unit.DateOut is null);
+
+    /// <summary>
+    /// Installe une unité en stock de la référence choisie dans cette imprimante.
+    ///
+    /// L'unité la plus anciennement reçue part la première : un consommable se périme, et laisser
+    /// vieillir le fond de stock pendant qu'on entame les arrivages est précisément ce qu'un suivi
+    /// d'exemplaires doit éviter.
+    ///
+    /// La trace est écrite des deux côtés — historique de l'imprimante et de la référence — parce
+    /// que les deux questions se posent : « qu'a-t-on mis dans cette imprimante » et « où sont
+    /// parties les unités de cette référence ».
+    /// </summary>
+    private async Task InstallCartridgeAsync()
+    {
+        _cartridgeError = null;
+
+        if (_db is null || _item is null || _itemToInstall == 0)
+        {
+            return;
+        }
+
+        Cartridge? available = await _db.Set<Cartridge>()
+            .Include(cartridge => cartridge.CartridgeItem)
+            .Where(cartridge => cartridge.CartridgeItemId == _itemToInstall
+                                && cartridge.DateUse == null
+                                && cartridge.DateOut == null)
+            .OrderBy(cartridge => cartridge.DateIn)
+            .FirstOrDefaultAsync();
+
+        if (available is null)
+        {
+            _cartridgeError = "Plus aucune unité de cette référence n'est en stock.";
+            await LoadCartridgesAsync();
+            return;
+        }
+
+        available.PrinterId = _item.Id;
+        available.DateUse = DateTime.UtcNow;
+
+        string reference = available.CartridgeItem?.Name ?? $"#{available.CartridgeItemId}";
+
+        _db.Set<PrinterHistoryEntry>().Add(new PrinterHistoryEntry
+        {
+            PrinterId = _item.Id,
+            User = _currentUserName,
+            Field = "Cartouche",
+            Description = $"Cartouche « {reference} » (unité #{available.Id}) installée",
+        });
+
+        _db.Set<CartridgeItemHistoryEntry>().Add(new CartridgeItemHistoryEntry
+        {
+            CartridgeItemId = available.CartridgeItemId,
+            User = _currentUserName,
+            Field = "Stock",
+            Description = $"Unité #{available.Id} mise en service sur {_item.Name}",
+        });
+
+        await _db.SaveChangesAsync();
+
+        _itemToInstall = 0;
+        await LoadCartridgesAsync();
+        await _db.Entry(_item).Collection(printer => printer.HistoryEntries).LoadAsync();
+    }
+
+    private async Task RemoveCartridgeAsync(Cartridge cartridge)
+    {
+        if (_db is null || _item is null)
+        {
+            return;
+        }
+
+        cartridge.DateOut = DateTime.UtcNow;
+
+        string reference = cartridge.CartridgeItem?.Name ?? $"#{cartridge.CartridgeItemId}";
+
+        _db.Set<PrinterHistoryEntry>().Add(new PrinterHistoryEntry
+        {
+            PrinterId = _item.Id,
+            User = _currentUserName,
+            Field = "Cartouche",
+            Description = $"Cartouche « {reference} » (unité #{cartridge.Id}) retirée",
+        });
+
+        _db.Set<CartridgeItemHistoryEntry>().Add(new CartridgeItemHistoryEntry
+        {
+            CartridgeItemId = cartridge.CartridgeItemId,
+            User = _currentUserName,
+            Field = "Stock",
+            Description = $"Unité #{cartridge.Id} retirée de {_item.Name}",
+        });
+
+        await _db.SaveChangesAsync();
+
+        await LoadCartridgesAsync();
+        await _db.Entry(_item).Collection(printer => printer.HistoryEntries).LoadAsync();
+    }
 
     private static Snapshot ToSnapshot(Printer i) => new(
         i.Name, i.StatusId, i.LocationId, i.Type, i.Manufacturer, i.Model,
