@@ -867,6 +867,11 @@ else
                     </div>
                     break;
 
+                case "links":
+                    <ExternalLinksPanel ItemType="@ExternalLinkTagSource.ComputerItemType"
+                                        Tags="@ExternalLinkTagSource.For(_computer)" />
+                    break;
+
                 case "collectinfo":
                     @if (_collectInfo is null)
                     {

@@ -994,9 +994,9 @@ public partial class Detail : ComponentBase, IDisposable
     // Reprend la liste et l'ordre des onglets de la fiche "Ordinateur" de GLPI. Seuls
     // "computer", "os", "components", "batteries", "volumes", "software", "connections",
     // "networkports", "connectors", "antivirus", "locks", "domains", "importinfo", "history",
-    // "tasks", "collectinfo" et "deploy" ont un contenu réel pour l'instant (voir le @switch de
-    // Detail.razor) ; les autres affichent un placeholder en attendant d'être alimentés au fur et
-    // à mesure des besoins.
+    // "tasks", "collectinfo", "links" et "deploy" ont un contenu réel pour l'instant (voir le
+    // @switch de Detail.razor) ; les autres affichent un placeholder en attendant d'être
+    // alimentés au fur et à mesure des besoins.
     private static List<FicheTab> BuildTabs(Computer computer, ComputerDeploymentTasksInfo? deploymentTasksInfo, int deploymentAssignmentsCount, int lockedFieldsCount, int? collectEntriesCount) =>
     [
         new("computer", "ti-device-desktop", "Ordinateur", null),
@@ -1017,6 +1017,7 @@ public partial class Detail : ComponentBase, IDisposable
         new("tasks", "ti-checklist", "Tâches / groupes",
             deploymentTasksInfo is null ? null : deploymentTasksInfo.Tasks.Count + deploymentTasksInfo.Groups.Count),
         new("collectinfo", "ti-cloud-upload", "Informations de collecte", collectEntriesCount),
+        new("links", "ti-external-link", "Liens externes", null),
         new("deploy", "ti-package", "Déploiement de package", deploymentAssignmentsCount == 0 ? null : deploymentAssignmentsCount),
         new("all", "ti-list", "Tous", null),
     ];

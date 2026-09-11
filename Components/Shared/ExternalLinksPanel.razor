@@ -1,0 +1,91 @@
+@using GlpiNg.Modules.Abstractions.ExternalLinks
+
+@* Liens externes applicables à cet objet, balises déjà remplacées (voir IExternalLinkProvider).
+   Le panneau se charge à l'affichage de l'onglet, pas à l'ouverture de la fiche : c'est une
+   requête de moins sur un onglet que la plupart des fiches n'ouvriront jamais. *@
+
+@if (_links is null)
+{
+    <div class="text-secondary py-3">
+        <i class="ti ti-loader-2 glpi-spin me-1"></i>Chargement…
+    </div>
+}
+else if (_links.Count == 0)
+{
+    <div class="glpi-config-placeholder">
+        <i class="ti ti-external-link"></i>
+        <p class="mb-1">Aucun lien externe pour ce type d'objet.</p>
+        <p class="mb-0 text-secondary" style="max-width: 46rem;">
+            Les liens se définissent dans
+            <a href="/config/external-links">Configuration &gt; Liens externes</a> : une URL portant
+            des balises (<code>[NAME]</code>, <code>[IP]</code>, ...) remplacées par les valeurs de
+            la fiche, pour pointer un outil tiers sur le bon élément.
+        </p>
+    </div>
+}
+else
+{
+    <div class="glpi-fiche-block">
+        <div class="glpi-fiche-block-title"><i class="ti ti-external-link"></i>Liens externes (@_links.Count)</div>
+        <div class="table-responsive">
+            <table class="table table-vcenter card-table mb-0">
+                <thead>
+                    <tr>
+                        <th style="width: 18rem;">Nom</th>
+                        <th>Adresse</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (ResolvedExternalLink link in _links)
+                    {
+                        <tr>
+                            <td>
+                                <a href="@link.Url" target="@(link.OpenInNewWindow ? "_blank" : null)"
+                                   rel="@(link.OpenInNewWindow ? "noopener noreferrer" : null)" class="fw-semibold">
+                                    <i class="ti ti-external-link me-1"></i>@link.Name
+                                </a>
+                            </td>
+                            @* L'URL complète est montrée : c'est elle qui dit si une balise est
+                               restée vide, ce qui ne se voit pas en cliquant. *@
+                            <td class="text-secondary" style="word-break: break-all;">@link.Url</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@code {
+    /// <summary>Type d'objet au sens GLPI — voir les constantes de ExternalLinkTagSource.</summary>
+    [Parameter, EditorRequired]
+    public string ItemType { get; set; } = null!;
+
+    /// <summary>Valeurs des balises pour cet objet, construites par ExternalLinkTagSource.For(...).</summary>
+    [Parameter, EditorRequired]
+    public Dictionary<string, string?> Tags { get; set; } = null!;
+
+    // Optionnel : c'est l'hôte qui l'enregistre (voir Program.cs), pour ne pas faire dépendre ce
+    // module du sien — même montage qu'IUserPreferences.
+    [Inject]
+    private IExternalLinkProvider? LinkProvider { get; set; }
+
+    private IReadOnlyList<ResolvedExternalLink>? _links;
+    private string? _loadedFor;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Rechargé quand la fiche change d'objet (navigation précédent/suivant), pas à chaque
+        // rendu : sinon un simple survol relancerait la requête.
+        string key = $"{ItemType}#{Tags.GetValueOrDefault(ExternalLinkTags.Id)}";
+        if (_loadedFor == key)
+        {
+            return;
+        }
+
+        _loadedFor = key;
+        _links = LinkProvider is null
+            ? []
+            : await LinkProvider.GetForItemAsync(ItemType, Tags);
+    }
+}

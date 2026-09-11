@@ -1,5 +1,6 @@
 ﻿@page "/parc/peripherals/{PeripheralId:int}"
 @using GlpiNg.Modules.Inventory.Models
+@using GlpiNg.Modules.Inventory.Services
 @rendermode InteractiveServer
 
 <PageTitle>@(_peripheral?.Name ?? "Périphérique") — GlpiNg</PageTitle>
@@ -48,6 +49,10 @@ else
                     }
                 </button>
             }
+            <button type="button" class="glpi-fiche-tab-item @(_activeTabKey == "links" ? "active" : "")" @onclick='() => SetTab("links")'>
+                <i class="ti ti-external-link"></i>
+                <span>Liens externes</span>
+            </button>
         </aside>
 
         <div class="glpi-fiche-panel">
@@ -175,6 +180,11 @@ else
                         <i class="ti @current.Icon"></i>
                         <p class="mb-0">L'onglet « @current.Label » n'est pas encore disponible.</p>
                     </div>
+                    break;
+
+                case "links":
+                    <ExternalLinksPanel ItemType="@ExternalLinkTagSource.PeripheralItemType"
+                                        Tags="@ExternalLinkTagSource.For(_peripheral)" />
                     break;
             }
         </div>

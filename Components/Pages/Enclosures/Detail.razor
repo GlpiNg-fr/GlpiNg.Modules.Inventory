@@ -1,5 +1,6 @@
 ﻿@page "/parc/enclosures/{ItemId:int}"
 @using GlpiNg.Modules.Inventory.Models
+@using GlpiNg.Modules.Inventory.Services
 @rendermode InteractiveServer
 
 <PageTitle>@(_item?.Name ?? "Châssis") — GlpiNg</PageTitle>
@@ -42,6 +43,10 @@ else
                 <i class="ti ti-history"></i>
                 <span>Historique</span>
                 <span class="glpi-fiche-tab-count">@_item.HistoryEntries.Count</span>
+            </button>
+            <button type="button" class="glpi-fiche-tab-item @(_activeTabKey == "links" ? "active" : "")" @onclick='() => SetTab("links")'>
+                <i class="ti ti-external-link"></i>
+                <span>Liens externes</span>
             </button>
         </aside>
 
@@ -102,6 +107,11 @@ else
                             </div>
                         }
                     </div>
+                    break;
+
+                case "links":
+                    <ExternalLinksPanel ItemType="@ExternalLinkTagSource.EnclosureItemType"
+                                        Tags="@ExternalLinkTagSource.For(_item)" />
                     break;
             }
         </div>
