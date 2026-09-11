@@ -1,4 +1,4 @@
-namespace GlpiNg.Modules.Inventory.Models;
+﻿namespace GlpiNg.Modules.Inventory.Models;
 
 /// <summary>
 /// Libellés, slugs d'URL et icônes de DictionaryRuleType, centralisés pour rester cohérents
@@ -72,4 +72,16 @@ public static class DictionaryRuleTypeCatalog
 
     /// <summary>Seul DictionaryRuleType.Software expose un critère sur le fabricant (DictionaryCriterionField.Publisher) en plus du nom.</summary>
     public static bool SupportsPublisherCriterion(DictionaryRuleType type) => type == DictionaryRuleType.Software;
+
+    /// <summary>
+    /// Champs sur lesquels un critère peut porter, pour ce type de dictionnaire.
+    ///
+    /// Toujours au moins le nom. C'est cette liste qui alimente le sélecteur de champ : présenter
+    /// une liste d'un seul élément vaut mieux qu'un champ désactivé, qui se lit comme une panne
+    /// alors qu'il n'y a simplement rien d'autre à choisir.
+    /// </summary>
+    public static IReadOnlyList<DictionaryCriterionField> CriterionFields(DictionaryRuleType type) =>
+        SupportsPublisherCriterion(type)
+            ? [DictionaryCriterionField.Name, DictionaryCriterionField.Publisher]
+            : [DictionaryCriterionField.Name];
 }

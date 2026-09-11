@@ -1,4 +1,4 @@
-using GlpiNg.Modules.Inventory.Models;
+﻿using GlpiNg.Modules.Inventory.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
 
@@ -86,6 +86,13 @@ public partial class DictionaryRuleDetail : ComponentBase, IAsyncDisposable
     {
         if (_db is null || _rule is null) return;
         if (!IsValuelessOperator(_newCriterion.Operator) && string.IsNullOrWhiteSpace(_newCriterion.Value)) return;
+
+        // Un champ que ce dictionnaire n'expose pas ne doit pas être enregistré : le moteur ne
+        // saurait pas l'évaluer, et la règle paraîtrait simplement ne jamais s'appliquer.
+        if (!DictionaryRuleTypeCatalog.CriterionFields(_type).Contains(_newCriterion.Field))
+        {
+            _newCriterion.Field = DictionaryCriterionField.Name;
+        }
 
         _newCriterion.DictionaryRuleId = _rule.Id;
         _rule.Criteria.Add(_newCriterion);

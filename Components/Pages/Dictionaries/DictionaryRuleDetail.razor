@@ -154,23 +154,18 @@ else
                             }
 
                             <div class="row g-2 align-items-end">
-                                @if (DictionaryRuleTypeCatalog.SupportsPublisherCriterion(_type))
-                                {
-                                    <div class="col-md-3">
-                                        <label class="form-label">Champ</label>
-                                        <select class="form-select" @bind="_newCriterion.Field">
-                                            <option value="@DictionaryCriterionField.Name">@CriterionFieldLabel(_type, DictionaryCriterionField.Name)</option>
-                                            <option value="@DictionaryCriterionField.Publisher">@CriterionFieldLabel(_type, DictionaryCriterionField.Publisher)</option>
-                                        </select>
-                                    </div>
-                                }
-                                else
-                                {
-                                    <div class="col-md-3">
-                                        <label class="form-label">Champ</label>
-                                        <input class="form-control" disabled value="@CriterionFieldLabel(_type, DictionaryCriterionField.Name)" />
-                                    </div>
-                                }
+                                @* Un seul sélecteur, quel que soit le dictionnaire : la liste des champs
+                                   dépend de son type, mais un champ désactivé se lit comme une panne alors
+                                   qu'il n'y a simplement rien d'autre à choisir. *@
+                                <div class="col-md-3">
+                                    <label class="form-label">Champ</label>
+                                    <select class="form-select" @bind="_newCriterion.Field">
+                                        @foreach (DictionaryCriterionField field in DictionaryRuleTypeCatalog.CriterionFields(_type))
+                                        {
+                                            <option value="@field">@CriterionFieldLabel(_type, field)</option>
+                                        }
+                                    </select>
+                                </div>
                                 <div class="col-md-3">
                                     <label class="form-label">Opérateur</label>
                                     <select class="form-select" @bind="_newCriterion.Operator">
