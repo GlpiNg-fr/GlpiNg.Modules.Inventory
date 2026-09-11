@@ -1,4 +1,4 @@
-namespace GlpiNg.Modules.Inventory.Models;
+﻿namespace GlpiNg.Modules.Inventory.Models;
 
 /// <summary>
 /// Regroupement d'un DropdownType : Intitulés (front/dropdown.php, valeurs de référence
@@ -55,6 +55,43 @@ public static class DropdownTypeCatalog
 
     /// <summary>Toutes les catégories (Intitulés + Composants) — utilisé uniquement par TryParseSlug, qui doit résoudre un slug quel que soit son groupe.</summary>
     private static readonly IReadOnlyList<DropdownType> All = [.. Labels, .. Components];
+
+    /// <summary>
+    /// Catégorie de catalogue correspondant à un type de composant remonté par l'inventaire.
+    ///
+    /// Les deux énumérations ne se recouvrent pas exactement : un modem n'a pas de catégorie à lui
+    /// côté GLPI et rejoint les composants génériques. Une catégorie sans équivalent rend
+    /// <c>null</c> — le composant existe alors sur la fiche du poste sans entrer au catalogue.
+    /// </summary>
+    public static DropdownType? ForComponent(ComponentType type) => type switch
+    {
+        ComponentType.Cpu => DropdownType.Processor,
+        ComponentType.Ram => DropdownType.Memory,
+        ComponentType.Disk => DropdownType.HardDrive,
+        ComponentType.NetworkCard => DropdownType.NetworkCard,
+        ComponentType.Gpu => DropdownType.GraphicCard,
+        ComponentType.Motherboard => DropdownType.Motherboard,
+        ComponentType.Controller => DropdownType.Controller,
+        ComponentType.SoundCard => DropdownType.SoundCard,
+        ComponentType.Modem => DropdownType.GenericDevice,
+        ComponentType.Firmware => DropdownType.Firmware,
+        _ => null,
+    };
+
+    /// <summary>Types de composants alimentant une catégorie de catalogue — l'inverse de
+    /// <see cref="ForComponent"/>, pour reconstruire une catégorie depuis le parc.</summary>
+    public static IReadOnlyList<ComponentType> ComponentTypesFor(DropdownType type) =>
+        [.. Enum.GetValues<ComponentType>().Where(candidate => ForComponent(candidate) == type)];
+
+    /// <summary>
+    /// Une désignation ne mérite le catalogue que si elle nomme quelque chose. Les valeurs de repli
+    /// posées par l'import quand l'agent n'a rien dit en sont écartées : les cataloguer créerait un
+    /// « modèle » nommé « inconnu » qu'aucun achat ne pourra jamais rapprocher.
+    /// </summary>
+    public static bool IsCatalogueableName(string? name) =>
+        !string.IsNullOrWhiteSpace(name)
+        && name.Trim().Length > 1
+        && !name.Contains("inconnu", StringComparison.OrdinalIgnoreCase);
 
     public static DropdownGroup Group(DropdownType type) =>
         Labels.Contains(type) ? DropdownGroup.Labels : DropdownGroup.Components;

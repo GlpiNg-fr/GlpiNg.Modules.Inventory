@@ -162,6 +162,70 @@ public partial class DropdownList : ComponentBase
         else _selectedIds.Remove(id);
     }
 
+    private string? _rebuildMessage;
+
+    /// <summary>
+    /// Reconstruit la catégorie courante à partir des composants déjà présents dans le parc.
+    ///
+    /// L'inventaire alimente le catalogue au fil de l'eau, mais seulement depuis qu'il sait le
+    /// faire : sur une base existante, les modèles remontés par les inventaires passés ne sont
+    /// nulle part. Ce rattrapage les retrouve, sans attendre que chaque poste repasse.
+    ///
+    /// Idempotent : il n'ajoute que les noms absents, et peut donc être relancé sans crainte.
+    /// </summary>
+    private async Task RebuildFromParcAsync()
+    {
+        _rebuildMessage = null;
+
+        await using DbContext db = await DbFactory.CreateDbContextAsync();
+
+        List<string> names = _type == DropdownType.Battery
+            ? await db.Set<ComputerBattery>().Select(battery => battery.Name).Distinct().ToListAsync()
+            : await CollectComponentNamesAsync(db);
+
+        HashSet<string> existing = new(
+            await db.Set<DropdownItem>().Where(item => item.Type == _type).Select(item => item.Name).ToListAsync(),
+            StringComparer.OrdinalIgnoreCase);
+
+        List<string> missing = [.. names
+            .Where(DropdownTypeCatalog.IsCatalogueableName)
+            .Select(name => name.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Where(name => !existing.Contains(name))
+            .OrderBy(name => name, StringComparer.CurrentCultureIgnoreCase)];
+
+        foreach (string name in missing)
+        {
+            db.Set<DropdownItem>().Add(new DropdownItem { Type = _type, Name = name });
+        }
+
+        await db.SaveChangesAsync();
+
+        _rebuildMessage = missing.Count == 0
+            ? "Aucun modèle à ajouter : le catalogue est déjà à jour pour cette catégorie."
+            : $"{missing.Count} modèle(s) ajouté(s) depuis le parc.";
+
+        await LoadAsync();
+    }
+
+    private async Task<List<string>> CollectComponentNamesAsync(DbContext db)
+    {
+        List<ComponentType> sources = [.. DropdownTypeCatalog.ComponentTypesFor(_type)];
+
+        return sources.Count == 0
+            ? []
+            : await db.Set<ComputerComponent>()
+                .Where(component => sources.Contains(component.Type))
+                .Select(component => component.Designation)
+                .Distinct()
+                .ToListAsync();
+    }
+
+    /// <summary>Vrai quand la catégorie courante peut être reconstruite : toutes n'ont pas de
+    /// source dans le parc (les boîtiers, capteurs et alimentations ne sont pas inventoriés).</summary>
+    private bool CanRebuildFromParc =>
+        _type == DropdownType.Battery || DropdownTypeCatalog.ComponentTypesFor(_type).Count > 0;
+
     private async Task DeleteSelectedAsync()
     {
         if (_selectedIds.Count == 0) return;
