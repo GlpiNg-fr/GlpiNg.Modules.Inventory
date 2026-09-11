@@ -31,6 +31,11 @@ public partial class Detail : ComponentBase, IDisposable
     private IComputerDeploymentTasksProvider? DeploymentTasksProvider { get; set; }
 
     // Optionnel pour la même raison que DeploymentTasksProvider ci-dessus — alimente l'onglet
+    // "Informations de collecte" (ce que les collectes registre/WMI/fichiers ont rapporté).
+    [Inject]
+    private IComputerCollectProvider? CollectProvider { get; set; }
+
+    // Optionnel pour la même raison que DeploymentTasksProvider ci-dessus — alimente l'onglet
     // "Déploiement de package" (assignation de paquets à l'agent du poste).
     [Inject]
     private IComputerDeploymentAssignmentService? DeploymentAssignmentService { get; set; }
@@ -146,6 +151,11 @@ public partial class Detail : ComponentBase, IDisposable
     private List<string> _userOptions = [];
 
     private ComputerDeploymentTasksInfo? _deploymentTasksInfo;
+    private ComputerCollectInfo? _collectInfo;
+
+    // Null quand le module Déploiement n'est pas là : l'onglet n'affiche alors pas « 0 », qui se
+    // lirait comme « rien collecté » alors que rien ne peut l'être.
+    private int? CollectEntriesCount => _collectInfo?.Groups.Sum(group => group.Entries.Count);
     private List<DeploymentPackageOption> _availablePackages = [];
     private List<ComputerDeploymentAssignment> _deploymentAssignments = [];
     private List<DeploymentPackageOption> _selectedPackagesToAssign = [];
@@ -224,8 +234,10 @@ public partial class Detail : ComponentBase, IDisposable
         _deploymentTasksInfo = DeploymentTasksProvider is null
             ? null
             : await DeploymentTasksProvider.GetForComputerAsync(ComputerId);
+
+        _collectInfo = CollectProvider is null ? null : await CollectProvider.GetForComputerAsync(ComputerId);
         await LoadDeploymentAssignmentsAsync();
-        _tabs = BuildTabs(_computer, _deploymentTasksInfo, _deploymentAssignments.Count, _locks.Count);
+        _tabs = BuildTabs(_computer, _deploymentTasksInfo, _deploymentAssignments.Count, _locks.Count, CollectEntriesCount);
 
         _agentStatusPollCts?.Cancel();
         _agentStatusPollCts?.Dispose();
@@ -534,8 +546,10 @@ public partial class Detail : ComponentBase, IDisposable
                 _deploymentTasksInfo = DeploymentTasksProvider is null
                     ? null
                     : await DeploymentTasksProvider.GetForComputerAsync(ComputerId);
+
+                _collectInfo = CollectProvider is null ? null : await CollectProvider.GetForComputerAsync(ComputerId);
                 await LoadDeploymentAssignmentsAsync();
-                _tabs = BuildTabs(_computer, _deploymentTasksInfo, _deploymentAssignments.Count, _locks.Count);
+                _tabs = BuildTabs(_computer, _deploymentTasksInfo, _deploymentAssignments.Count, _locks.Count, CollectEntriesCount);
             }
         }
         finally
@@ -702,7 +716,7 @@ public partial class Detail : ComponentBase, IDisposable
                 await InvokeAsync(async () =>
                 {
                     await LoadDeploymentAssignmentsAsync();
-                    _tabs = BuildTabs(_computer!, _deploymentTasksInfo, _deploymentAssignments.Count, _locks.Count);
+                    _tabs = BuildTabs(_computer!, _deploymentTasksInfo, _deploymentAssignments.Count, _locks.Count, CollectEntriesCount);
                     StateHasChanged();
                 });
 
@@ -769,7 +783,7 @@ public partial class Detail : ComponentBase, IDisposable
             {
                 _selectedPackagesToAssign = [];
                 await LoadDeploymentAssignmentsAsync();
-                _tabs = BuildTabs(_computer!, _deploymentTasksInfo, _deploymentAssignments.Count, _locks.Count);
+                _tabs = BuildTabs(_computer!, _deploymentTasksInfo, _deploymentAssignments.Count, _locks.Count, CollectEntriesCount);
 
                 _prepareInstallError = _wakeMode switch
                 {
@@ -858,7 +872,7 @@ public partial class Detail : ComponentBase, IDisposable
 
         await DeploymentAssignmentService.CancelAssignmentAsync(jobId);
         await LoadDeploymentAssignmentsAsync();
-        _tabs = BuildTabs(_computer!, _deploymentTasksInfo, _deploymentAssignments.Count, _locks.Count);
+        _tabs = BuildTabs(_computer!, _deploymentTasksInfo, _deploymentAssignments.Count, _locks.Count, CollectEntriesCount);
         StateHasChanged();
     }
 
@@ -887,7 +901,7 @@ public partial class Detail : ComponentBase, IDisposable
             }
 
             await LoadDeploymentAssignmentsAsync();
-            _tabs = BuildTabs(_computer!, _deploymentTasksInfo, _deploymentAssignments.Count, _locks.Count);
+            _tabs = BuildTabs(_computer!, _deploymentTasksInfo, _deploymentAssignments.Count, _locks.Count, CollectEntriesCount);
 
             _prepareInstallError = _wakeMode switch
             {
@@ -980,11 +994,10 @@ public partial class Detail : ComponentBase, IDisposable
     // Reprend la liste et l'ordre des onglets de la fiche "Ordinateur" de GLPI. Seuls
     // "computer", "os", "components", "batteries", "volumes", "software", "connections",
     // "networkports", "connectors", "antivirus", "locks", "domains", "importinfo", "history",
-    // "tasks" et "deploy" ont un contenu réel pour l'instant (voir le @switch de Detail.razor) ;
-    // les autres affichent un placeholder en attendant d'être alimentés au fur et à mesure des
-    // besoins. "collectinfo" fait exception : il n'a rien à montrer parce que rien ne collecte
-    // encore côté agent, et il l'explique plutôt que de renvoyer le placeholder générique.
-    private static List<FicheTab> BuildTabs(Computer computer, ComputerDeploymentTasksInfo? deploymentTasksInfo, int deploymentAssignmentsCount, int lockedFieldsCount) =>
+    // "tasks", "collectinfo" et "deploy" ont un contenu réel pour l'instant (voir le @switch de
+    // Detail.razor) ; les autres affichent un placeholder en attendant d'être alimentés au fur et
+    // à mesure des besoins.
+    private static List<FicheTab> BuildTabs(Computer computer, ComputerDeploymentTasksInfo? deploymentTasksInfo, int deploymentAssignmentsCount, int lockedFieldsCount, int? collectEntriesCount) =>
     [
         new("computer", "ti-device-desktop", "Ordinateur", null),
         new("os", "ti-settings-cog", "Systèmes d'exploitation", computer.OperatingSystem is null ? 0 : 1),
@@ -1003,7 +1016,7 @@ public partial class Detail : ComponentBase, IDisposable
         new("history", "ti-history", "Historique", computer.HistoryEntries.Count),
         new("tasks", "ti-checklist", "Tâches / groupes",
             deploymentTasksInfo is null ? null : deploymentTasksInfo.Tasks.Count + deploymentTasksInfo.Groups.Count),
-        new("collectinfo", "ti-cloud-upload", "Informations de collecte", null),
+        new("collectinfo", "ti-cloud-upload", "Informations de collecte", collectEntriesCount),
         new("deploy", "ti-package", "Déploiement de package", deploymentAssignmentsCount == 0 ? null : deploymentAssignmentsCount),
         new("all", "ti-list", "Tous", null),
     ];
