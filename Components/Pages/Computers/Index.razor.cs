@@ -84,6 +84,30 @@ public partial class Index : ComponentBase
     private bool _showSaveSearchModal;
     private int? _currentUserId;
     private string? _currentUserName;
+
+    /// <summary>
+    /// Champ visé par une action de masse. Volontairement restreint aux champs de gestion :
+    /// statut, lieu, utilisateur. Tout ce que l'inventaire réécrit — nom, numéro de série,
+    /// système — n'a rien à faire ici, une modification en masse y serait effacée à la remontée
+    /// suivante de l'agent.
+    /// </summary>
+    private enum MassActionField
+    {
+        None,
+        Status,
+        Location,
+        AssignedUser,
+    }
+
+    private MassActionField _massAction = MassActionField.None;
+    private int? _massStatusId;
+    private int? _massLocationId;
+    private string _massAssignedUser = string.Empty;
+    private string? _massMessage;
+    private bool _massApplying;
+
+    private List<DropdownItem> _statusOptions = [];
+    private List<LocationOption> _locationOptions = [];
     // Taille de page par défaut du compte connecté (page /preferences). Injecté par l'hôte, qui
     // seul connaît le modèle d'utilisateur — voir IUserPreferences.
     [Inject]
@@ -154,6 +178,13 @@ public partial class Index : ComponentBase
             .Where(computer => computer.IsDeleted == _showTrash)
             .OrderBy(computer => computer.Name)
             .ToListAsync();
+
+        // Intitulés nécessaires aux actions de masse. Les lieux passent par LocationHierarchy :
+        // une liste à plat mélangerait les niveaux et rendrait deux « Office » indiscernables.
+        _statusOptions = await db.Set<DropdownItem>().AsNoTracking()
+            .Where(item => item.Type == DropdownType.Status).OrderBy(item => item.Name).ToListAsync();
+        _locationOptions = LocationHierarchy.BuildOptions(
+            await db.Set<DropdownItem>().AsNoTracking().Where(item => item.Type == DropdownType.Location).ToListAsync());
 
         _selectedIds.Clear();
         _currentPage = 1;
@@ -598,6 +629,131 @@ public partial class Index : ComponentBase
         _selectedIds.Clear();
         await LoadAsync();
     }
+
+    /// <summary>Libellé du champ visé, pour l'historique et le récapitulatif.</summary>
+    private static string MassActionLabel(MassActionField field) => field switch
+    {
+        MassActionField.Status => "Statut",
+        MassActionField.Location => "Lieu",
+        MassActionField.AssignedUser => "Utilisateur assigné",
+        _ => string.Empty,
+    };
+
+    /// <summary>
+    /// Vrai quand l'action est complète : un champ choisi, et une valeur. Une valeur vide est
+    /// légitime pour le lieu, le statut et l'utilisateur — elle les efface — donc seule l'absence
+    /// de champ empêche d'appliquer.
+    /// </summary>
+    private bool CanApplyMassAction => _massAction != MassActionField.None && _selectedIds.Count > 0 && !_massApplying;
+
+    /// <summary>
+    /// Applique le changement à tous les postes sélectionnés.
+    ///
+    /// Seuls les postes que le changement modifie réellement sont touchés : réappliquer le même
+    /// statut à cent postes ne doit pas déposer cent lignes d'historique identiques, qui noieraient
+    /// les vrais changements.
+    ///
+    /// Chaque modification est tracée comme si elle venait de la fiche : c'est le même champ, et
+    /// l'historique d'un poste doit dire ce qui lui est arrivé, pas par quel écran.
+    /// </summary>
+    private async Task ApplyMassActionAsync()
+    {
+        if (!CanApplyMassAction)
+        {
+            return;
+        }
+
+        _massApplying = true;
+        _massMessage = null;
+
+        try
+        {
+            await using DbContext db = await DbFactory.CreateDbContextAsync();
+
+            List<Computer> targets = await db.Set<Computer>()
+                .Where(computer => _selectedIds.Contains(computer.Id))
+                .ToListAsync();
+
+            string? newLabel = NewValueLabel();
+            int changed = 0;
+
+            foreach (Computer computer in targets)
+            {
+                string? before = CurrentLabel(computer);
+
+                if (!ApplyTo(computer))
+                {
+                    continue;
+                }
+
+                db.Set<ComputerHistoryEntry>().Add(new ComputerHistoryEntry
+                {
+                    ComputerId = computer.Id,
+                    User = _currentUserName ?? "Système",
+                    Field = MassActionLabel(_massAction),
+                    Description = $"{before ?? "vide"} → {newLabel ?? "vide"} (action de masse)",
+                });
+
+                changed++;
+            }
+
+            await db.SaveChangesAsync();
+
+            _massMessage = changed == 0
+                ? $"Aucun changement : les {targets.Count} poste(s) sélectionné(s) avaient déjà cette valeur."
+                : $"{MassActionLabel(_massAction)} modifié sur {changed} poste(s) sur {targets.Count} sélectionné(s).";
+
+            await LoadAsync();
+        }
+        finally
+        {
+            _massApplying = false;
+        }
+    }
+
+    /// <summary>Applique la nouvelle valeur, et dit si elle change quelque chose.</summary>
+    private bool ApplyTo(Computer computer)
+    {
+        switch (_massAction)
+        {
+            case MassActionField.Status when computer.StatusId != _massStatusId:
+                computer.StatusId = _massStatusId;
+                return true;
+
+            case MassActionField.Location when computer.LocationId != _massLocationId:
+                computer.LocationId = _massLocationId;
+                return true;
+
+            case MassActionField.AssignedUser:
+                string? user = string.IsNullOrWhiteSpace(_massAssignedUser) ? null : _massAssignedUser.Trim();
+                if (computer.AssignedUser == user)
+                {
+                    return false;
+                }
+
+                computer.AssignedUser = user;
+                return true;
+
+            default:
+                return false;
+        }
+    }
+
+    private string? CurrentLabel(Computer computer) => _massAction switch
+    {
+        MassActionField.Status => _statusOptions.FirstOrDefault(status => status.Id == computer.StatusId)?.Name,
+        MassActionField.Location => _locationOptions.FirstOrDefault(location => location.Id == computer.LocationId)?.Path,
+        MassActionField.AssignedUser => computer.AssignedUser,
+        _ => null,
+    };
+
+    private string? NewValueLabel() => _massAction switch
+    {
+        MassActionField.Status => _statusOptions.FirstOrDefault(status => status.Id == _massStatusId)?.Name,
+        MassActionField.Location => _locationOptions.FirstOrDefault(location => location.Id == _massLocationId)?.Path,
+        MassActionField.AssignedUser => string.IsNullOrWhiteSpace(_massAssignedUser) ? null : _massAssignedUser.Trim(),
+        _ => null,
+    };
 
     private async Task DeleteSelectedAsync()
     {

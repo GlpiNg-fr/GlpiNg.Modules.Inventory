@@ -1,4 +1,5 @@
 ﻿@page "/parc/computer"
+@using GlpiNg.Modules.Inventory.Services
 @rendermode InteractiveServer
 
 <PageTitle>Ordinateurs — GlpiNg</PageTitle>
@@ -142,6 +143,89 @@
                     <i class="ti ti-arrow-back-up"></i>
                 </button>
             }
+
+            @* Réservé aux champs de gestion : statut, lieu, utilisateur. Tout ce que l'inventaire
+               réécrit — nom, numéro de série, système — n'a rien à faire ici, une modification en
+               masse y serait effacée à la remontée suivante de l'agent. *@
+            <div class="dropdown">
+                <button type="button" class="btn btn-icon" data-bs-toggle="dropdown" data-bs-auto-close="outside"
+                        aria-expanded="false" disabled="@(_selectedIds.Count == 0)" title="Actions de masse">
+                    <i class="ti ti-list-check"></i>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end p-3" style="min-width: 340px;">
+                    <p class="mb-2 fw-medium">Modifier @_selectedIds.Count poste(s) sélectionné(s)</p>
+
+                    <div class="mb-2">
+                        <label class="form-label">Champ</label>
+                        <select class="form-select" value="@((int)_massAction)"
+                                @onchange="@((ChangeEventArgs e) => { _massAction = (MassActionField)int.Parse((string)e.Value!); _massMessage = null; })">
+                            <option value="0">— choisir —</option>
+                            <option value="1">Statut</option>
+                            <option value="2">Lieu</option>
+                            <option value="3">Utilisateur assigné</option>
+                        </select>
+                    </div>
+
+                    @if (_massAction == MassActionField.Status)
+                    {
+                        <div class="mb-2">
+                            <label class="form-label">Nouveau statut</label>
+                            <select class="form-select" value="@(_massStatusId?.ToString() ?? "")"
+                                    @onchange="@((ChangeEventArgs e) => _massStatusId = string.IsNullOrEmpty((string?)e.Value) ? null : int.Parse((string)e.Value!))">
+                                <option value="">— aucun —</option>
+                                @foreach (DropdownItem status in _statusOptions)
+                                {
+                                    <option value="@status.Id">@status.Name</option>
+                                }
+                            </select>
+                        </div>
+                    }
+                    else if (_massAction == MassActionField.Location)
+                    {
+                        <div class="mb-2">
+                            <label class="form-label">Nouveau lieu</label>
+                            <select class="form-select" value="@(_massLocationId?.ToString() ?? "")"
+                                    @onchange="@((ChangeEventArgs e) => _massLocationId = string.IsNullOrEmpty((string?)e.Value) ? null : int.Parse((string)e.Value!))">
+                                <option value="">— aucun —</option>
+                                @foreach (LocationOption location in _locationOptions)
+                                {
+                                    <option value="@location.Id">@location.Path</option>
+                                }
+                            </select>
+                        </div>
+                    }
+                    else if (_massAction == MassActionField.AssignedUser)
+                    {
+                        <div class="mb-2">
+                            <label class="form-label">Nouvel utilisateur assigné</label>
+                            <input class="form-control" placeholder="Laisser vide pour effacer" @bind="_massAssignedUser" />
+                        </div>
+                    }
+
+                    @if (_massAction != MassActionField.None)
+                    {
+                        <p class="hint" style="margin-left:0;">
+                            Seuls les postes que ce changement modifie réellement sont touchés, et chacun le
+                            garde dans son historique.
+                        </p>
+                    }
+
+                    @if (_massMessage is { } massMessage)
+                    {
+                        <div class="alert alert-info py-2 px-3 mb-2" role="alert">
+                            <i class="ti ti-info-circle me-1"></i>@massMessage
+                        </div>
+                    }
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-sm">Fermer</button>
+                        <button type="button" class="btn btn-sm btn-primary" disabled="@(!CanApplyMassAction)"
+                                @onclick="ApplyMassActionAsync">
+                            @(_massApplying ? "Application…" : "Appliquer")
+                        </button>
+                    </div>
+                </div>
+            </div>
 
             <div class="dropdown">
                 <button type="button" class="btn btn-icon text-danger" data-bs-toggle="dropdown" aria-expanded="false"
