@@ -40,6 +40,17 @@ public partial class Index : ComponentBase
     [Inject]
     private IJSRuntime JS { get; set; } = null!;
 
+    /// <summary>
+    /// Cartouches en service, par imprimante. Chargées d'un bloc avec la liste plutôt qu'à chaque
+    /// dépliage : une requête de plus par ligne ouverte se paierait sur un parc de deux cents
+    /// imprimantes, et ces lignes sont peu nombreuses par nature.
+    /// </summary>
+    private Dictionary<int, List<Cartridge>> _cartridgesByPrinter = [];
+
+    /// <summary>Imprimantes dépliées. Conservé entre les pages et les tris : replier tout ce que
+    /// l'utilisateur venait d'ouvrir à chaque changement de tri serait hostile.</summary>
+    private readonly HashSet<int> _expandedIds = [];
+
     private List<Printer> _items = [];
     private List<Printer> _filtered = [];
     private List<Printer> _paged = [];
@@ -66,6 +77,35 @@ public partial class Index : ComponentBase
         await LoadAsync();
     }
 
+    private List<Cartridge> CartridgesOf(int printerId) =>
+        _cartridgesByPrinter.TryGetValue(printerId, out List<Cartridge>? cartridges) ? cartridges : [];
+
+    private void ToggleExpanded(int printerId)
+    {
+        if (!_expandedIds.Remove(printerId))
+        {
+            _expandedIds.Add(printerId);
+        }
+    }
+
+    /// <summary>
+    /// Couleur du niveau d'une cartouche. Les seuils sont ceux qu'on utilise pour décider d'une
+    /// commande : sous 10 % il faut agir, sous 25 % il faut prévoir.
+    /// </summary>
+    private static string LevelBadgeCss(int level) =>
+        level <= 10 ? "bg-red-lt" : level <= 25 ? "bg-orange-lt" : "bg-green-lt";
+
+    /// <summary>
+    /// Niveau le plus bas parmi les cartouches d'une imprimante, ou null si aucune n'a été relevée.
+    /// C'est lui qui résume la ligne repliée : une imprimante n'est utilisable que jusqu'à ce que
+    /// sa cartouche la plus basse soit vide, et c'est donc celle-là qui commande.
+    /// </summary>
+    private int? LowestLevel(int printerId) => CartridgesOf(printerId)
+        .Where(cartridge => cartridge.LevelPercent is not null)
+        .Select(cartridge => cartridge.LevelPercent!.Value)
+        .DefaultIfEmpty(-1)
+        .Min() is var lowest && lowest >= 0 ? lowest : null;
+
     private async Task LoadAsync()
     {
         await using DbContext db = await DbFactory.CreateDbContextAsync();
@@ -75,6 +115,16 @@ public partial class Index : ComponentBase
             .Include(item => item.LocationItem)
             .OrderBy(item => item.Name)
             .ToListAsync();
+
+        // Seules les cartouches en service : une cartouche retirée appartient à l'historique de
+        // l'imprimante, pas à l'état qu'on vient lire dans une liste de parc.
+        _cartridgesByPrinter = (await db.Set<Cartridge>()
+                .AsNoTracking()
+                .Include(cartridge => cartridge.CartridgeItem)
+                .Where(cartridge => cartridge.PrinterId != null && cartridge.DateOut == null)
+                .ToListAsync())
+            .GroupBy(cartridge => cartridge.PrinterId!.Value)
+            .ToDictionary(group => group.Key, group => group.OrderBy(c => c.CartridgeItem!.Name).ToList());
 
         _statusOptions = await db.Set<DropdownItem>().AsNoTracking().Where(i => i.Type == DropdownType.Status).OrderBy(i => i.Name).ToListAsync();
         _locationOptions = await db.Set<DropdownItem>().AsNoTracking().Where(i => i.Type == DropdownType.Location).OrderBy(i => i.Name).ToListAsync();

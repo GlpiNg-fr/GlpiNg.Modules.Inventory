@@ -52,29 +52,44 @@
                                checked="@AllSelected"
                                @onchange="@((ChangeEventArgs e) => ToggleSelectAll((bool)(e.Value ?? false)))" />
                     </th>
+                    <th style="width: 2rem;"></th>
                     <th class="glpi-sortable-th" @onclick='() => SetSort("name")'>Nom @SortIndicator("name")</th>
                     <th class="glpi-sortable-th" @onclick='() => SetSort("status")'>Statut @SortIndicator("status")</th>
                     <th class="glpi-sortable-th" @onclick='() => SetSort("manufacturer")'>Fabricant @SortIndicator("manufacturer")</th>
                     <th class="glpi-sortable-th" @onclick='() => SetSort("location")'>Lieu @SortIndicator("location")</th>
                     <th class="glpi-sortable-th" @onclick='() => SetSort("type")'>Type @SortIndicator("type")</th>
                     <th class="glpi-sortable-th" @onclick='() => SetSort("model")'>Modèle @SortIndicator("model")</th>
+                    <th>Cartouches</th>
                 </tr>
             </thead>
             <tbody>
                 @if (_filtered.Count == 0)
                 {
                     <tr>
-                        <td colspan="7" class="text-center text-secondary py-4">Aucune imprimante trouvée.</td>
+                        <td colspan="9" class="text-center text-secondary py-4">Aucune imprimante trouvée.</td>
                     </tr>
                 }
                 else
                 {
                     @foreach (Printer item in _paged)
                     {
+                        List<Cartridge> cartridges = CartridgesOf(item.Id);
+                        bool isExpanded = _expandedIds.Contains(item.Id);
+
                         <tr>
                             <td>
                                 <input class="form-check-input m-0" type="checkbox" checked="@_selectedIds.Contains(item.Id)"
                                        @onchange="@((ChangeEventArgs e) => ToggleSelect(item.Id, (bool)(e.Value ?? false)))" />
+                            </td>
+                            <td>
+                                @* Le chevron n'apparaît que s'il y a quelque chose à déplier : une
+                                   imprimante sans cartouche en service ne doit pas inviter à un
+                                   clic qui n'ouvrirait rien. *@
+                                @if (cartridges.Count > 0)
+                                {
+                                    <i class="ti @(isExpanded ? "ti-chevron-down" : "ti-chevron-right") text-secondary cursor-pointer"
+                                       role="button" @onclick="() => ToggleExpanded(item.Id)"></i>
+                                }
                             </td>
                             <td>
                                 <a href="@($"/parc/printers/{item.Id}")" class="text-reset fw-semibold">
@@ -86,7 +101,81 @@
                             <td>@(item.LocationItem?.Name ?? "—")</td>
                             <td>@(item.Type ?? "—")</td>
                             <td>@(item.Model ?? "—")</td>
+                            <td>
+                                @if (cartridges.Count == 0)
+                                {
+                                    <span class="text-secondary">—</span>
+                                }
+                                else
+                                {
+                                    <span class="text-secondary me-2">@cartridges.Count</span>
+                                    @* Le plus bas niveau résume la ligne repliée : une imprimante
+                                       n'est utilisable que jusqu'à ce que sa cartouche la plus
+                                       basse soit vide. *@
+                                    @if (LowestLevel(item.Id) is { } lowest)
+                                    {
+                                        <span class="badge @LevelBadgeCss(lowest)">@lowest&nbsp;%</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary-lt" title="Aucun relevé SNMP : voir l'OID sur la référence de cartouche et les paramètres SNMP de l'imprimante.">
+                                            non relevé
+                                        </span>
+                                    }
+                                }
+                            </td>
                         </tr>
+
+                        @if (isExpanded)
+                        {
+                            <tr>
+                                <td colspan="2"></td>
+                                <td colspan="7" class="pb-3">
+                                    <table class="table table-sm table-vcenter mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Cartouche</th>
+                                                <th>Type</th>
+                                                <th>Niveau</th>
+                                                <th>Relevé le</th>
+                                                <th>Installée le</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (Cartridge cartridge in cartridges)
+                                            {
+                                                <tr>
+                                                    <td>
+                                                        <a href="@($"/parc/cartridge-items/{cartridge.CartridgeItemId}")" class="text-reset">
+                                                            <i class="ti ti-droplet me-1 text-secondary"></i>@(cartridge.CartridgeItem?.Name ?? "—")
+                                                        </a>
+                                                    </td>
+                                                    <td>@(cartridge.CartridgeItem?.Type ?? "—")</td>
+                                                    <td>
+                                                        @if (cartridge.LevelPercent is { } level)
+                                                        {
+                                                            <span class="badge @LevelBadgeCss(level)">@level&nbsp;%</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="text-secondary">—</span>
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        @* La date accompagne toujours le niveau : un relevé d'il y a
+                                                           trois mois ne se lit pas comme celui de ce matin. *@
+                                                        @(cartridge.LevelReadAt is { } read
+                                                            ? read.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                                            : "—")
+                                                    </td>
+                                                    <td>@(cartridge.DateUse is { } used ? used.ToLocalTime().ToString("dd/MM/yyyy") : "—")</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr>
+                        }
                     }
                 }
             </tbody>
