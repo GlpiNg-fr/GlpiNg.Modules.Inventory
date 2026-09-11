@@ -1,8 +1,8 @@
-@page "/parc/consumable-items/{ItemId:int}"
+﻿@page "/parc/consumable-items/{ItemId:int}"
 @using GlpiNg.Modules.Inventory.Models
 @rendermode InteractiveServer
 
-<PageTitle>GlpiNg — @(_item?.Name ?? "Modèle de consommable")</PageTitle>
+<PageTitle>@(_item?.Name ?? "Modèle de consommable") — GlpiNg</PageTitle>
 
 @if (_item is null)
 {

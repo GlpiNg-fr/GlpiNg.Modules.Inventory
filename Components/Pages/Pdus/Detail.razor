@@ -1,8 +1,8 @@
-@page "/parc/pdus/{ItemId:int}"
+﻿@page "/parc/pdus/{ItemId:int}"
 @using GlpiNg.Modules.Inventory.Models
 @rendermode InteractiveServer
 
-<PageTitle>GlpiNg — @(_item?.Name ?? "PDU")</PageTitle>
+<PageTitle>@(_item?.Name ?? "PDU") — GlpiNg</PageTitle>
 
 @if (_item is null)
 {

@@ -2,7 +2,7 @@
 @using GlpiNg.Modules.Inventory.Models
 @rendermode InteractiveServer
 
-<PageTitle>GlpiNg — @(_item?.Name ?? "Imprimante")</PageTitle>
+<PageTitle>@(_item?.Name ?? "Imprimante") — GlpiNg</PageTitle>
 
 @if (_item is null)
 {

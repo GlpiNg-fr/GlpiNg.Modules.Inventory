@@ -1,8 +1,8 @@
-@page "/parc/network-equipments/{ItemId:int}"
+﻿@page "/parc/network-equipments/{ItemId:int}"
 @using GlpiNg.Modules.Inventory.Models
 @rendermode InteractiveServer
 
-<PageTitle>GlpiNg — @(_item?.Name ?? "Matériel réseau")</PageTitle>
+<PageTitle>@(_item?.Name ?? "Matériel réseau") — GlpiNg</PageTitle>
 
 @if (_item is null)
 {

@@ -1,8 +1,8 @@
-@page "/parc/peripherals/{PeripheralId:int}"
+﻿@page "/parc/peripherals/{PeripheralId:int}"
 @using GlpiNg.Modules.Inventory.Models
 @rendermode InteractiveServer
 
-<PageTitle>GlpiNg — @(_peripheral?.Name ?? "Périphérique")</PageTitle>
+<PageTitle>@(_peripheral?.Name ?? "Périphérique") — GlpiNg</PageTitle>
 
 @if (_peripheral is null)
 {

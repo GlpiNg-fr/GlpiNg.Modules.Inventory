@@ -1,8 +1,8 @@
-@page "/parc/phones/{ItemId:int}"
+﻿@page "/parc/phones/{ItemId:int}"
 @using GlpiNg.Modules.Inventory.Models
 @rendermode InteractiveServer
 
-<PageTitle>GlpiNg — @(_item?.Name ?? "Téléphone")</PageTitle>
+<PageTitle>@(_item?.Name ?? "Téléphone") — GlpiNg</PageTitle>
 
 @if (_item is null)
 {

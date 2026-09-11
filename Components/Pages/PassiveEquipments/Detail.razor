@@ -1,8 +1,8 @@
-@page "/parc/passive-equipments/{ItemId:int}"
+﻿@page "/parc/passive-equipments/{ItemId:int}"
 @using GlpiNg.Modules.Inventory.Models
 @rendermode InteractiveServer
 
-<PageTitle>GlpiNg — @(_item?.Name ?? "Équipement passif")</PageTitle>
+<PageTitle>@(_item?.Name ?? "Équipement passif") — GlpiNg</PageTitle>
 
 @if (_item is null)
 {

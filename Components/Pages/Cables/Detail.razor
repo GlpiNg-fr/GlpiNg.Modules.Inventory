@@ -1,9 +1,9 @@
-@page "/parc/cables/{ItemId:int}"
+﻿@page "/parc/cables/{ItemId:int}"
 @using GlpiNg.Modules.Inventory.Models
 @using GlpiNg.Modules.Inventory.Services
 @rendermode InteractiveServer
 
-<PageTitle>GlpiNg — @(_item?.Name ?? "Câble")</PageTitle>
+<PageTitle>@(_item?.Name ?? "Câble") — GlpiNg</PageTitle>
 
 @if (_item is null)
 {

@@ -1,8 +1,8 @@
-@page "/parc/monitors/{MonitorId:int}"
+﻿@page "/parc/monitors/{MonitorId:int}"
 @using GlpiNg.Modules.Inventory.Models
 @rendermode InteractiveServer
 
-<PageTitle>GlpiNg — @(_monitor?.Designation ?? "Écran")</PageTitle>
+<PageTitle>@(_monitor?.Designation ?? "Écran") — GlpiNg</PageTitle>
 
 @if (_monitor is null)
 {

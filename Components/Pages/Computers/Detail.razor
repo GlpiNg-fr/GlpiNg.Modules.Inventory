@@ -4,7 +4,7 @@
 @using GlpiNg.Modules.Inventory.Services
 @rendermode InteractiveServer
 
-<PageTitle>GlpiNg — @(_computer?.Name ?? "Ordinateur")</PageTitle>
+<PageTitle>@(_computer?.Name ?? "Ordinateur") — GlpiNg</PageTitle>
 
 @if (_computer is null)
 {

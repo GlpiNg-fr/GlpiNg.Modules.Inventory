@@ -1,8 +1,8 @@
-@page "/parc/simcards/{ItemId:int}"
+﻿@page "/parc/simcards/{ItemId:int}"
 @using GlpiNg.Modules.Inventory.Models
 @rendermode InteractiveServer
 
-<PageTitle>GlpiNg — @(_item?.Name ?? "Carte SIM")</PageTitle>
+<PageTitle>@(_item?.Name ?? "Carte SIM") — GlpiNg</PageTitle>
 
 @if (_item is null)
 {

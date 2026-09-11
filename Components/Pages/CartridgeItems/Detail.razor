@@ -1,8 +1,8 @@
-@page "/parc/cartridge-items/{ItemId:int}"
+﻿@page "/parc/cartridge-items/{ItemId:int}"
 @using GlpiNg.Modules.Inventory.Models
 @rendermode InteractiveServer
 
-<PageTitle>GlpiNg — @(_item?.Name ?? "Modèle de cartouche")</PageTitle>
+<PageTitle>@(_item?.Name ?? "Modèle de cartouche") — GlpiNg</PageTitle>
 
 @if (_item is null)
 {

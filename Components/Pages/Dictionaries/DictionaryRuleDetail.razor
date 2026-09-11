@@ -1,7 +1,7 @@
 ﻿@page "/admin/dictionaries/{TypeSlug}/{RuleId:int}"
 @rendermode InteractiveServer
 
-<PageTitle>GlpiNg — @(_rule?.Name ?? "Règle de dictionnaire")</PageTitle>
+<PageTitle>@(_rule?.Name ?? "Règle de dictionnaire") — GlpiNg</PageTitle>
 
 @if (!_typeResolved)
 {

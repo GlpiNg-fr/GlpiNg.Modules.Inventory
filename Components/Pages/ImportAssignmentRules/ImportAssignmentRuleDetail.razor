@@ -2,7 +2,7 @@
 @using GlpiNg.Modules.Inventory.Services
 @rendermode InteractiveServer
 
-<PageTitle>GlpiNg — @(_rule?.Name ?? "Règle d'import")</PageTitle>
+<PageTitle>@(_rule?.Name ?? "Règle d'import") — GlpiNg</PageTitle>
 
 @if (_rule is null)
 {

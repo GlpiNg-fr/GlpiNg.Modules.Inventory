@@ -4,7 +4,7 @@
 @page "/config/components/{TypeSlug}"
 @rendermode InteractiveServer
 
-<PageTitle>GlpiNg — @(_typeResolved ? DropdownTypeCatalog.GroupLabel(DropdownTypeCatalog.Group(_type)) : DropdownTypeCatalog.GroupLabel(IsComponentsRoute ? DropdownGroup.Components : DropdownGroup.Labels))</PageTitle>
+<PageTitle>@(_typeResolved ? DropdownTypeCatalog.GroupLabel(DropdownTypeCatalog.Group(_type)) : DropdownTypeCatalog.GroupLabel(IsComponentsRoute ? DropdownGroup.Components : DropdownGroup.Labels)) — GlpiNg</PageTitle>
 
 @if (!_typeResolved)
 {

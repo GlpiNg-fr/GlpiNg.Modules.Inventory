@@ -2,7 +2,7 @@
 @using GlpiNg.Modules.Inventory.Services
 @rendermode InteractiveServer
 
-<PageTitle>GlpiNg — @(_rule?.Name ?? "Règle métier")</PageTitle>
+<PageTitle>@(_rule?.Name ?? "Règle métier") — GlpiNg</PageTitle>
 
 @if (_rule is null)
 {
