@@ -982,7 +982,8 @@ public partial class Detail : ComponentBase, IDisposable
     // "networkports", "connectors", "antivirus", "locks", "domains", "importinfo", "history",
     // "tasks" et "deploy" ont un contenu réel pour l'instant (voir le @switch de Detail.razor) ;
     // les autres affichent un placeholder en attendant d'être alimentés au fur et à mesure des
-    // besoins.
+    // besoins. "collectinfo" fait exception : il n'a rien à montrer parce que rien ne collecte
+    // encore côté agent, et il l'explique plutôt que de renvoyer le placeholder générique.
     private static List<FicheTab> BuildTabs(Computer computer, ComputerDeploymentTasksInfo? deploymentTasksInfo, int deploymentAssignmentsCount, int lockedFieldsCount) =>
     [
         new("computer", "ti-device-desktop", "Ordinateur", null),

@@ -867,6 +867,24 @@ else
                     </div>
                     break;
 
+                case "collectinfo":
+                    @* Les collectes (clés de registre, requêtes WMI, recherches de fichiers) se
+                       définissent côté Déploiement, mais rien ne les exécute ni ne rapatrie leurs
+                       résultats : le protocole agent de GlpiNg ne traite pas l'action « collect ».
+                       L'onglet le dit, plutôt que d'afficher un vide qui se lit comme une panne. *@
+                    <div class="glpi-config-placeholder">
+                        <i class="ti ti-cloud-off"></i>
+                        <p class="mb-1">Aucune information de collecte pour ce poste.</p>
+                        <p class="mb-0 text-secondary" style="max-width: 46rem;">
+                            Les collectes se définissent dans
+                            <a href="/tools/deployments/collects">Outils &gt; Déploiements &gt; Informations de collecte</a>
+                            (clés de registre, requêtes WMI, recherches de fichiers), mais GlpiNg ne les fait pas
+                            encore exécuter par les agents : aucun résultat n'est donc remonté ni stocké. Cet
+                            onglet restera vide tant que ce sera le cas.
+                        </p>
+                    </div>
+                    break;
+
                 case "domains":
                     @if (_computer.Domain is null)
                     {
