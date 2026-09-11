@@ -24,6 +24,7 @@
       restent la responsabilité du projet hôte. Voir Import/GlpiMySqlImportService.cs.
     -->
     <PackageReference Include="ClosedXML" Version="0.105.1" />
+    <PackageReference Include="Lextm.SharpSnmpLib" Version="12.5.7" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.12" />
     <!-- AsSplitQuery() (Components/Pages/Computers/Detail.razor.cs) vit dans le provider
          relationnel plutôt que dans le paquet EF Core de base. -->

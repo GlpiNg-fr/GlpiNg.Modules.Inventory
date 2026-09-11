@@ -80,6 +80,17 @@ public class Cartridge
 
     /// <summary>Date de retrait/mise au rebut — null tant qu'en stock ou en service.</summary>
     public DateTime? DateOut { get; set; }
+
+    /// <summary>
+    /// Niveau restant en pourcentage, relevé par SNMP sur l'imprimante (voir
+    /// PrinterSnmpPollCronTask et CartridgeItem.SnmpLevelOid). Null tant qu'aucun relevé n'a
+    /// abouti — ce qui est le cas d'une cartouche en stock, qui n'est dans aucune imprimante.
+    /// </summary>
+    public int? LevelPercent { get; set; }
+
+    /// <summary>Date du dernier relevé. Distincte du niveau : un niveau ancien doit pouvoir être
+    /// reconnu comme tel plutôt que passer pour une mesure fraîche.</summary>
+    public DateTime? LevelReadAt { get; set; }
 }
 
 /// <summary>Ligne du journal de modifications d'un modèle de cartouche (onglet "Historique" de la fiche).</summary>

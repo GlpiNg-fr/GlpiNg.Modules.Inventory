@@ -41,6 +41,12 @@ public static class InventoryModuleServiceCollectionExtensions
         // laquelle une regle portant sur l'anciennete du dernier contact ne se declencherait jamais.
         services.AddScoped<ICronTask, ComputerRuleCronTask>();
 
+        // Relevé SNMP des imprimantes : compteur de pages et niveau des cartouches installées.
+        // Une imprimante réseau n'héberge pas d'agent — sans cette action, personne ne remonte son
+        // état alors qu'elle-même le publie. Voir PrinterSnmpPollCronTask.
+        services.AddScoped<PrinterSnmpReader>();
+        services.AddScoped<ICronTask, PrinterSnmpPollCronTask>();
+
         // Contribution du module au menu latéral de l'hôte (groupe "Parc" + entrées
         // Agents/Déploiements dans "Outils") — voir InventoryMenuProvider.
         services.AddSingleton<IMenuProvider, InventoryMenuProvider>();

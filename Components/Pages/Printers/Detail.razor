@@ -98,6 +98,7 @@ else
                                             <th>Référence</th>
                                             <th>Type</th>
                                             <th>Unité</th>
+                                            <th>Niveau</th>
                                             <th>Installée le</th>
                                             <th></th>
                                         </tr>
@@ -111,6 +112,21 @@ else
                                                 </td>
                                                 <td>@(cartridge.CartridgeItem?.Type ?? "—")</td>
                                                 <td>#@cartridge.Id</td>
+                                                <td>
+                                                    @if (cartridge.LevelPercent is { } level)
+                                                    {
+                                                        @* La date du relevé accompagne toujours le niveau : un niveau
+                                                           d'il y a trois mois ne se lit pas comme celui de ce matin. *@
+                                                        <span class="badge @(level <= 10 ? "bg-red-lt" : level <= 25 ? "bg-orange-lt" : "bg-green-lt")"
+                                                              title="@(cartridge.LevelReadAt is { } read ? $"Relevé le {read.ToLocalTime():dd/MM/yyyy HH:mm}" : null)">
+                                                            @level&nbsp;%
+                                                        </span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-secondary">—</span>
+                                                    }
+                                                </td>
                                                 <td>@(cartridge.DateUse is { } used ? used.ToLocalTime().ToString("dd/MM/yyyy") : "—")</td>
                                                 <td class="text-end">
                                                     <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => RemoveCartridgeAsync(cartridge)">
