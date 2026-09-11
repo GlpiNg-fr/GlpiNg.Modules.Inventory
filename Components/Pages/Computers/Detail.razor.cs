@@ -667,7 +667,7 @@ public partial class Detail : ComponentBase, IDisposable
             return;
         }
 
-        _availablePackages = await DeploymentAssignmentService.GetAvailablePackagesAsync();
+        _availablePackages = await DeploymentAssignmentService.GetAvailablePackagesAsync(ComputerId);
         _deploymentAssignments = await DeploymentAssignmentService.GetAssignmentsAsync(ComputerId);
 
         EnsureDeploymentAssignmentsPollingIfNeeded();

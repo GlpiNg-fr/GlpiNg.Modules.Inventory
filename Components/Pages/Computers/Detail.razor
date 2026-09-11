@@ -1267,7 +1267,14 @@ else
                                     }
                                     else if (_availablePackages.Count == 0)
                                     {
-                                        <div class="text-secondary small mt-2">Aucun paquet de déploiement disponible. <a href="/tools/deployments/packages">Créer un paquet</a>.</div>
+                                        @* Le catalogue peut être fourni sans qu'aucun paquet ne soit proposable ici :
+                                           le libre-service s'active paquet par paquet, pour un groupe d'ordinateurs
+                                           donné. Le dire, plutôt que de laisser croire qu'il n'existe aucun paquet. *@
+                                        <div class="text-secondary small mt-2">
+                                            Aucun paquet en déploiement à la demande pour ce poste : le libre-service s'active
+                                            sur la <a href="/tools/deployments/packages">fiche d'un paquet</a>, pour un groupe
+                                            d'ordinateurs dont ce poste doit être membre.
+                                        </div>
                                     }
                                 </div>
                             </div>
