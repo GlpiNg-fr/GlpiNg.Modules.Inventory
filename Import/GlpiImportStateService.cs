@@ -84,6 +84,15 @@ public sealed class GlpiImportStateService
     /// </summary>
     public GlpiPluginImportSelection PluginSelection { get; } = new();
 
+    /// <summary>
+    /// Volume de la base de connaissances de la base source, et cases correspondantes. Séparé de
+    /// l'analyse « parc » comme l'administration et le plugin : c'est un service d'import distinct
+    /// (voir IGlpiKnowledgeBaseImportService), avec son propre résultat et sa propre erreur.
+    /// </summary>
+    public GlpiKnowledgeBaseImportAnalysis? KnowledgeBaseAnalysis { get; private set; }
+
+    public GlpiKnowledgeBaseImportSelection KnowledgeBaseSelection { get; } = new();
+
     public bool IsRunning { get; private set; }
 
     /// <summary>Phase en cours, telle que nommée par <see cref="GlpiImportPhases"/>. Null hors import.</summary>
@@ -112,6 +121,8 @@ public sealed class GlpiImportStateService
     public string? LastAdminError { get; private set; }
     public GlpiPluginImportResult? LastPluginResult { get; private set; }
     public string? LastPluginError { get; private set; }
+    public GlpiKnowledgeBaseImportResult? LastKnowledgeBaseResult { get; private set; }
+    public string? LastKnowledgeBaseError { get; private set; }
     public DateTime? LastRunAt { get; private set; }
 
     /// <summary>Levé après chaque changement d'état, pour que les pages abonnées se rafraîchissent (StateHasChanged).</summary>
@@ -150,7 +161,7 @@ public sealed class GlpiImportStateService
     public bool CanRun => !IsRunning
         && !IsAnalyzing
         && Analysis is not null
-        && (Selection.AnySelected || AdminSelection.AnySelected || PluginSelection.AnySelected);
+        && (Selection.AnySelected || AdminSelection.AnySelected || KnowledgeBaseSelection.AnySelected || PluginSelection.AnySelected);
 
     public async Task AnalyzeAsync()
     {
@@ -171,11 +182,15 @@ public sealed class GlpiImportStateService
             LastAdminError = null;
             LastPluginResult = null;
             LastPluginError = null;
+            KnowledgeBaseAnalysis = null;
+            LastKnowledgeBaseResult = null;
+            LastKnowledgeBaseError = null;
             Changed?.Invoke();
 
             await using AsyncServiceScope scope = _scopeFactory.CreateAsyncScope();
             GlpiMySqlImportService importService = scope.ServiceProvider.GetRequiredService<GlpiMySqlImportService>();
             IGlpiAdminImportService adminImportService = scope.ServiceProvider.GetRequiredService<IGlpiAdminImportService>();
+            IGlpiKnowledgeBaseImportService knowledgeBaseImportService = scope.ServiceProvider.GetRequiredService<IGlpiKnowledgeBaseImportService>();
             string connectionString = BuildConnectionString();
 
             try
@@ -203,6 +218,17 @@ public sealed class GlpiImportStateService
                 AdminSelection.ImportProfiles = adminAnalysis.ProfilesCount > 0;
                 AdminSelection.ImportUsers = adminAnalysis.UsersCount > 0;
                 AdminSelection.ImportGeneralConfig = adminAnalysis.GeneralConfigAvailable;
+
+                GlpiKnowledgeBaseImportAnalysis knowledgeBaseAnalysis = await knowledgeBaseImportService.AnalyzeAsync(connectionString);
+                KnowledgeBaseAnalysis = knowledgeBaseAnalysis;
+
+                // Cochées d'emblée quand il y a quelque chose : reprendre la base de connaissances
+                // fait partie d'une migration GLPI ordinaire, contrairement aux données du plugin
+                // d'inventaire (voir plus bas), qui recouvrent un domaine que GlpiNg réimplémente.
+                KnowledgeBaseSelection.ImportCategories = knowledgeBaseAnalysis.CategoriesCount > 0;
+                KnowledgeBaseSelection.ImportArticles = knowledgeBaseAnalysis.ArticlesCount > 0;
+                KnowledgeBaseSelection.ImportTargets = knowledgeBaseAnalysis.TargetsCount > 0;
+                KnowledgeBaseSelection.ImportRevisions = knowledgeBaseAnalysis.RevisionsCount > 0;
 
                 // L'adresse de téléchargement des fichiers de paquets vient de la base, pas de
                 // l'administrateur : GLPI y range sa propre racine HTTP, et le plugin ses miroirs.
@@ -308,6 +334,14 @@ public sealed class GlpiImportStateService
             Add(AdminSelection.ImportGeneralConfig, GlpiImportPhases.GeneralConfig, 1);
         }
 
+        if (KnowledgeBaseAnalysis is { } knowledgeBase)
+        {
+            Add(KnowledgeBaseSelection.ImportCategories, GlpiImportPhases.KnowledgeBaseCategories, knowledgeBase.CategoriesCount);
+            Add(KnowledgeBaseSelection.ImportArticles, GlpiImportPhases.KnowledgeBaseArticles, knowledgeBase.ArticlesCount);
+            Add(KnowledgeBaseSelection.ImportTargets, GlpiImportPhases.KnowledgeBaseTargets, knowledgeBase.TargetsCount);
+            Add(KnowledgeBaseSelection.ImportRevisions, GlpiImportPhases.KnowledgeBaseRevisions, knowledgeBase.RevisionsCount);
+        }
+
         GlpiInventoryPluginInfo plugin = analysis.InventoryPlugin;
         Add(PluginSelection.ImportIpRanges, GlpiImportPhases.IpRanges, plugin.IpRangesCount);
         Add(PluginSelection.ImportSnmpCredentials, GlpiImportPhases.SnmpCredentials, plugin.SnmpCredentialsCount);
@@ -372,6 +406,7 @@ public sealed class GlpiImportStateService
             IsRunning = true;
             LastError = null;
             LastAdminError = null;
+            LastKnowledgeBaseError = null;
 
             _plan = BuildPlan();
             _completedBeforeCurrentPhase = 0;
@@ -412,6 +447,27 @@ public sealed class GlpiImportStateService
                 {
                     LastAdminError = Describe(ex);
                     LastAdminResult = null;
+                }
+            }
+
+            // Après l'administration, et pour la même raison qu'elle précède le plugin : les
+            // articles se rattachent à une entité, leur auteur à un compte, et leurs cibles à des
+            // groupes, profils et comptes — tout cela n'existe qu'une fois l'administration
+            // importée. Lancée avant, la reprise perdrait ses cibles (comptées comme ignorées) et
+            // les articles seraient plus visibles qu'ils ne l'étaient.
+            if (KnowledgeBaseSelection.AnySelected)
+            {
+                try
+                {
+                    IGlpiKnowledgeBaseImportService knowledgeBaseImportService =
+                        scope.ServiceProvider.GetRequiredService<IGlpiKnowledgeBaseImportService>();
+
+                    LastKnowledgeBaseResult = await knowledgeBaseImportService.RunAsync(connectionString, KnowledgeBaseSelection, progress);
+                }
+                catch (Exception ex)
+                {
+                    LastKnowledgeBaseError = Describe(ex);
+                    LastKnowledgeBaseResult = null;
                 }
             }
 

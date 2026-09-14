@@ -7,14 +7,15 @@ namespace GlpiNg.Modules.Inventory.Components.Pages.Import;
 public partial class GlpiMySqlImportPage : ComponentBase, IDisposable
 {
     /// <summary>
-    /// Onglets de la sélection. Ils recoupent exactement les trois services d'import (parc,
-    /// administration, plugin d'inventaire), qui ont chacun leur analyse, leur sélection et leur
-    /// résultat.
+    /// Onglets de la sélection. Ils recoupent exactement les quatre services d'import (parc,
+    /// administration, base de connaissances, plugin d'inventaire), qui ont chacun leur analyse,
+    /// leur sélection et leur résultat.
     /// </summary>
     private enum ImportTab
     {
         Parc,
         Administration,
+        KnowledgeBase,
         Plugin,
     }
 
@@ -94,6 +95,27 @@ public partial class GlpiMySqlImportPage : ComponentBase, IDisposable
         State.AdminSelection.ImportProfiles = selected && analysis.ProfilesCount > 0;
         State.AdminSelection.ImportUsers = selected && analysis.UsersCount > 0;
         State.AdminSelection.ImportGeneralConfig = selected && analysis.GeneralConfigAvailable;
+    }
+
+    private (int Selected, int Available) KnowledgeBaseTally(GlpiKnowledgeBaseImportAnalysis analysis)
+    {
+        (bool Selected, int Count)[] items =
+        [
+            (State.KnowledgeBaseSelection.ImportCategories, analysis.CategoriesCount),
+            (State.KnowledgeBaseSelection.ImportArticles, analysis.ArticlesCount),
+            (State.KnowledgeBaseSelection.ImportTargets, analysis.TargetsCount),
+            (State.KnowledgeBaseSelection.ImportRevisions, analysis.RevisionsCount),
+        ];
+
+        return (items.Count(item => item is { Selected: true, Count: > 0 }), items.Count(item => item.Count > 0));
+    }
+
+    private void SetAllKnowledgeBase(GlpiKnowledgeBaseImportAnalysis analysis, bool selected)
+    {
+        State.KnowledgeBaseSelection.ImportCategories = selected && analysis.CategoriesCount > 0;
+        State.KnowledgeBaseSelection.ImportArticles = selected && analysis.ArticlesCount > 0;
+        State.KnowledgeBaseSelection.ImportTargets = selected && analysis.TargetsCount > 0;
+        State.KnowledgeBaseSelection.ImportRevisions = selected && analysis.RevisionsCount > 0;
     }
 
     private (int Selected, int Available) PluginTally(GlpiInventoryPluginInfo plugin)

@@ -1,7 +1,9 @@
 ﻿using GlpiNg.Modules.Abstractions.Cron;
 using GlpiNg.Modules.Abstractions.Menu;
+using GlpiNg.Modules.Abstractions.Reports;
 using GlpiNg.Modules.Inventory.Controllers;
 using GlpiNg.Modules.Inventory.Import;
+using GlpiNg.Modules.Inventory.Reports;
 using GlpiNg.Modules.Inventory.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -50,6 +52,11 @@ public static class InventoryModuleServiceCollectionExtensions
         // Contribution du module au menu latéral de l'hôte (groupe "Parc" + entrées
         // Agents/Déploiements dans "Outils") — voir InventoryMenuProvider.
         services.AddSingleton<IMenuProvider, InventoryMenuProvider>();
+
+        // Contribution du module aux rapports de l'hôte (/tools/reports) — voir
+        // InventoryReportProvider. Scoped et non singleton : un rapport lit la base sous le
+        // cloisonnement par entité de l'utilisateur courant, qui est une notion de scope.
+        services.AddScoped<IReportProvider, InventoryReportProvider>();
 
         services.AddScoped<ComputerListStateService>();
 

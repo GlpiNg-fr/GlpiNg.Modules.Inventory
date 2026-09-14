@@ -83,6 +83,9 @@
             @{
                 (int Selected, int Available) parcTally = ParcTally(analysis);
                 (int Selected, int Available) adminTally = AdminTally(adminAnalysis);
+                (int Selected, int Available) knowledgeBaseTally = State.KnowledgeBaseAnalysis is { } kbAnalysis
+                    ? KnowledgeBaseTally(kbAnalysis)
+                    : (0, 0);
                 (int Selected, int Available) pluginTally = PluginTally(plugin);
             }
 
@@ -113,6 +116,27 @@
                                    @onchange="@((ChangeEventArgs e) => SetAllAdmin(adminAnalysis, (bool)(e.Value ?? false)))" />
                             <span class="glpi-switch-slider"></span>
                         </label>
+                    </span>
+                </li>
+                <li class="nav-item">
+                    <span class="nav-link @(_tab == ImportTab.KnowledgeBase ? "active" : "")" role="button" @onclick="() => _tab = ImportTab.KnowledgeBase">
+                        <i class="ti ti-book"></i>
+                        <span>Base de connaissances</span>
+                        @if (State.KnowledgeBaseAnalysis is { IsPresent: true } kbTab)
+                        {
+                            <span class="badge bg-secondary-lt">@knowledgeBaseTally.Selected / @knowledgeBaseTally.Available</span>
+                            <label class="glpi-switch" title="Tout activer ou désactiver dans cet onglet"
+                                   @onclick="() => { }" @onclick:stopPropagation="true">
+                                <input type="checkbox" checked="@(knowledgeBaseTally.Available > 0 && knowledgeBaseTally.Selected == knowledgeBaseTally.Available)"
+                                       disabled="@(State.IsRunning || knowledgeBaseTally.Available == 0)"
+                                       @onchange="@((ChangeEventArgs e) => SetAllKnowledgeBase(kbTab, (bool)(e.Value ?? false)))" />
+                                <span class="glpi-switch-slider"></span>
+                            </label>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary-lt">absente</span>
+                        }
                     </span>
                 </li>
                 <li class="nav-item">
@@ -283,6 +307,65 @@
                     module ne le sont pas — à configurer manuellement). Configuration générale : uniquement les
                     réglages ayant un équivalent direct dans "Configuration générale" &gt; "Général".
                 </p>
+            }
+
+            @if (_tab == ImportTab.KnowledgeBase)
+            {
+                @if (State.KnowledgeBaseAnalysis is not { IsPresent: true } kb)
+                {
+                    <div class="glpi-import-plugin-empty">
+                        <i class="ti ti-book-off"></i>
+                        <p class="mb-0">Aucune base de connaissances sur cette base source (table <code>glpi_knowbaseitems</code> absente).</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="glpi-config-field-grid">
+                        <div class="glpi-config-field checkbox">
+                            <label for="glpi-import-sel-kbcategories"><i class="ti ti-category me-2"></i>Catégories (@kb.CategoriesCount)</label>
+                            <label class="glpi-switch">
+                                <input id="glpi-import-sel-kbcategories" type="checkbox" @bind="State.KnowledgeBaseSelection.ImportCategories"
+                                       disabled="@(State.IsRunning || kb.CategoriesCount == 0)" />
+                                <span class="glpi-switch-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="glpi-config-field checkbox">
+                            <label for="glpi-import-sel-kbarticles"><i class="ti ti-book me-2"></i>Articles (@kb.ArticlesCount)</label>
+                            <label class="glpi-switch">
+                                <input id="glpi-import-sel-kbarticles" type="checkbox" @bind="State.KnowledgeBaseSelection.ImportArticles"
+                                       disabled="@(State.IsRunning || kb.ArticlesCount == 0)" />
+                                <span class="glpi-switch-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="glpi-config-field checkbox">
+                            <label for="glpi-import-sel-kbtargets"><i class="ti ti-lock me-2"></i>Cibles de visibilité (@kb.TargetsCount)</label>
+                            <label class="glpi-switch">
+                                <input id="glpi-import-sel-kbtargets" type="checkbox" @bind="State.KnowledgeBaseSelection.ImportTargets"
+                                       disabled="@(State.IsRunning || kb.TargetsCount == 0)" />
+                                <span class="glpi-switch-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="glpi-config-field checkbox">
+                            <label for="glpi-import-sel-kbrevisions"><i class="ti ti-history me-2"></i>Révisions (@kb.RevisionsCount)</label>
+                            <label class="glpi-switch">
+                                <input id="glpi-import-sel-kbrevisions" type="checkbox" @bind="State.KnowledgeBaseSelection.ImportRevisions"
+                                       disabled="@(State.IsRunning || kb.RevisionsCount == 0)" />
+                                <span class="glpi-switch-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <p class="hint mt-2">
+                        Le contenu des articles est converti du HTML de GLPI vers le Markdown de GlpiNg (voir la fiche
+                        d'un article) : une mise en forme complexe peut être simplifiée au passage. Les cibles de
+                        visibilité et l'auteur d'un article ne se retrouvent que si l'onglet « Administration » a été
+                        importé — sinon, l'article arrive visible de tous. L'import est idempotent : le relancer met à
+                        jour les articles déjà repris au lieu de les dupliquer.
+                    </p>
+                }
             }
 
             @if (_tab == ImportTab.Plugin)
@@ -720,6 +803,68 @@
                 <div class="glpi-fiche-block-title"><i class="ti ti-alert-triangle"></i>Avertissements (Administration)</div>
                 <ul>
                     @foreach (string warning in adminResult.Warnings)
+                    {
+                        <li>@warning</li>
+                    }
+                </ul>
+            }
+        }
+
+        @if (State.LastKnowledgeBaseError is not null)
+        {
+            <div class="alert alert-danger">
+                <i class="ti ti-alert-circle me-1"></i>@State.LastKnowledgeBaseError
+            </div>
+        }
+
+        @if (State.LastKnowledgeBaseResult is { } kbResult)
+        {
+            <div class="row row-cards mb-3">
+                <div class="col-6 col-md-3">
+                    <div class="card card-sm">
+                        <div class="card-body text-center">
+                            <div class="fs-2 fw-bold">@(kbResult.CategoriesCreated + kbResult.CategoriesUpdated)</div>
+                            <div class="text-secondary">Catégories (@kbResult.CategoriesCreated créées)</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card card-sm">
+                        <div class="card-body text-center">
+                            <div class="fs-2 fw-bold">@(kbResult.ArticlesCreated + kbResult.ArticlesUpdated)</div>
+                            <div class="text-secondary">Articles (@kbResult.ArticlesCreated créés)</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card card-sm">
+                        <div class="card-body text-center">
+                            <div class="fs-2 fw-bold">@kbResult.TargetsImported</div>
+                            <div class="text-secondary">
+                                Cibles reprises
+                                @if (kbResult.TargetsSkipped > 0)
+                                {
+                                    <text>(@kbResult.TargetsSkipped ignorées)</text>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card card-sm">
+                        <div class="card-body text-center">
+                            <div class="fs-2 fw-bold">@kbResult.RevisionsImported</div>
+                            <div class="text-secondary">Révisions reprises</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (kbResult.Warnings.Count > 0)
+            {
+                <div class="glpi-fiche-block-title"><i class="ti ti-alert-triangle"></i>Avertissements (Base de connaissances)</div>
+                <ul>
+                    @foreach (string warning in kbResult.Warnings)
                     {
                         <li>@warning</li>
                     }
