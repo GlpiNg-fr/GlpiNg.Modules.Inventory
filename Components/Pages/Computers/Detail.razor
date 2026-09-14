@@ -959,6 +959,12 @@ else
                                     (clés de registre, requêtes WMI, recherches de fichiers). Les collectes actives
                                     sont transmises à tous les agents, qui rapportent leurs résultats ici.
                                 </p>
+                                <p class="mb-0 text-secondary" style="max-width: 46rem;">
+                                    Si rien ne remonte alors que des collectes sont actives, vérifiez que la tâche
+                                    <code>collect</code> est bien activée sur l'agent : elle est souvent installée
+                                    sans l'être, et le serveur ne peut pas l'activer à distance. Son état figure
+                                    dans « Tâches activées » sur la fiche de l'agent.
+                                </p>
                             </div>
                         }
                     }
