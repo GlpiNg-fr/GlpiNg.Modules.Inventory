@@ -229,6 +229,7 @@ public sealed class GlpiImportStateService
                 KnowledgeBaseSelection.ImportArticles = knowledgeBaseAnalysis.ArticlesCount > 0;
                 KnowledgeBaseSelection.ImportTargets = knowledgeBaseAnalysis.TargetsCount > 0;
                 KnowledgeBaseSelection.ImportRevisions = knowledgeBaseAnalysis.RevisionsCount > 0;
+                KnowledgeBaseSelection.ImportDocuments = knowledgeBaseAnalysis.DocumentsCount > 0;
 
                 // L'adresse de téléchargement des fichiers de paquets vient de la base, pas de
                 // l'administrateur : GLPI y range sa propre racine HTTP, et le plugin ses miroirs.
@@ -340,6 +341,7 @@ public sealed class GlpiImportStateService
             Add(KnowledgeBaseSelection.ImportArticles, GlpiImportPhases.KnowledgeBaseArticles, knowledgeBase.ArticlesCount);
             Add(KnowledgeBaseSelection.ImportTargets, GlpiImportPhases.KnowledgeBaseTargets, knowledgeBase.TargetsCount);
             Add(KnowledgeBaseSelection.ImportRevisions, GlpiImportPhases.KnowledgeBaseRevisions, knowledgeBase.RevisionsCount);
+            Add(KnowledgeBaseSelection.ImportDocuments, GlpiImportPhases.KnowledgeBaseDocuments, knowledgeBase.DocumentsCount);
         }
 
         GlpiInventoryPluginInfo plugin = analysis.InventoryPlugin;

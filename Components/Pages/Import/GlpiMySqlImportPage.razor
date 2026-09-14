@@ -356,7 +356,33 @@
                                 <span class="glpi-switch-slider"></span>
                             </label>
                         </div>
+
+                        <div class="glpi-config-field checkbox">
+                            <label for="glpi-import-sel-kbdocuments"><i class="ti ti-paperclip me-2"></i>Documents (@kb.DocumentsCount)</label>
+                            <label class="glpi-switch">
+                                <input id="glpi-import-sel-kbdocuments" type="checkbox" @bind="State.KnowledgeBaseSelection.ImportDocuments"
+                                       disabled="@(State.IsRunning || kb.DocumentsCount == 0)" />
+                                <span class="glpi-switch-slider"></span>
+                            </label>
+                        </div>
                     </div>
+
+                    @if (State.KnowledgeBaseSelection.ImportDocuments)
+                    {
+                        <div class="glpi-config-field">
+                            <label for="glpi-import-files-path">Dossier <code>files/</code> de GLPI</label>
+                            <input id="glpi-import-files-path" class="glpi-config-input"
+                                   @bind="State.KnowledgeBaseSelection.GlpiFilesPath"
+                                   disabled="@State.IsRunning"
+                                   placeholder="/var/www/glpi/files ou \serveur\glpiiles" />
+                        </div>
+                        <p class="hint">
+                            GLPI ne range pas les fichiers en base : seul leur chemin y figure. Sans ce dossier, les
+                            documents sont repris en fiches et rattachements, mais sans contenu téléchargeable — le
+                            compte rendu le signale, et téléverser le fichier depuis l'article complète la fiche
+                            existante. Le service GlpiNg doit avoir le droit de lire ce dossier.
+                        </p>
+                    }
 
                     <p class="hint mt-2">
                         Le contenu des articles est converti du HTML de GLPI vers le Markdown de GlpiNg (voir la fiche
