@@ -43,6 +43,49 @@
                     d'écriture sur la base GLPI source.
                 </p>
 
+                @* Saisi avec la connexion, et non dans chaque section : c'est une propriété de
+                   l'installation source au même titre que son serveur. Tout ce que l'import va
+                   chercher sur disque en descend — les documents directement, les fichiers de
+                   paquets sous _plugins/. *@
+                <div class="glpi-config-divider">
+                    <span><i class="ti ti-folder"></i> Fichiers de l'installation GLPI</span>
+                </div>
+
+                <p class="hint" style="margin-left:0;">
+                    GLPI ne range pas ses fichiers en base : seuls leurs chemins y figurent. Sans ce dossier,
+                    documents et fichiers de paquets sont repris en fiches, mais sans contenu téléchargeable.
+                </p>
+
+                <div class="glpi-config-field">
+                    <label for="glpi-import-files-root">Dossier <code>files/</code> de GLPI</label>
+                    <input id="glpi-import-files-root" type="text" class="glpi-config-input"
+                           placeholder="/var/www/glpi/files"
+                           @bind="State.GlpiFilesPath" disabled="@State.IsRunning" />
+                </div>
+                <p class="hint">Chemin local ou partage réseau (UNC), vu depuis la machine GlpiNg.</p>
+
+                @* Optionnels : un partage déjà accessible au compte sous lequel tourne GlpiNg n'en
+                   a pas besoin. Ils ne servent qu'aux chemins UNC — sur un chemin local ils sont
+                   simplement ignorés. *@
+                <div class="glpi-config-field">
+                    <label for="glpi-import-files-user">Identifiant du partage <span class="text-secondary">(optionnel)</span></label>
+                    <input id="glpi-import-files-user" type="text" class="glpi-config-input"
+                           placeholder="DOMAINE\utilisateur"
+                           @bind="State.GlpiFilesUserName" disabled="@State.IsRunning" />
+                </div>
+
+                <div class="glpi-config-field">
+                    <label for="glpi-import-files-password">Mot de passe du partage</label>
+                    <input id="glpi-import-files-password" type="password" class="glpi-config-input"
+                           autocomplete="new-password"
+                           @bind="State.GlpiFilesPassword" disabled="@State.IsRunning" />
+                </div>
+                <p class="hint">
+                    À renseigner seulement si le compte sous lequel tourne GlpiNg n'a pas accès au partage.
+                    Utilisés le temps de l'import et jamais enregistrés. L'authentification d'un partage
+                    réseau n'est possible que sous Windows ; ailleurs, montez-le avant de lancer l'import.
+                </p>
+
                 <button type="submit" class="glpi-config-save" disabled="@(!State.CanAnalyze)">
                     @if (State.IsAnalyzing)
                     {
@@ -369,18 +412,17 @@
 
                     @if (State.KnowledgeBaseSelection.ImportDocuments)
                     {
-                        <div class="glpi-config-field">
-                            <label for="glpi-import-files-path">Dossier <code>files/</code> de GLPI</label>
-                            <input id="glpi-import-files-path" class="glpi-config-input"
-                                   @bind="State.KnowledgeBaseSelection.GlpiFilesPath"
-                                   disabled="@State.IsRunning"
-                                   placeholder="/var/www/glpi/files ou \serveur\glpiiles" />
-                        </div>
                         <p class="hint">
-                            GLPI ne range pas les fichiers en base : seul leur chemin y figure. Sans ce dossier, les
-                            documents sont repris en fiches et rattachements, mais sans contenu téléchargeable — le
-                            compte rendu le signale, et téléverser le fichier depuis l'article complète la fiche
-                            existante. Le service GlpiNg doit avoir le droit de lire ce dossier.
+                            Le contenu des fichiers est lu dans le dossier <code>files/</code> saisi avec la
+                            connexion, plus haut.
+                            @if (string.IsNullOrWhiteSpace(State.GlpiFilesPath))
+                            {
+                                <text>
+                                    <strong>Il n'est pas renseigné</strong> : les documents seront repris en fiches et
+                                    rattachements, mais sans contenu téléchargeable — le compte rendu le signalera, et
+                                    téléverser le fichier depuis l'article complétera la fiche existante.
+                                </text>
+                            }
                         </p>
                     }
 
@@ -502,32 +544,19 @@
                             </p>
 
                             <div class="glpi-config-field">
-                                <label for="glpi-import-files-path">Répertoire des fichiers du plugin</label>
+                                <label for="glpi-import-files-path">
+                                    Répertoire des fichiers du plugin <span class="text-secondary">(optionnel)</span>
+                                </label>
                                 <input id="glpi-import-files-path" type="text" class="glpi-config-input"
-                                       placeholder="\\serveur-glpi\glpi\files\_plugins\glpiinventory\files"
-                                       @bind="State.DeployFilesPath" disabled="@State.IsRunning" />
-                            </div>
-                            <p class="hint">Chemin local ou partage réseau, vu depuis la machine GlpiNg. Route principale.</p>
-
-                            @* Optionnels : un partage déjà accessible au compte sous lequel tourne
-                               GlpiNg n'en a pas besoin. Ils ne servent qu'aux chemins UNC — sur un
-                               chemin local ils sont simplement ignorés. *@
-                            <div class="glpi-config-field">
-                                <label for="glpi-import-files-user">Identifiant du partage <span class="text-secondary">(optionnel)</span></label>
-                                <input id="glpi-import-files-user" type="text" class="glpi-config-input"
-                                       placeholder="DOMAINE\utilisateur"
-                                       @bind="State.DeployFilesUserName" disabled="@State.IsRunning" />
-                            </div>
-
-                            <div class="glpi-config-field">
-                                <label for="glpi-import-files-password">Mot de passe du partage</label>
-                                <input id="glpi-import-files-password" type="password" class="glpi-config-input"
-                                       autocomplete="new-password"
-                                       @bind="State.DeployFilesPassword" disabled="@State.IsRunning" />
+                                       placeholder="Déduit du dossier files/ et du plugin détecté"
+                                       @bind="State.DeployFilesPathOverride" disabled="@State.IsRunning" />
                             </div>
                             <p class="hint">
-                                À renseigner seulement si le compte sous lequel tourne GlpiNg n'a pas accès au
-                                partage. Utilisés le temps de l'import et jamais enregistrés.
+                                Laissez vide dans le cas courant : le chemin est déduit du dossier <code>files/</code>
+                                saisi avec la connexion, et du plugin détecté à l'analyse
+                                (<code>&lt;files&gt;/_plugins/&lt;plugin&gt;/files</code>). À renseigner seulement si
+                                cette installation range ses fichiers de paquets ailleurs. Les identifiants du partage
+                                sont ceux de la connexion — c'est le même partage.
                             </p>
 
                             <div class="glpi-config-field">

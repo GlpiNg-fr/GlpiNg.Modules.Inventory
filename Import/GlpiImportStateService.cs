@@ -31,21 +31,31 @@ public sealed class GlpiImportStateService
     public string Password { get; set; } = string.Empty;
 
     /// <summary>
-    /// Répertoire des fichiers du plugin d'inventaire sur l'installation GLPI source, vu depuis la
-    /// machine GlpiNg. Renseigné, l'import rapatrie le contenu des fichiers de paquets ; sinon ils
-    /// sont seulement déclarés, à téléverser à la main.
+    /// Dossier <c>files/</c> de l'installation GLPI source, vu depuis la machine GlpiNg.
+    ///
+    /// Saisi avec la connexion MySQL et non dans chaque section, parce que c'est une propriété de
+    /// l'installation source au même titre que son serveur de base : tout ce que l'import va
+    /// chercher sur disque en descend — le contenu des documents directement, les fichiers de
+    /// paquets sous <c>_plugins/</c> (voir <see cref="ResolveDeployFilesPath"/>).
     /// </summary>
-    public string DeployFilesPath { get; set; } = string.Empty;
+    public string GlpiFilesPath { get; set; } = string.Empty;
 
     /// <summary>
-    /// Identifiants du partage réseau hébergeant <see cref="DeployFilesPath"/>, quand le compte
-    /// sous lequel tourne GlpiNg n'y a pas accès. Gardés en mémoire le temps de la session, comme
-    /// le mot de passe MySQL du même formulaire, et jamais persistés.
+    /// Identifiants du partage réseau hébergeant <see cref="GlpiFilesPath"/>, quand le compte sous
+    /// lequel tourne GlpiNg n'y a pas accès. Gardés en mémoire le temps de la session, comme le
+    /// mot de passe MySQL du même formulaire, et jamais persistés.
     /// </summary>
-    public string DeployFilesUserName { get; set; } = string.Empty;
+    public string GlpiFilesUserName { get; set; } = string.Empty;
 
-    /// <inheritdoc cref="DeployFilesUserName"/>
-    public string DeployFilesPassword { get; set; } = string.Empty;
+    /// <inheritdoc cref="GlpiFilesUserName"/>
+    public string GlpiFilesPassword { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Dérogation au chemin déduit pour les fichiers de paquets, quand le plugin range les siens
+    /// ailleurs que sous <c>files/_plugins/&lt;plugin&gt;/files</c>. Laissé vide dans le cas
+    /// courant.
+    /// </summary>
+    public string DeployFilesPathOverride { get; set; } = string.Empty;
 
     /// <summary>Racine HTTP de GLPI, essayée en repli quand le répertoire n'est pas joignable.</summary>
     public string GlpiBaseUrl { get; set; } = string.Empty;
@@ -464,6 +474,12 @@ public sealed class GlpiImportStateService
                     IGlpiKnowledgeBaseImportService knowledgeBaseImportService =
                         scope.ServiceProvider.GetRequiredService<IGlpiKnowledgeBaseImportService>();
 
+                    // Le dossier files/ et ses identifiants viennent du formulaire de connexion,
+                    // comme pour les fichiers de paquets : c'est le même partage.
+                    KnowledgeBaseSelection.GlpiFilesPath = string.IsNullOrWhiteSpace(GlpiFilesPath) ? null : GlpiFilesPath.Trim();
+                    KnowledgeBaseSelection.GlpiFilesUserName = string.IsNullOrWhiteSpace(GlpiFilesUserName) ? null : GlpiFilesUserName.Trim();
+                    KnowledgeBaseSelection.GlpiFilesPassword = string.IsNullOrEmpty(GlpiFilesPassword) ? null : GlpiFilesPassword;
+
                     LastKnowledgeBaseResult = await knowledgeBaseImportService.RunAsync(connectionString, KnowledgeBaseSelection, progress);
                 }
                 catch (Exception ex)
@@ -482,9 +498,9 @@ public sealed class GlpiImportStateService
                     IGlpiInventoryPluginImportService pluginImportService =
                         scope.ServiceProvider.GetRequiredService<IGlpiInventoryPluginImportService>();
 
-                    PluginSelection.DeployFilesPath = string.IsNullOrWhiteSpace(DeployFilesPath) ? null : DeployFilesPath.Trim();
-                    PluginSelection.DeployFilesUserName = string.IsNullOrWhiteSpace(DeployFilesUserName) ? null : DeployFilesUserName.Trim();
-                    PluginSelection.DeployFilesPassword = string.IsNullOrEmpty(DeployFilesPassword) ? null : DeployFilesPassword;
+                    PluginSelection.DeployFilesPath = ResolveDeployFilesPath(tablePrefix);
+                    PluginSelection.DeployFilesUserName = string.IsNullOrWhiteSpace(GlpiFilesUserName) ? null : GlpiFilesUserName.Trim();
+                    PluginSelection.DeployFilesPassword = string.IsNullOrEmpty(GlpiFilesPassword) ? null : GlpiFilesPassword;
                     PluginSelection.GlpiBaseUrl = string.IsNullOrWhiteSpace(GlpiBaseUrl) ? null : GlpiBaseUrl.Trim();
                     PluginSelection.GlpiUserName = string.IsNullOrWhiteSpace(GlpiUserName) ? null : GlpiUserName.Trim();
                     PluginSelection.GlpiPassword = string.IsNullOrEmpty(GlpiPassword) ? null : GlpiPassword;
@@ -533,6 +549,41 @@ public sealed class GlpiImportStateService
         }
 
         return string.Join(" — ", messages);
+    }
+
+    /// <summary>
+    /// Chemin des fichiers de paquets : la dérogation si elle est saisie, sinon
+    /// <c>&lt;files&gt;/_plugins/&lt;plugin&gt;/files</c>, où le nom du plugin se lit dans le
+    /// préfixe de tables détecté à l'analyse (<c>glpi_plugin_glpiinventory_</c> →
+    /// <c>glpiinventory</c>).
+    ///
+    /// Déduit plutôt que ressaisi parce que les deux chemins ne sont pas indépendants : le dossier
+    /// des paquets est toujours sous celui des documents, et demander deux fois la même racine
+    /// n'apporte que l'occasion de les contredire.
+    /// </summary>
+    private string? ResolveDeployFilesPath(string tablePrefix)
+    {
+        if (!string.IsNullOrWhiteSpace(DeployFilesPathOverride))
+        {
+            return DeployFilesPathOverride.Trim();
+        }
+
+        if (string.IsNullOrWhiteSpace(GlpiFilesPath))
+        {
+            return null;
+        }
+
+        string plugin = tablePrefix.TrimEnd('_');
+        int lastSeparator = plugin.LastIndexOf('_');
+
+        if (lastSeparator >= 0)
+        {
+            plugin = plugin[(lastSeparator + 1)..];
+        }
+
+        return plugin.Length == 0
+            ? null
+            : Path.Combine(GlpiFilesPath.Trim(), "_plugins", plugin, "files");
     }
 
     private string BuildConnectionString() => new MySqlConnectionStringBuilder
