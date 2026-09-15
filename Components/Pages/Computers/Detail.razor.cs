@@ -2,6 +2,8 @@
 using System.Text;
 using System.Text.RegularExpressions;
 using GlpiNg.Modules.Abstractions.Deployment;
+using GlpiNg.Modules.Abstractions.Items;
+using GlpiNg.Modules.Abstractions.Notes;
 using GlpiNg.Modules.Abstractions.Preferences;
 using GlpiNg.Modules.Inventory.Models;
 using GlpiNg.Modules.Inventory.Services;
@@ -34,6 +36,13 @@ public partial class Detail : ComponentBase, IDisposable
     // "Informations de collecte" (ce que les collectes registre/WMI/fichiers ont rapporté).
     [Inject]
     private IComputerCollectProvider? CollectProvider { get; set; }
+
+    /// <summary>
+    /// Notes libres (onglet « Notes » de GLPI), rendues par l'hôte : le modèle vit chez lui, comme
+    /// les documents, parce qu'une note se rattache à n'importe quel type d'objet.
+    /// </summary>
+    [Inject]
+    private IItemNotes Notes { get; set; } = null!;
 
     // Optionnel pour la même raison que DeploymentTasksProvider ci-dessus — alimente l'onglet
     // "Déploiement de package" (assignation de paquets à l'agent du poste).
@@ -153,6 +162,12 @@ public partial class Detail : ComponentBase, IDisposable
     private ComputerDeploymentTasksInfo? _deploymentTasksInfo;
     private ComputerCollectInfo? _collectInfo;
 
+    private IReadOnlyList<ItemNote> _notes = [];
+    private string _newNote = string.Empty;
+    private int? _editingNoteId;
+    private string _editingNote = string.Empty;
+    private int? _confirmDeleteNoteId;
+
     // Null quand le module Déploiement n'est pas là : l'onglet n'affiche alors pas « 0 », qui se
     // lirait comme « rien collecté » alors que rien ne peut l'être.
     private int? CollectEntriesCount => _collectInfo?.Groups.Sum(group => group.Entries.Count);
@@ -236,8 +251,9 @@ public partial class Detail : ComponentBase, IDisposable
             : await DeploymentTasksProvider.GetForComputerAsync(ComputerId);
 
         _collectInfo = CollectProvider is null ? null : await CollectProvider.GetForComputerAsync(ComputerId);
+        _notes = await Notes.GetForItemAsync(ItemTypes.Computer, ComputerId);
         await LoadDeploymentAssignmentsAsync();
-        _tabs = BuildTabs(_computer, _deploymentTasksInfo, _deploymentAssignments.Count, _locks.Count, CollectEntriesCount);
+        _tabs = BuildTabs(_computer, _deploymentTasksInfo, _deploymentAssignments.Count, _locks.Count, CollectEntriesCount, _notes.Count);
 
         _agentStatusPollCts?.Cancel();
         _agentStatusPollCts?.Dispose();
@@ -548,8 +564,9 @@ public partial class Detail : ComponentBase, IDisposable
                     : await DeploymentTasksProvider.GetForComputerAsync(ComputerId);
 
                 _collectInfo = CollectProvider is null ? null : await CollectProvider.GetForComputerAsync(ComputerId);
+        _notes = await Notes.GetForItemAsync(ItemTypes.Computer, ComputerId);
                 await LoadDeploymentAssignmentsAsync();
-                _tabs = BuildTabs(_computer, _deploymentTasksInfo, _deploymentAssignments.Count, _locks.Count, CollectEntriesCount);
+                _tabs = BuildTabs(_computer, _deploymentTasksInfo, _deploymentAssignments.Count, _locks.Count, CollectEntriesCount, _notes.Count);
             }
         }
         finally
@@ -716,7 +733,7 @@ public partial class Detail : ComponentBase, IDisposable
                 await InvokeAsync(async () =>
                 {
                     await LoadDeploymentAssignmentsAsync();
-                    _tabs = BuildTabs(_computer!, _deploymentTasksInfo, _deploymentAssignments.Count, _locks.Count, CollectEntriesCount);
+                    _tabs = BuildTabs(_computer!, _deploymentTasksInfo, _deploymentAssignments.Count, _locks.Count, CollectEntriesCount, _notes.Count);
                     StateHasChanged();
                 });
 
@@ -783,7 +800,7 @@ public partial class Detail : ComponentBase, IDisposable
             {
                 _selectedPackagesToAssign = [];
                 await LoadDeploymentAssignmentsAsync();
-                _tabs = BuildTabs(_computer!, _deploymentTasksInfo, _deploymentAssignments.Count, _locks.Count, CollectEntriesCount);
+                _tabs = BuildTabs(_computer!, _deploymentTasksInfo, _deploymentAssignments.Count, _locks.Count, CollectEntriesCount, _notes.Count);
 
                 _prepareInstallError = _wakeMode switch
                 {
@@ -872,7 +889,7 @@ public partial class Detail : ComponentBase, IDisposable
 
         await DeploymentAssignmentService.CancelAssignmentAsync(jobId);
         await LoadDeploymentAssignmentsAsync();
-        _tabs = BuildTabs(_computer!, _deploymentTasksInfo, _deploymentAssignments.Count, _locks.Count, CollectEntriesCount);
+        _tabs = BuildTabs(_computer!, _deploymentTasksInfo, _deploymentAssignments.Count, _locks.Count, CollectEntriesCount, _notes.Count);
         StateHasChanged();
     }
 
@@ -901,7 +918,7 @@ public partial class Detail : ComponentBase, IDisposable
             }
 
             await LoadDeploymentAssignmentsAsync();
-            _tabs = BuildTabs(_computer!, _deploymentTasksInfo, _deploymentAssignments.Count, _locks.Count, CollectEntriesCount);
+            _tabs = BuildTabs(_computer!, _deploymentTasksInfo, _deploymentAssignments.Count, _locks.Count, CollectEntriesCount, _notes.Count);
 
             _prepareInstallError = _wakeMode switch
             {
@@ -997,7 +1014,70 @@ public partial class Detail : ComponentBase, IDisposable
     // "tasks", "collectinfo", "links" et "deploy" ont un contenu réel pour l'instant (voir le
     // @switch de Detail.razor) ; les autres affichent un placeholder en attendant d'être
     // alimentés au fur et à mesure des besoins.
-    private static List<FicheTab> BuildTabs(Computer computer, ComputerDeploymentTasksInfo? deploymentTasksInfo, int deploymentAssignmentsCount, int lockedFieldsCount, int? collectEntriesCount) =>
+    // ---- Notes ---------------------------------------------------------------------------------
+
+    private async Task LoadNotesAsync()
+        => _notes = await Notes.GetForItemAsync(ItemTypes.Computer, ComputerId);
+
+    private async Task AddNoteAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_newNote))
+        {
+            return;
+        }
+
+        await Notes.AddAsync(ItemTypes.Computer, ComputerId, _newNote, await CurrentUserNameAsync(), null);
+
+        _newNote = string.Empty;
+        await LoadNotesAsync();
+        RefreshTabs();
+    }
+
+    private void StartEditNote(ItemNote note)
+    {
+        _editingNoteId = note.Id;
+        _editingNote = note.Content;
+        _confirmDeleteNoteId = null;
+    }
+
+    private void CancelEditNote()
+    {
+        _editingNoteId = null;
+        _editingNote = string.Empty;
+    }
+
+    private async Task SaveNoteAsync()
+    {
+        if (_editingNoteId is not int noteId || string.IsNullOrWhiteSpace(_editingNote))
+        {
+            return;
+        }
+
+        await Notes.UpdateAsync(noteId, _editingNote, await CurrentUserNameAsync());
+
+        CancelEditNote();
+        await LoadNotesAsync();
+    }
+
+    private async Task DeleteNoteAsync(int noteId)
+    {
+        await Notes.DeleteAsync(noteId);
+
+        _confirmDeleteNoteId = null;
+        await LoadNotesAsync();
+        RefreshTabs();
+    }
+
+    /// <summary>Recalcule les onglets : seul le compteur de notes a changé.</summary>
+    private void RefreshTabs()
+    {
+        if (_computer is not null)
+        {
+            _tabs = BuildTabs(_computer, _deploymentTasksInfo, _deploymentAssignments.Count, _locks.Count, CollectEntriesCount, _notes.Count);
+        }
+    }
+
+    private static List<FicheTab> BuildTabs(Computer computer, ComputerDeploymentTasksInfo? deploymentTasksInfo, int deploymentAssignmentsCount, int lockedFieldsCount, int? collectEntriesCount, int notesCount) =>
     [
         new("computer", "ti-device-desktop", "Ordinateur", null),
         new("os", "ti-settings-cog", "Systèmes d'exploitation", computer.OperatingSystem is null ? 0 : 1),
@@ -1017,6 +1097,7 @@ public partial class Detail : ComponentBase, IDisposable
         new("tasks", "ti-checklist", "Tâches / groupes",
             deploymentTasksInfo is null ? null : deploymentTasksInfo.Tasks.Count + deploymentTasksInfo.Groups.Count),
         new("collectinfo", "ti-cloud-upload", "Informations de collecte", collectEntriesCount),
+        new("notes", "ti-notes", "Notes", notesCount > 0 ? notesCount : null),
         new("links", "ti-external-link", "Liens externes", null),
         new("deploy", "ti-package", "Déploiement de package", deploymentAssignmentsCount == 0 ? null : deploymentAssignmentsCount),
         new("all", "ti-list", "Tous", null),

@@ -2,6 +2,7 @@
 @using GlpiNg.Modules.Abstractions.Deployment
 @using GlpiNg.Modules.Inventory.Models
 @using GlpiNg.Modules.Inventory.Services
+@using GlpiNg.Modules.Abstractions.Notes
 @rendermode InteractiveServer
 
 <PageTitle>@(_computer?.Name ?? "Ordinateur") — GlpiNg</PageTitle>
@@ -965,6 +966,104 @@ else
                                     sans l'être, et le serveur ne peut pas l'activer à distance. Son état figure
                                     dans « Tâches activées » sur la fiche de l'agent.
                                 </p>
+                            </div>
+                        }
+                    }
+                    break;
+
+                case "notes":
+                    <p class="text-secondary">
+                        Notes libres attachées à ce poste. Elles ne viennent pas de l'inventaire et ne sont
+                        jamais écrasées par un agent : c'est le carnet de bord de ceux qui l'exploitent.
+                    </p>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="pc-new-note">Ajouter une note</label>
+                        <textarea id="pc-new-note" class="form-control" rows="3"
+                                  placeholder="Intervention, particularité, rappel…"
+                                  @bind="_newNote" @bind:event="oninput"></textarea>
+                        <button type="button" class="btn btn-primary mt-2"
+                                disabled="@string.IsNullOrWhiteSpace(_newNote)" @onclick="AddNoteAsync">
+                            <i class="ti ti-plus me-1"></i>Ajouter
+                        </button>
+                    </div>
+
+                    @if (_notes.Count == 0)
+                    {
+                        <div class="glpi-config-placeholder">
+                            <i class="ti ti-notes-off"></i>
+                            <p class="mb-0">Aucune note pour ce poste.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        @foreach (ItemNote note in _notes)
+                        {
+                            <div class="card mb-2">
+                                <div class="card-body">
+                                    @if (_editingNoteId == note.Id)
+                                    {
+                                        <textarea class="form-control" rows="4"
+                                                  @bind="_editingNote" @bind:event="oninput"></textarea>
+                                        <div class="mt-2">
+                                            <button type="button" class="btn btn-primary btn-sm"
+                                                    disabled="@string.IsNullOrWhiteSpace(_editingNote)" @onclick="SaveNoteAsync">
+                                                Enregistrer
+                                            </button>
+                                            <button type="button" class="btn btn-sm" @onclick="CancelEditNote">Annuler</button>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        @* Texte brut, volontairement : la fiche d'un poste n'a pas de rendu
+                                           Markdown, et interpréter du balisage ici obligerait à l'assainir. *@
+                                        <div style="white-space: pre-wrap;">@note.Content</div>
+
+                                        <div class="d-flex align-items-center justify-content-between mt-2">
+                                            <div class="text-secondary small">
+                                                <i class="ti ti-user me-1"></i>@note.AuthorName
+                                                <span class="ms-2">
+                                                    <i class="ti ti-calendar me-1"></i>@note.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                                </span>
+                                                @if (note.UpdatedAt is { } updated)
+                                                {
+                                                    <span class="ms-2">
+                                                        <i class="ti ti-pencil me-1"></i>Modifiée le @updated.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                                        @if (note.LastEditorName is { Length: > 0 } editor)
+                                                        {
+                                                            <text> par @editor</text>
+                                                        }
+                                                    </span>
+                                                }
+                                            </div>
+
+                                            <div class="text-nowrap">
+                                                <button type="button" class="btn btn-icon btn-sm" title="Modifier"
+                                                        @onclick="() => StartEditNote(note)">
+                                                    <i class="ti ti-pencil"></i>
+                                                </button>
+                                                @if (_confirmDeleteNoteId == note.Id)
+                                                {
+                                                    <button type="button" class="btn btn-sm btn-danger"
+                                                            @onclick="() => DeleteNoteAsync(note.Id)">
+                                                        Confirmer
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm"
+                                                            @onclick="() => _confirmDeleteNoteId = null">
+                                                        Annuler
+                                                    </button>
+                                                }
+                                                else
+                                                {
+                                                    <button type="button" class="btn btn-icon btn-sm btn-ghost-danger" title="Supprimer"
+                                                            @onclick="() => _confirmDeleteNoteId = note.Id">
+                                                        <i class="ti ti-trash"></i>
+                                                    </button>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
                             </div>
                         }
                     }
