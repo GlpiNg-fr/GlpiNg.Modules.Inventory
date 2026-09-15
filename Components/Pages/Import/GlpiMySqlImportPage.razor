@@ -913,6 +913,31 @@
                         </div>
                     </div>
                 </div>
+                @* Documents et rattachements comptés séparément : un document repris sans être
+                   rattaché à aucun article n'apparaîtrait nulle part sur les fiches, et le seul
+                   nombre de documents laisserait croire l'import complet. *@
+                <div class="col-6 col-md-3">
+                    <div class="card card-sm">
+                        <div class="card-body text-center">
+                            <div class="fs-2 fw-bold">@kbResult.DocumentsImported</div>
+                            <div class="text-secondary">
+                                Documents repris
+                                @if (kbResult.DocumentsWithoutContent > 0)
+                                {
+                                    <text>(@kbResult.DocumentsWithoutContent sans fichier)</text>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card card-sm">
+                        <div class="card-body text-center">
+                            <div class="fs-2 fw-bold">@kbResult.DocumentLinksImported</div>
+                            <div class="text-secondary">Rattachements aux articles</div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             @if (kbResult.Warnings.Count > 0)
