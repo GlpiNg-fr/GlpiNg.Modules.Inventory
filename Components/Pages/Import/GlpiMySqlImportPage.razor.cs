@@ -106,6 +106,7 @@ public partial class GlpiMySqlImportPage : ComponentBase, IDisposable
             (State.KnowledgeBaseSelection.ImportTargets, analysis.TargetsCount),
             (State.KnowledgeBaseSelection.ImportRevisions, analysis.RevisionsCount),
             (State.KnowledgeBaseSelection.ImportDocuments, analysis.DocumentsCount),
+            (State.KnowledgeBaseSelection.ImportNotes, analysis.NotesCount),
         ];
 
         return (items.Count(item => item is { Selected: true, Count: > 0 }), items.Count(item => item.Count > 0));
@@ -118,6 +119,7 @@ public partial class GlpiMySqlImportPage : ComponentBase, IDisposable
         State.KnowledgeBaseSelection.ImportTargets = selected && analysis.TargetsCount > 0;
         State.KnowledgeBaseSelection.ImportRevisions = selected && analysis.RevisionsCount > 0;
         State.KnowledgeBaseSelection.ImportDocuments = selected && analysis.DocumentsCount > 0;
+        State.KnowledgeBaseSelection.ImportNotes = selected && analysis.NotesCount > 0;
     }
 
     private (int Selected, int Available) PluginTally(GlpiInventoryPluginInfo plugin)

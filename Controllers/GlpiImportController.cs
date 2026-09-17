@@ -14,11 +14,12 @@ namespace GlpiNg.Modules.Inventory.Controllers;
 /// (<see cref="IGlpiKnowledgeBaseImportService"/>, ces deux derniers implémentés par l'hôte),
 /// d'un seul coup et toutes catégories confondues.
 ///
-/// Pour la base de connaissances, les quatre catégories sont demandées explicitement plutôt que
-/// laissées au constructeur par défaut : la sélection de cet import démarre vide, parce que la
-/// page la remplit depuis l'analyse de la base source. Ici, il n'y a pas d'analyse — un appelant
+/// Pour la base de connaissances, les catégories sont demandées explicitement plutôt que laissées
+/// au constructeur par défaut : la sélection de cet import démarre vide, parce que la page la
+/// remplit depuis l'analyse de la base source. Ici, il n'y a pas d'analyse — un appelant
 /// machine-à-machine veut tout, et le dire ici vaut mieux qu'un défaut discret qui changerait le
-/// comportement des deux appelants à la fois.
+/// comportement des deux appelants à la fois. Les documents restent hors de cette liste : ils
+/// dépendent du dossier <c>files/</c> de l'installation source, que cet appelant ne fournit pas.
 ///
 /// Protégé par un jeton OAuth2 Bearer portant le scope "api" ou "inventory" (policy
 /// "OAuthApiAccess" définie dans Program.cs) plutôt que par le FallbackPolicy global
@@ -53,6 +54,7 @@ public class GlpiImportController(
                 ImportArticles = true,
                 ImportTargets = true,
                 ImportRevisions = true,
+                ImportNotes = true,
             },
             progress: null,
             cancellationToken);

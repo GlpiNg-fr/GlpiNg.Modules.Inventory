@@ -408,6 +408,15 @@
                                 <span class="glpi-switch-slider"></span>
                             </label>
                         </div>
+
+                        <div class="glpi-config-field checkbox">
+                            <label for="glpi-import-sel-kbnotes"><i class="ti ti-notes me-2"></i>Notes (@kb.NotesCount)</label>
+                            <label class="glpi-switch">
+                                <input id="glpi-import-sel-kbnotes" type="checkbox" @bind="State.KnowledgeBaseSelection.ImportNotes"
+                                       disabled="@(State.IsRunning || kb.NotesCount == 0)" />
+                                <span class="glpi-switch-slider"></span>
+                            </label>
+                        </div>
                     </div>
 
                     @if (State.KnowledgeBaseSelection.ImportDocuments)
@@ -935,6 +944,20 @@
                         <div class="card-body text-center">
                             <div class="fs-2 fw-bold">@kbResult.DocumentLinksImported</div>
                             <div class="text-secondary">Rattachements aux articles</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card card-sm">
+                        <div class="card-body text-center">
+                            <div class="fs-2 fw-bold">@kbResult.NotesImported</div>
+                            <div class="text-secondary">
+                                Notes reprises
+                                @if (kbResult.NotesSkipped > 0)
+                                {
+                                    <text>(@kbResult.NotesSkipped ignorées)</text>
+                                }
+                            </div>
                         </div>
                     </div>
                 </div>
