@@ -140,6 +140,10 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
             </div>
             <div class="modal-body">
+                @if (_createError is not null)
+                {
+                    <div class="alert alert-danger">@_createError</div>
+                }
                 <CartridgeItemFormFields Item="_newItem" LocationOptions="_locationOptions" OnChanged="StateHasChanged" />
             </div>
             <div class="modal-footer">

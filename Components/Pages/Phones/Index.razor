@@ -138,6 +138,10 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
             </div>
             <div class="modal-body">
+                @if (_createError is not null)
+                {
+                    <div class="alert alert-danger">@_createError</div>
+                }
                 <PhoneFormFields Item="_newItem" StatusOptions="_statusOptions" LocationOptions="_locationOptions" OnChanged="StateHasChanged" />
             </div>
             <div class="modal-footer">

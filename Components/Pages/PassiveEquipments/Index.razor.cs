@@ -1,4 +1,6 @@
-﻿using GlpiNg.Modules.Abstractions.Preferences;
+﻿using GlpiNg.Modules.Abstractions.FieldUnicity;
+using GlpiNg.Modules.Abstractions.Items;
+using GlpiNg.Modules.Abstractions.Preferences;
 using GlpiNg.Modules.Inventory.Models;
 using GlpiNg.Modules.Inventory.Search;
 using Microsoft.AspNetCore.Components;
@@ -33,6 +35,12 @@ public partial class Index : ComponentBase
 
     [Inject]
     private IDbContextFactory<DbContext> DbFactory { get; set; } = null!;
+
+    [Inject]
+    private IFieldUnicityChecker FieldUnicity { get; set; } = null!;
+
+    /// <summary>Refus d'un critère d'unicité des champs, affiché dans la fenêtre de création.</summary>
+    private string? _createError;
 
     [Inject]
     private IJSRuntime JS { get; set; } = null!;
@@ -171,6 +179,17 @@ public partial class Index : ComponentBase
         if (string.IsNullOrWhiteSpace(_newItem.Name)) return;
 
         await using DbContext db = await DbFactory.CreateDbContextAsync();
+
+        // Unicité des champs (Configuration > Unicité des champs) : un critère peut refuser la
+        // création d'un doublon. La fenêtre reste ouverte avec la saisie, pour la corriger.
+        FieldUnicityVerdict verdict = await FieldUnicity.CheckAsync(ItemTypes.PassiveEquipment, db.Set<PassiveEquipment>(), _newItem);
+        if (verdict.Refused)
+        {
+            _createError = verdict.Message;
+            return;
+        }
+
+        _createError = null;
         db.Set<PassiveEquipment>().Add(_newItem);
         await db.SaveChangesAsync();
 
