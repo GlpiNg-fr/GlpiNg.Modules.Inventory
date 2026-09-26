@@ -223,11 +223,11 @@ public partial class Index : ComponentBase
 
         (byte[] Bytes, string Extension, string ContentType) export = format switch
         {
-            "pdf-landscape" => (ComputerExportWriter.BuildPdf(source, landscape: true), "pdf", "application/pdf"),
-            "pdf-portrait" => (ComputerExportWriter.BuildPdf(source, landscape: false), "pdf", "application/pdf"),
-            "csv" => (ComputerExportWriter.BuildCsv(source), "csv", "text/csv"),
-            "ods" => (ComputerExportWriter.BuildOds(source), "ods", "application/vnd.oasis.opendocument.spreadsheet"),
-            "xlsx" => (ComputerExportWriter.BuildXlsx(source), "xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
+            "pdf-landscape" => (ComputerExportWriter.BuildPdf(source, landscape: true, Display.Values), "pdf", "application/pdf"),
+            "pdf-portrait" => (ComputerExportWriter.BuildPdf(source, landscape: false, Display.Values), "pdf", "application/pdf"),
+            "csv" => (ComputerExportWriter.BuildCsv(source, Display.Values), "csv", "text/csv"),
+            "ods" => (ComputerExportWriter.BuildOds(source, Display.Values), "ods", "application/vnd.oasis.opendocument.spreadsheet"),
+            "xlsx" => (ComputerExportWriter.BuildXlsx(source, Display.Values), "xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
             _ => throw new ArgumentOutOfRangeException(nameof(format), format, null)
         };
 
@@ -807,7 +807,7 @@ public partial class Index : ComponentBase
     /// Rendu d'une cellule de colonne dynamique. Passe par l'accesseur du champ, donc une colonne
     /// ajoutée à SearchFields devient affichable sans code supplémentaire.
     /// </summary>
-    private static string CellText(Computer computer, string key)
+    private string CellText(Computer computer, string key)
     {
         SearchField<Computer>? field = FindField(key);
         if (field is null) return "—";
@@ -817,7 +817,7 @@ public partial class Index : ComponentBase
         return field.Type switch
         {
             SearchFieldType.Date => raw is DateTime date
-                ? date.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                ? Display.DateTime(date)!
                 : (key == "lastinventory" ? "Jamais" : "—"),
             SearchFieldType.Number => raw is not null
                 ? Convert.ToDouble(raw).ToString("0.##") + (key == "battery" ? "%" : string.Empty)

@@ -133,11 +133,11 @@ else
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach (PeripheralHistoryEntry entry in _peripheral.HistoryEntries.OrderByDescending(e => e.OccurredAt).ThenByDescending(e => e.Id))
+                                        @foreach (PeripheralHistoryEntry entry in Display.Chronological(_peripheral.HistoryEntries, e => e.OccurredAt))
                                         {
                                             <tr>
                                                 <td>@entry.Id</td>
-                                                <td>@entry.OccurredAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                                <td>@Display.DateTime(entry.OccurredAt)</td>
                                                 <td>@entry.User</td>
                                                 <td>@entry.Field</td>
                                                 <td>@entry.Description</td>
@@ -167,9 +167,9 @@ else
                     </div>
                     <div class="glpi-fiche-block">
                         <div class="glpi-fiche-block-title"><i class="ti ti-history"></i>Historique (@_peripheral.HistoryEntries.Count)</div>
-                        @foreach (PeripheralHistoryEntry entry in _peripheral.HistoryEntries.OrderByDescending(e => e.OccurredAt))
+                        @foreach (PeripheralHistoryEntry entry in Display.Chronological(_peripheral.HistoryEntries, e => e.OccurredAt))
                         {
-                            <p class="mb-1">@entry.OccurredAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm") — @entry.User — @entry.Field : @entry.Description</p>
+                            <p class="mb-1">@Display.DateTime(entry.OccurredAt) — @entry.User — @entry.Field : @entry.Description</p>
                         }
                     </div>
                     break;

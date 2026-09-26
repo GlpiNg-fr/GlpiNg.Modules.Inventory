@@ -1,6 +1,7 @@
 using System.IO.Compression;
 using System.Text;
 using ClosedXML.Excel;
+using GlpiNg.Modules.Abstractions.Preferences;
 using GlpiNg.Modules.Inventory.Models;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
@@ -26,27 +27,29 @@ internal static class ComputerExportWriter
         QuestPDF.Settings.License = LicenseType.Community;
     }
 
-    public static byte[] BuildCsv(IReadOnlyList<Computer> computers)
+    /// <param name="display">Préférences de l'utilisateur : délimiteur CSV et écriture des dates.</param>
+    public static byte[] BuildCsv(IReadOnlyList<Computer> computers, UserPreferenceValues display)
     {
+        string delimiter = display.CsvDelimiter;
         StringBuilder sb = new();
-        sb.AppendLine(string.Join(';', Headers.Select(CsvEscape)));
+        sb.AppendLine(string.Join(delimiter, Headers.Select(value => CsvEscape(value, delimiter))));
 
         foreach (Computer computer in computers)
         {
-            sb.AppendLine(string.Join(';', Row(computer).Select(CsvEscape)));
+            sb.AppendLine(string.Join(delimiter, Row(computer, display).Select(value => CsvEscape(value, delimiter))));
         }
 
         return new UTF8Encoding(encoderShouldEmitUTF8Identifier: true).GetBytes(sb.ToString());
     }
 
-    private static string CsvEscape(string value)
+    private static string CsvEscape(string value, string delimiter)
     {
-        return value.Contains(';') || value.Contains('"') || value.Contains('\n')
+        return value.Contains(delimiter) || value.Contains('"') || value.Contains('\n')
             ? $"\"{value.Replace("\"", "\"\"")}\""
             : value;
     }
 
-    public static byte[] BuildXlsx(IReadOnlyList<Computer> computers)
+    public static byte[] BuildXlsx(IReadOnlyList<Computer> computers, UserPreferenceValues display)
     {
         using XLWorkbook workbook = new();
         IXLWorksheet sheet = workbook.Worksheets.Add("Ordinateurs");
@@ -60,7 +63,7 @@ internal static class ComputerExportWriter
 
         for (int rowIndex = 0; rowIndex < computers.Count; rowIndex++)
         {
-            string[] row = Row(computers[rowIndex]);
+            string[] row = Row(computers[rowIndex], display);
             for (int col = 0; col < row.Length; col++)
             {
                 sheet.Cell(rowIndex + 2, col + 1).Value = row[col];
@@ -74,7 +77,7 @@ internal static class ComputerExportWriter
         return stream.ToArray();
     }
 
-    public static byte[] BuildOds(IReadOnlyList<Computer> computers)
+    public static byte[] BuildOds(IReadOnlyList<Computer> computers, UserPreferenceValues display)
     {
         using MemoryStream stream = new();
 
@@ -106,14 +109,14 @@ internal static class ComputerExportWriter
             using (Stream entryStream = contentEntry.Open())
             using (StreamWriter writer = new(entryStream, new UTF8Encoding(false)))
             {
-                writer.Write(BuildOdsContentXml(computers));
+                writer.Write(BuildOdsContentXml(computers, display));
             }
         }
 
         return stream.ToArray();
     }
 
-    private static string BuildOdsContentXml(IReadOnlyList<Computer> computers)
+    private static string BuildOdsContentXml(IReadOnlyList<Computer> computers, UserPreferenceValues display)
     {
         StringBuilder sb = new();
         sb.Append("""
@@ -124,7 +127,7 @@ internal static class ComputerExportWriter
         AppendOdsRow(sb, Headers);
         foreach (Computer computer in computers)
         {
-            AppendOdsRow(sb, Row(computer));
+            AppendOdsRow(sb, Row(computer, display));
         }
 
         sb.Append("</table:table></office:spreadsheet></office:body></office:document-content>");
@@ -145,7 +148,7 @@ internal static class ComputerExportWriter
 
     private static string XmlEscape(string value) => System.Security.SecurityElement.Escape(value) ?? value;
 
-    public static byte[] BuildPdf(IReadOnlyList<Computer> computers, bool landscape)
+    public static byte[] BuildPdf(IReadOnlyList<Computer> computers, bool landscape, UserPreferenceValues display)
     {
         Document document = Document.Create(container =>
         {
@@ -177,7 +180,7 @@ internal static class ComputerExportWriter
 
                     foreach (Computer computer in computers)
                     {
-                        foreach (string value in Row(computer))
+                        foreach (string value in Row(computer, display))
                         {
                             table.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(value);
                         }
@@ -196,13 +199,13 @@ internal static class ComputerExportWriter
         return document.GeneratePdf();
     }
 
-    private static string[] Row(Computer computer) =>
+    private static string[] Row(Computer computer, UserPreferenceValues display) =>
     [
         computer.Name,
         computer.StatusItem?.Name ?? "—",
         ManufacturerAndModel(computer),
         computer.OperatingSystem ?? "—",
-        LastInventoryLabel(computer)
+        LastInventoryLabel(computer, display)
     ];
 
     private static string ManufacturerAndModel(Computer computer)
@@ -215,10 +218,10 @@ internal static class ComputerExportWriter
         return hasManufacturer ? computer.Manufacturer! : computer.Model!;
     }
 
-    private static string LastInventoryLabel(Computer computer)
+    private static string LastInventoryLabel(Computer computer, UserPreferenceValues display)
     {
         return computer.LastInventoryAt is { } lastInventory
-            ? lastInventory.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+            ? display.DateTime(lastInventory)!
             : "Jamais";
     }
 

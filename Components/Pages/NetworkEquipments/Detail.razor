@@ -92,11 +92,11 @@ else
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach (NetworkEquipmentHistoryEntry entry in _item.HistoryEntries.OrderByDescending(e => e.OccurredAt).ThenByDescending(e => e.Id))
+                                        @foreach (NetworkEquipmentHistoryEntry entry in Display.Chronological(_item.HistoryEntries, e => e.OccurredAt))
                                         {
                                             <tr>
                                                 <td>@entry.Id</td>
-                                                <td>@entry.OccurredAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                                <td>@Display.DateTime(entry.OccurredAt)</td>
                                                 <td>@entry.User</td>
                                                 <td>@entry.Field</td>
                                                 <td>@entry.Description</td>

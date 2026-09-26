@@ -117,7 +117,7 @@ else
                                         {
                                             <tr>
                                                 <td>@cartridge.Id</td>
-                                                <td>@cartridge.DateIn.ToLocalTime().ToString("dd/MM/yyyy")</td>
+                                                <td>@Display.Date(cartridge.DateIn)</td>
                                                 <td>
                                                     @if (cartridge.DateOut is not null)
                                                     {
@@ -188,11 +188,11 @@ else
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach (CartridgeItemHistoryEntry entry in _item.HistoryEntries.OrderByDescending(e => e.OccurredAt).ThenByDescending(e => e.Id))
+                                        @foreach (CartridgeItemHistoryEntry entry in Display.Chronological(_item.HistoryEntries, e => e.OccurredAt))
                                         {
                                             <tr>
                                                 <td>@entry.Id</td>
-                                                <td>@entry.OccurredAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                                <td>@Display.DateTime(entry.OccurredAt)</td>
                                                 <td>@entry.User</td>
                                                 <td>@entry.Field</td>
                                                 <td>@entry.Description</td>

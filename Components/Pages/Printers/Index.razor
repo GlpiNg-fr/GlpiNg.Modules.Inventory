@@ -165,10 +165,10 @@
                                                         @* La date accompagne toujours le niveau : un relevé d'il y a
                                                            trois mois ne se lit pas comme celui de ce matin. *@
                                                         @(cartridge.LevelReadAt is { } read
-                                                            ? read.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                                            ? Display.DateTime(read)
                                                             : "—")
                                                     </td>
-                                                    <td>@(cartridge.DateUse is { } used ? used.ToLocalTime().ToString("dd/MM/yyyy") : "—")</td>
+                                                    <td>@(cartridge.DateUse is { } used ? Display.Date(used) : "—")</td>
                                                 </tr>
                                             }
                                         </tbody>

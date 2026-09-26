@@ -711,7 +711,7 @@
                 Dernier import terminé en @result.Duration.TotalSeconds.ToString("0.0") s
                 @if (State.LastRunAt is { } lastRunAt)
                 {
-                    <span>(le @lastRunAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm"))</span>
+                    <span>(le @Display.DateTime(lastRunAt))</span>
                 }
             </div>
 

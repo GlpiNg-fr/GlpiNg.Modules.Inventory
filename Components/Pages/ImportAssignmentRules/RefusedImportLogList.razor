@@ -48,7 +48,7 @@
                     @foreach (RefusedImportLog entry in _entries)
                     {
                         <tr>
-                            <td class="text-nowrap">@entry.OccurredAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                            <td class="text-nowrap">@Display.DateTime(entry.OccurredAt)</td>
                             <td>@entry.RuleName</td>
                             <td>@(entry.ComputerName ?? "—")</td>
                             <td>@(entry.SerialNumber ?? "—")</td>

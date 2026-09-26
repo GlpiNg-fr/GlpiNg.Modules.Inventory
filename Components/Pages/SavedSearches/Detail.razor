@@ -99,7 +99,7 @@ else
                         <p class="mb-1"><strong>Par défaut :</strong> @(_savedSearch.IsDefault ? "Oui" : "Non")</p>
                         <p class="mb-1"><strong>Résultats :</strong> @_savedSearch.ResultCount</p>
                         <p class="mb-1"><strong>Propriétaire :</strong> @(_savedSearch.OwnerName ?? "—")</p>
-                        <p class="mb-0"><strong>Créée le :</strong> @_savedSearch.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</p>
+                        <p class="mb-0"><strong>Créée le :</strong> @Display.DateTime(_savedSearch.CreatedAt)</p>
                     </div>
                     break;
 

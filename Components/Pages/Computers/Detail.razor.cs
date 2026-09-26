@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.JSInterop;
 
 namespace GlpiNg.Modules.Inventory.Components.Pages.Computers;
 
@@ -67,6 +68,9 @@ public partial class Detail : ComponentBase, IDisposable
 
     [Inject]
     private IConfiguration Configuration { get; set; } = null!;
+
+    [Inject]
+    private IJSRuntime JS { get; set; } = null!;
 
     [Inject]
     private IHttpClientFactory HttpClientFactory { get; set; } = null!;
@@ -178,6 +182,13 @@ public partial class Detail : ComponentBase, IDisposable
     private bool _prepareInstallLoading;
     private string? _prepareInstallError;
     private int? _expandedAssignmentJobId;
+    // Journaux qu'un utilisateur a refermés lui-même : ne sont plus rouverts automatiquement
+    // (voir AutoExpandRunningAssignmentLog), sauf à la relance du job.
+    private readonly HashSet<int> _assignmentLogsCollapsedByUser = [];
+    private ElementReference _expandedAssignmentLogRef;
+    // Onglet « Tâches / groupes » : exécution dont le journal est déplié (voir
+    // ComputerDeploymentTaskExecution.Key, unique entre déploiement et réveil réseau).
+    private string? _expandedTaskExecutionKey;
     private int? _retryingJobId;
 
     private enum DeploymentWakeMode
@@ -233,13 +244,13 @@ public partial class Detail : ComponentBase, IDisposable
         _softwareSorted = _computer.Softwares.OrderBy(s => s.Name).ToList();
         ApplySoftwareFilter();
 
-        _historySorted = _computer.HistoryEntries.OrderByDescending(e => e.OccurredAt).ThenByDescending(e => e.Id).ToList();
+        _historySorted = Display.Chronological(_computer.HistoryEntries, e => e.OccurredAt).ToList();
         ApplyHistoryFilter();
 
         await LoadLocksAsync(db);
         await LoadLocationPathAsync(db);
 
-        _importHistorySorted = _computer.ImportHistories.OrderByDescending(e => e.OccurredAt).ToList();
+        _importHistorySorted = Display.Chronological(_computer.ImportHistories, e => e.OccurredAt).ToList();
         ApplyImportHistoryFilter();
 
         _deploymentAssignmentsPollCts?.Cancel();
@@ -547,10 +558,10 @@ public partial class Detail : ComponentBase, IDisposable
                 _softwareSorted = _computer.Softwares.OrderBy(s => s.Name).ToList();
                 ApplySoftwareFilter();
 
-                _historySorted = _computer.HistoryEntries.OrderByDescending(e => e.OccurredAt).ThenByDescending(e => e.Id).ToList();
+                _historySorted = Display.Chronological(_computer.HistoryEntries, e => e.OccurredAt).ToList();
                 ApplyHistoryFilter();
 
-                _importHistorySorted = _computer.ImportHistories.OrderByDescending(e => e.OccurredAt).ToList();
+                _importHistorySorted = Display.Chronological(_computer.ImportHistories, e => e.OccurredAt).ToList();
                 ApplyImportHistoryFilter();
 
                 // Sans ce rechargement, poser un verrou l'enregistrait sans que le cadenas change
@@ -701,7 +712,55 @@ public partial class Detail : ComponentBase, IDisposable
         _availablePackages = await DeploymentAssignmentService.GetAvailablePackagesAsync(ComputerId);
         _deploymentAssignments = await DeploymentAssignmentService.GetAssignmentsAsync(ComputerId);
 
+        AutoExpandRunningAssignmentLog();
         EnsureDeploymentAssignmentsPollingIfNeeded();
+    }
+
+    /// <summary>Démarré mais pas terminé : c'est le seul état où le journal grandit encore.</summary>
+    private static bool IsInProgress(ComputerDeploymentAssignment assignment) =>
+        assignment.StartedAtUtc is not null && assignment.CompletedAtUtc is null;
+
+    // Un journal replié par défaut donnait l'impression qu'un job en cours ne progressait pas : on
+    // ouvre celui du premier job en cours qui a déjà écrit quelque chose, tant qu'aucun autre
+    // journal n'est ouvert et que l'utilisateur ne l'a pas refermé lui-même.
+    private void AutoExpandRunningAssignmentLog()
+    {
+        if (_expandedAssignmentJobId is not null)
+        {
+            return;
+        }
+
+        ComputerDeploymentAssignment? running = _deploymentAssignments.Find(a =>
+            IsInProgress(a) && !string.IsNullOrWhiteSpace(a.Log) && !_assignmentLogsCollapsedByUser.Contains(a.JobId));
+
+        _expandedAssignmentJobId = running?.JobId;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // Le journal d'un job en cours suit ses dernières lignes à chaque rafraîchissement du
+        // poll (voir glpiNg.followLog) ; un journal terminé s'ouvre, lui, en haut comme avant.
+        // Le journal peut être marqué ouvert (AutoExpandRunningAssignmentLog) alors qu'un autre
+        // onglet est affiché : la référence ne désigne alors aucun élément, d'où le test d'onglet.
+        if (_activeTabKey == "deploy"
+            && _expandedAssignmentJobId is { } jobId
+            && _deploymentAssignments.Find(a => a.JobId == jobId) is { } expanded
+            && IsInProgress(expanded)
+            && !string.IsNullOrWhiteSpace(expanded.Log))
+        {
+            try
+            {
+                await JS.InvokeVoidAsync("glpiNg.followLog", _expandedAssignmentLogRef);
+            }
+            catch (JSDisconnectedException)
+            {
+            }
+            catch (JSException)
+            {
+                // Confort d'affichage seulement : un échec ne doit jamais faire tomber le circuit,
+                // ce que ferait une exception non rattrapée dans OnAfterRenderAsync.
+            }
+        }
     }
 
     // Tant qu'au moins une assignation de paquet n'est pas terminée (statut différent de
@@ -917,6 +976,13 @@ public partial class Detail : ComponentBase, IDisposable
                 return;
             }
 
+            // Nouvelle exécution, journal vidé : il doit pouvoir se rouvrir tout seul.
+            _assignmentLogsCollapsedByUser.Remove(jobId);
+            if (_expandedAssignmentJobId == jobId)
+            {
+                _expandedAssignmentJobId = null;
+            }
+
             await LoadDeploymentAssignmentsAsync();
             _tabs = BuildTabs(_computer!, _deploymentTasksInfo, _deploymentAssignments.Count, _locks.Count, CollectEntriesCount, _notes.Count);
 
@@ -936,7 +1002,21 @@ public partial class Detail : ComponentBase, IDisposable
 
     private void ToggleAssignmentLog(int jobId)
     {
-        _expandedAssignmentJobId = _expandedAssignmentJobId == jobId ? null : jobId;
+        if (_expandedAssignmentJobId == jobId)
+        {
+            _expandedAssignmentJobId = null;
+            _assignmentLogsCollapsedByUser.Add(jobId);
+        }
+        else
+        {
+            _expandedAssignmentJobId = jobId;
+            _assignmentLogsCollapsedByUser.Remove(jobId);
+        }
+    }
+
+    private void ToggleTaskExecutionLog(string key)
+    {
+        _expandedTaskExecutionKey = _expandedTaskExecutionKey == key ? null : key;
     }
 
     // Même mise en forme que TaskDetail.RenderLog (module Déploiement) : GlpiNg.Modules.Inventory
@@ -1350,7 +1430,7 @@ public partial class Detail : ComponentBase, IDisposable
             using HttpClient client = HttpClientFactory.CreateClient("GlpiAgent");
             using HttpResponseMessage response = await client.GetAsync($"{url}/now?task=inventory");
             _inventoryRequestResult = response.IsSuccessStatusCode
-                ? DateTime.Now.ToString("dd/MM/yyyy HH:mm")
+                ? Display.DateTime(DateTime.UtcNow)!
                 : $"Erreur ({(int)response.StatusCode})";
         }
         catch (Exception ex)
@@ -1386,7 +1466,7 @@ public partial class Detail : ComponentBase, IDisposable
             using HttpClient client = HttpClientFactory.CreateClient("GlpiAgent");
             using HttpResponseMessage response = await client.GetAsync($"{url}/now");
             _hostTasksRequestResult = response.IsSuccessStatusCode
-                ? DateTime.Now.ToString("dd/MM/yyyy HH:mm")
+                ? Display.DateTime(DateTime.UtcNow)!
                 : $"Erreur ({(int)response.StatusCode})";
         }
         catch (Exception ex)
@@ -1399,10 +1479,10 @@ public partial class Detail : ComponentBase, IDisposable
         }
     }
 
-    private static string LastInventoryLabel(Computer computer)
+    private string LastInventoryLabel(Computer computer)
     {
         return computer.LastInventoryAt is { } lastInventory
-            ? lastInventory.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+            ? Display.DateTime(lastInventory)!
             : "Jamais";
     }
 

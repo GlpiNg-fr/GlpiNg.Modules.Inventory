@@ -274,7 +274,7 @@ else
                                 </div>
                                 <div class="col-md-4">
                                     <div class="glpi-fiche-inventory-label">Dernier contact</div>
-                                    <div>@agent.LastContactAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                                    <div>@Display.DateTime(agent.LastContactAt)</div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="glpi-fiche-inventory-label">Dernière mise à jour de l'inventaire</div>
@@ -303,7 +303,7 @@ else
                                 </div>
                             </div>
                             <div class="glpi-fiche-inventory-footer">
-                                <span>Créé le @_computer.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
+                                <span>Créé le @Display.DateTime(_computer.CreatedAt)</span>
                                 <span>Dernière mise à jour le @LastInventoryLabel(_computer)</span>
                             </div>
                         </div>
@@ -859,7 +859,7 @@ else
                                                 }
                                             </td>
                                             <td>@(lockRow?.LockedBy ?? "—")</td>
-                                            <td>@(lockRow is null ? "—" : lockRow.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm"))</td>
+                                            <td>@(lockRow is null ? "—" : Display.DateTime(lockRow.CreatedAt))</td>
                                         </tr>
                                     }
                                 </tbody>
@@ -894,7 +894,7 @@ else
                                     @if (group.LastCollectedAt is { } collectedAt)
                                     {
                                         <span class="text-secondary ms-auto" style="font-weight: 400;">
-                                            Dernière remontée : @collectedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                            Dernière remontée : @Display.DateTime(collectedAt)
                                         </span>
                                     }
                                 </div>
@@ -928,7 +928,7 @@ else
                                                         }
                                                     </td>
                                                     <td class="text-nowrap text-secondary">
-                                                        @entry.CollectedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                                        @Display.DateTime(entry.CollectedAt)
                                                     </td>
                                                 </tr>
                                             }
@@ -1023,12 +1023,12 @@ else
                                             <div class="text-secondary small">
                                                 <i class="ti ti-user me-1"></i>@note.AuthorName
                                                 <span class="ms-2">
-                                                    <i class="ti ti-calendar me-1"></i>@note.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                                    <i class="ti ti-calendar me-1"></i>@Display.DateTime(note.CreatedAt)
                                                 </span>
                                                 @if (note.UpdatedAt is { } updated)
                                                 {
                                                     <span class="ms-2">
-                                                        <i class="ti ti-pencil me-1"></i>Modifiée le @updated.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                                        <i class="ti ti-pencil me-1"></i>Modifiée le @Display.DateTime(updated)
                                                         @if (note.LastEditorName is { Length: > 0 } editor)
                                                         {
                                                             <text> par @editor</text>
@@ -1132,7 +1132,7 @@ else
                                         @foreach (ComputerImportHistory entry in _importHistoryFiltered)
                                         {
                                             <tr>
-                                                <td>@entry.OccurredAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                                <td>@Display.DateTime(entry.OccurredAt)</td>
                                                 <td>@entry.RuleName</td>
                                                 <td>@(entry.AgentIdentifier ?? "—")</td>
                                                 <td>@entry.Module</td>
@@ -1180,7 +1180,7 @@ else
                                         {
                                             <tr>
                                                 <td>@entry.Id</td>
-                                                <td>@entry.OccurredAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                                <td>@Display.DateTime(entry.OccurredAt)</td>
                                                 <td>@entry.User</td>
                                                 <td>@entry.Field</td>
                                                 <td>@entry.Description</td>
@@ -1258,6 +1258,7 @@ else
                                                 <th>Méthode</th>
                                                 <th>Date</th>
                                                 <th>Statut</th>
+                                                <th></th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -1267,15 +1268,36 @@ else
                                                     <td><a href="/tools/deployments/tasks/@task.TaskId">@task.Name</a></td>
                                                     <td><span class="badge @BoolBadgeCss(task.Active)">@BoolLabel(task.Active)</span></td>
                                                     <td>@task.MethodLabel</td>
-                                                    <td colspan="2"></td>
+                                                    <td colspan="3"></td>
                                                 </tr>
                                                 @foreach (ComputerDeploymentTaskExecution execution in task.Executions)
                                                 {
                                                     <tr>
-                                                        <td colspan="3"></td>
-                                                        <td>@(execution.DateUtc is { } date ? date.ToLocalTime().ToString("dd/MM/yyyy HH:mm") : "—")</td>
+                                                        <td colspan="3" class="ps-4 text-secondary">
+                                                            @if (execution.PackageName is not null)
+                                                            {
+                                                                <i class="ti ti-package me-1"></i>@execution.PackageName
+                                                            }
+                                                        </td>
+                                                        <td>@(execution.DateUtc is { } date ? Display.DateTime(date) : "—")</td>
                                                         <td><span class="badge @execution.StatusBadgeCssClass">@execution.StatusLabel</span></td>
+                                                        <td class="text-end">
+                                                            @if (!string.IsNullOrWhiteSpace(execution.Log))
+                                                            {
+                                                                <button type="button" class="btn btn-sm" @onclick="() => ToggleTaskExecutionLog(execution.Key)">
+                                                                    <i class="ti ti-file-text me-1"></i>Journal
+                                                                </button>
+                                                            }
+                                                        </td>
                                                     </tr>
+                                                    @if (_expandedTaskExecutionKey == execution.Key && !string.IsNullOrWhiteSpace(execution.Log))
+                                                    {
+                                                        <tr>
+                                                            <td colspan="6">
+                                                                <div class="glpi-job-log">@RenderLog(execution.Log)</div>
+                                                            </td>
+                                                        </tr>
+                                                    }
                                                 }
                                             }
                                         </tbody>
@@ -1361,15 +1383,24 @@ else
                                                             }
                                                         </td>
                                                         <td><span class="badge @assignment.StatusBadgeCssClass">@assignment.StatusLabel</span></td>
-                                                        <td>@assignment.CreatedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
-                                                        <td>@(assignment.StartedAtUtc is { } started ? started.ToLocalTime().ToString("dd/MM/yyyy HH:mm") : "—")</td>
-                                                        <td>@(assignment.CompletedAtUtc is { } completed ? completed.ToLocalTime().ToString("dd/MM/yyyy HH:mm") : "—")</td>
+                                                        <td>@Display.DateTime(assignment.CreatedAtUtc)</td>
+                                                        <td>@(assignment.StartedAtUtc is { } started ? Display.DateTime(started) : "—")</td>
+                                                        <td>@(assignment.CompletedAtUtc is { } completed ? Display.DateTime(completed) : "—")</td>
                                                         <td class="text-end">
                                                             <div class="btn-list justify-content-end flex-nowrap">
                                                                 @if (!string.IsNullOrWhiteSpace(assignment.Log))
                                                                 {
-                                                                    <button type="button" class="btn btn-sm" @onclick="() => ToggleAssignmentLog(assignment.JobId)">
-                                                                        <i class="ti ti-file-text me-1"></i>Journal
+                                                                    <button type="button" class="btn btn-sm" @onclick="() => ToggleAssignmentLog(assignment.JobId)"
+                                                                            title="@(IsInProgress(assignment) ? "Journal mis à jour automatiquement" : null)">
+                                                                        @if (IsInProgress(assignment))
+                                                                        {
+                                                                            <i class="ti ti-refresh glpi-spin me-1"></i>
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <i class="ti ti-file-text me-1"></i>
+                                                                        }
+                                                                        Journal
                                                                     </button>
                                                                 }
                                                                 @if (assignment.CanCancel)
@@ -1391,7 +1422,7 @@ else
                                                     {
                                                         <tr>
                                                             <td colspan="6">
-                                                                <div class="glpi-job-log">@RenderLog(assignment.Log)</div>
+                                                                <div class="glpi-job-log" @ref="_expandedAssignmentLogRef">@RenderLog(assignment.Log)</div>
                                                             </td>
                                                         </tr>
                                                     }

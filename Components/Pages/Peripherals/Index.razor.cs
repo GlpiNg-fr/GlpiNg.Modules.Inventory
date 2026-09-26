@@ -502,10 +502,10 @@ public partial class Index : ComponentBase
         return label.Length > 0 ? label : null;
     }
 
-    private static string LastModifiedLabel(Peripheral peripheral)
+    private string LastModifiedLabel(Peripheral peripheral)
     {
         DateTime lastModified = peripheral.UpdatedAt ?? peripheral.CreatedAt;
-        return lastModified.ToLocalTime().ToString("dd/MM/yyyy HH:mm");
+        return Display.DateTime(lastModified)!;
     }
 
 }
