@@ -14,54 +14,54 @@
 }
 else
 {
-    <div class="glpi-fiche-topbar">
-        <a class="glpi-fiche-pager-btn" href="/parc/monitors" title="Retour à la liste">
+    <div class="glping-fiche-topbar">
+        <a class="glping-fiche-pager-btn" href="/parc/monitors" title="Retour à la liste">
             <i class="ti ti-list"></i>
         </a>
-        <div class="glpi-fiche-crumb">
+        <div class="glping-fiche-crumb">
             <i class="ti ti-device-tv"></i>
             <span>Écran - @_monitor.Designation - ID @_monitor.Id</span>
-            <button type="button" class="glpi-fiche-favorite" title="Ajouter aux favoris">
+            <button type="button" class="glping-fiche-favorite" title="Ajouter aux favoris">
                 <i class="ti ti-star"></i>
             </button>
         </div>
-        <div class="glpi-fiche-toolbar">
+        <div class="glping-fiche-toolbar">
             <button type="button" class="btn btn-sm" @onclick="EnterEditModeAsync">
                 <i class="ti ti-pencil me-1"></i>Modifier
             </button>
             @if (_total > 0)
             {
-                <span class="glpi-fiche-pager-count">@_position/@_total</span>
-                <a class="glpi-fiche-pager-btn @(_previousId is null ? "disabled" : "")" href="@(_previousId is { } prevId ? $"/parc/monitors/{prevId}" : "#")">
+                <span class="glping-fiche-pager-count">@_position/@_total</span>
+                <a class="glping-fiche-pager-btn @(_previousId is null ? "disabled" : "")" href="@(_previousId is { } prevId ? $"/parc/monitors/{prevId}" : "#")">
                     <i class="ti ti-chevron-left"></i>
                 </a>
-                <a class="glpi-fiche-pager-btn @(_nextId is null ? "disabled" : "")" href="@(_nextId is { } nextId ? $"/parc/monitors/{nextId}" : "#")">
+                <a class="glping-fiche-pager-btn @(_nextId is null ? "disabled" : "")" href="@(_nextId is { } nextId ? $"/parc/monitors/{nextId}" : "#")">
                     <i class="ti ti-chevron-right"></i>
                 </a>
             }
         </div>
     </div>
 
-    <div class="glpi-fiche-layout">
-        <aside class="glpi-fiche-sidebar">
+    <div class="glping-fiche-layout">
+        <aside class="glping-fiche-sidebar">
             @foreach (var tab in _tabs)
             {
-                <button type="button" class="glpi-fiche-tab-item @(_activeTabKey == tab.Key ? "active" : "")" @onclick="() => SetTab(tab.Key)">
+                <button type="button" class="glping-fiche-tab-item @(_activeTabKey == tab.Key ? "active" : "")" @onclick="() => SetTab(tab.Key)">
                     <i class="ti @tab.Icon"></i>
                     <span>@tab.Label</span>
                     @if (tab.Count is { } count)
                     {
-                        <span class="glpi-fiche-tab-count">@count</span>
+                        <span class="glping-fiche-tab-count">@count</span>
                     }
                 </button>
             }
-            <button type="button" class="glpi-fiche-tab-item @(_activeTabKey == "links" ? "active" : "")" @onclick='() => SetTab("links")'>
+            <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "links" ? "active" : "")" @onclick='() => SetTab("links")'>
                 <i class="ti ti-external-link"></i>
                 <span>Liens externes</span>
             </button>
         </aside>
 
-        <div class="glpi-fiche-panel">
+        <div class="glping-fiche-panel">
             @switch (_activeTabKey)
             {
                 case "monitor":
@@ -70,26 +70,26 @@ else
                         <div class="d-flex justify-content-end gap-2 mb-3">
                             <button type="button" class="btn btn-sm" disabled="@_editSaving" @onclick="CancelEdit">Annuler</button>
                             <button type="button" class="btn btn-sm btn-primary" disabled="@_editSaving" @onclick="SaveEditAsync">
-                                <i class="ti ti-device-floppy me-1 @(_editSaving ? "glpi-spin" : "")"></i>Enregistrer
+                                <i class="ti ti-device-floppy me-1 @(_editSaving ? "glping-spin" : "")"></i>Enregistrer
                             </button>
                         </div>
                     }
-                    <div class="glpi-fiche-form">
+                    <div class="glping-fiche-form">
                         <div class="row">
                             <div class="col-md-6">
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Désignation</label>
-                                    <div class="glpi-fiche-value-box">@_monitor.Designation</div>
+                                    <div class="glping-fiche-value-box">@_monitor.Designation</div>
                                 </div>
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Fabricant</label>
-                                    <div class="glpi-fiche-value-box">@(_monitor.Manufacturer ?? "—")</div>
+                                    <div class="glping-fiche-value-box">@(_monitor.Manufacturer ?? "—")</div>
                                 </div>
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Numéro de série</label>
-                                    <div class="glpi-fiche-value-box">@(_monitor.Serial ?? "—")</div>
+                                    <div class="glping-fiche-value-box">@(_monitor.Serial ?? "—")</div>
                                 </div>
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Statut</label>
                                     @if (_editMode)
                                     {
@@ -103,16 +103,16 @@ else
                                     }
                                     else
                                     {
-                                        <div class="glpi-fiche-value-box">
+                                        <div class="glping-fiche-value-box">
                                             <StatusBadge Status="_monitor.StatusItem" />
                                         </div>
                                     }
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Ordinateur associé</label>
-                                    <div class="glpi-fiche-value-box">
+                                    <div class="glping-fiche-value-box">
                                         @if (_computer is { } computer)
                                         {
                                             <a href="@($"/parc/computer/{computer.Id}")" class="text-reset">
@@ -131,8 +131,8 @@ else
                     break;
 
                 case "connections":
-                    <div class="glpi-fiche-block">
-                        <div class="glpi-fiche-block-title"><i class="ti ti-plug-connected"></i>Connexions (@(_computer is null ? 0 : 1))</div>
+                    <div class="glping-fiche-block">
+                        <div class="glping-fiche-block-title"><i class="ti ti-plug-connected"></i>Connexions (@(_computer is null ? 0 : 1))</div>
                         @if (_computer is { } linkedComputer)
                         {
                             <div class="table-responsive">
@@ -156,7 +156,7 @@ else
                         }
                         else
                         {
-                            <div class="glpi-config-placeholder">
+                            <div class="glping-config-placeholder">
                                 <i class="ti ti-plug-connected-x"></i>
                                 <p class="mb-0">Cet écran n'est connecté à aucun ordinateur.</p>
                             </div>
@@ -165,22 +165,22 @@ else
                     break;
 
                 case "all":
-                    <div class="glpi-fiche-block">
-                        <div class="glpi-fiche-block-title"><i class="ti ti-device-tv"></i>Écran</div>
+                    <div class="glping-fiche-block">
+                        <div class="glping-fiche-block-title"><i class="ti ti-device-tv"></i>Écran</div>
                         <p class="mb-1"><strong>Désignation :</strong> @_monitor.Designation</p>
                         <p class="mb-1"><strong>Fabricant :</strong> @(_monitor.Manufacturer ?? "—")</p>
                         <p class="mb-1"><strong>Numéro de série :</strong> @(_monitor.Serial ?? "—")</p>
                         <p class="mb-0"><strong>Statut :</strong> @(_monitor.StatusItem?.Name ?? "—")</p>
                     </div>
-                    <div class="glpi-fiche-block">
-                        <div class="glpi-fiche-block-title"><i class="ti ti-plug-connected"></i>Connexions</div>
+                    <div class="glping-fiche-block">
+                        <div class="glping-fiche-block-title"><i class="ti ti-plug-connected"></i>Connexions</div>
                         <p class="mb-0">@(_computer?.Name ?? "Aucune connexion")</p>
                     </div>
                     break;
 
                 default:
                     var current = _tabs.First(t => t.Key == _activeTabKey);
-                    <div class="glpi-config-placeholder">
+                    <div class="glping-config-placeholder">
                         <i class="ti @current.Icon"></i>
                         <p class="mb-0">L'onglet « @current.Label » n'est pas encore disponible.</p>
                     </div>

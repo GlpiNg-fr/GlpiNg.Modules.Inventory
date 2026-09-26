@@ -128,7 +128,7 @@ public partial class DictionaryRuleList : ComponentBase
         await db.SaveChangesAsync();
 
         int newId = _newRule.Id;
-        await JS.InvokeVoidAsync("glpiNg.hideModal", "newDictionaryRuleModal");
+        await JS.InvokeVoidAsync("glping.hideModal", "newDictionaryRuleModal");
         Nav.NavigateTo($"/admin/dictionaries/{DictionaryRuleTypeCatalog.Slug(_type)}/{newId}");
     }
 

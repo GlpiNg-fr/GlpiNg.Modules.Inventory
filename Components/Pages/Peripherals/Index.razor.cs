@@ -398,7 +398,7 @@ public partial class Index : ComponentBase
         await db.SaveChangesAsync();
 
         _newPeripheral = NewBlankPeripheral();
-        await JS.InvokeVoidAsync("glpiNg.hideModal", "newPeripheralModal");
+        await JS.InvokeVoidAsync("glping.hideModal", "newPeripheralModal");
         await LoadAsync();
     }
 

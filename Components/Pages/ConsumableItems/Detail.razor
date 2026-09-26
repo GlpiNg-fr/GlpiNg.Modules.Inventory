@@ -14,36 +14,36 @@
 }
 else
 {
-    <div class="glpi-fiche-topbar">
-        <div class="glpi-fiche-crumb">
+    <div class="glping-fiche-topbar">
+        <div class="glping-fiche-crumb">
             <i class="ti ti-package"></i>
             <span>Modèle de consommable - @_item.Name - ID @_item.Id</span>
         </div>
     </div>
 
-    <div class="glpi-fiche-layout">
-        <aside class="glpi-fiche-sidebar">
-            <button type="button" class="glpi-fiche-tab-item @(_activeTabKey == "main" ? "active" : "")" @onclick='() => SetTab("main")'>
+    <div class="glping-fiche-layout">
+        <aside class="glping-fiche-sidebar">
+            <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "main" ? "active" : "")" @onclick='() => SetTab("main")'>
                 <i class="ti ti-package"></i>
                 <span>Modèle</span>
             </button>
-            <button type="button" class="glpi-fiche-tab-item @(_activeTabKey == "stock" ? "active" : "")" @onclick='() => SetTab("stock")'>
+            <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "stock" ? "active" : "")" @onclick='() => SetTab("stock")'>
                 <i class="ti ti-stack-2"></i>
                 <span>Stock</span>
-                <span class="glpi-fiche-tab-count">@_item.Consumables.Count</span>
+                <span class="glping-fiche-tab-count">@_item.Consumables.Count</span>
             </button>
-            <button type="button" class="glpi-fiche-tab-item @(_activeTabKey == "history" ? "active" : "")" @onclick='() => SetTab("history")'>
+            <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "history" ? "active" : "")" @onclick='() => SetTab("history")'>
                 <i class="ti ti-history"></i>
                 <span>Historique</span>
-                <span class="glpi-fiche-tab-count">@_item.HistoryEntries.Count</span>
+                <span class="glping-fiche-tab-count">@_item.HistoryEntries.Count</span>
             </button>
-            <button type="button" class="glpi-fiche-tab-item @(_activeTabKey == "links" ? "active" : "")" @onclick='() => SetTab("links")'>
+            <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "links" ? "active" : "")" @onclick='() => SetTab("links")'>
                 <i class="ti ti-external-link"></i>
                 <span>Liens externes</span>
             </button>
         </aside>
 
-        <div class="glpi-fiche-panel">
+        <div class="glping-fiche-panel">
             @switch (_activeTabKey)
             {
                 case "main":
@@ -64,8 +64,8 @@ else
                 case "stock":
                     int available = _item.Consumables.Count(c => c.DateOut is null);
                     int consumed = _item.Consumables.Count(c => c.DateOut is not null);
-                    <div class="glpi-fiche-block">
-                        <div class="glpi-fiche-block-title"><i class="ti ti-stack-2"></i>Stock</div>
+                    <div class="glping-fiche-block">
+                        <div class="glping-fiche-block-title"><i class="ti ti-stack-2"></i>Stock</div>
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <div class="text-secondary">Disponible</div>
@@ -89,7 +89,7 @@ else
 
                         @if (_item.Consumables.Count == 0)
                         {
-                            <div class="glpi-config-placeholder">
+                            <div class="glping-config-placeholder">
                                 <i class="ti ti-stack-2"></i>
                                 <p class="mb-0">Aucune unité réceptionnée pour ce modèle.</p>
                             </div>
@@ -140,11 +140,11 @@ else
                     break;
 
                 case "history":
-                    <div class="glpi-fiche-block">
-                        <div class="glpi-fiche-block-title"><i class="ti ti-history"></i>Historique (@_item.HistoryEntries.Count)</div>
+                    <div class="glping-fiche-block">
+                        <div class="glping-fiche-block-title"><i class="ti ti-history"></i>Historique (@_item.HistoryEntries.Count)</div>
                         @if (_item.HistoryEntries.Count == 0)
                         {
-                            <div class="glpi-config-placeholder">
+                            <div class="glping-config-placeholder">
                                 <i class="ti ti-history"></i>
                                 <p class="mb-0">Aucune modification enregistrée.</p>
                             </div>

@@ -3,9 +3,9 @@
 
 <PageTitle>Périphériques — GlpiNg</PageTitle>
 
-<div class="glpi-list-page">
+<div class="glping-list-page">
 <div class="card">
-    <div class="card-header d-flex align-items-center justify-content-between glpi-list-toolbar">
+    <div class="card-header d-flex align-items-center justify-content-between glping-list-toolbar">
         <div class="btn-list">
             <button type="button" class="btn btn-icon" disabled title="Recherches sauvegardées (à venir)">
                 <i class="ti ti-bookmark"></i>
@@ -122,11 +122,11 @@
                                 @sortLabel
                                 @if (active is not null)
                                 {
-                                    <span class="glpi-sort-indicator">
+                                    <span class="glping-sort-indicator">
                                         <i class="ti @(active.Descending ? "ti-caret-up-filled" : "ti-caret-down-filled")"></i>
                                         @if (_sortCriteria.Count > 1)
                                         {
-                                            <span class="glpi-sort-num">@(_sortCriteria.IndexOf(active) + 1)</span>
+                                            <span class="glping-sort-num">@(_sortCriteria.IndexOf(active) + 1)</span>
                                         }
                                     </span>
                                 }
@@ -181,17 +181,17 @@
                     @foreach ((SortField sortField, string sortLabel) in SortableColumns)
                     {
                         SortCriterion? active = GetSortCriterion(sortField);
-                        <th class="glpi-sortable-th" title="Ctrl+clic pour ajouter un tri secondaire"
+                        <th class="glping-sortable-th" title="Ctrl+clic pour ajouter un tri secondaire"
                             @onclick="@((MouseEventArgs e) => SetSort(sortField, e.CtrlKey))">
                             <span class="d-flex align-items-center gap-1">
                                 @sortLabel
                                 @if (active is not null)
                                 {
-                                    <span class="glpi-sort-indicator">
+                                    <span class="glping-sort-indicator">
                                         <i class="ti @(active.Descending ? "ti-caret-up-filled" : "ti-caret-down-filled")"></i>
                                         @if (_sortCriteria.Count > 1)
                                         {
-                                            <span class="glpi-sort-num">@(_sortCriteria.IndexOf(active) + 1)</span>
+                                            <span class="glping-sort-num">@(_sortCriteria.IndexOf(active) + 1)</span>
                                         }
                                     </span>
                                 }

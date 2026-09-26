@@ -16,20 +16,20 @@
 }
 else
 {
-    <div class="glpi-fiche-topbar">
-        <a class="glpi-fiche-pager-btn" href="@_listUrl" title="Retour à la liste">
+    <div class="glping-fiche-topbar">
+        <a class="glping-fiche-pager-btn" href="@_listUrl" title="Retour à la liste">
             <i class="ti ti-list"></i>
         </a>
-        <div class="glpi-fiche-crumb">
+        <div class="glping-fiche-crumb">
             <i class="ti ti-device-desktop"></i>
             <span>Ordinateur - @_computer.Name - ID @_computer.Id</span>
-            <button type="button" class="glpi-fiche-favorite" title="Ajouter aux favoris">
+            <button type="button" class="glping-fiche-favorite" title="Ajouter aux favoris">
                 <i class="ti ti-star"></i>
             </button>
         </div>
-        <div class="glpi-fiche-toolbar">
-            <button type="button" class="glpi-fiche-pager-btn" title="Recharger les données" disabled="@_isReloading" @onclick="ReloadComputerAsync">
-                <i class="ti ti-refresh @(_isReloading ? "glpi-spin" : "")"></i>
+        <div class="glping-fiche-toolbar">
+            <button type="button" class="glping-fiche-pager-btn" title="Recharger les données" disabled="@_isReloading" @onclick="ReloadComputerAsync">
+                <i class="ti ti-refresh @(_isReloading ? "glping-spin" : "")"></i>
             </button>
             <div class="dropdown">
                 <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -44,7 +44,7 @@ else
                                            ? "Diffuse un magic packet sur toutes les adresses MAC connues du poste, depuis le serveur."
                                            : "Aucune adresse MAC connue : l'inventaire réseau de ce poste n'a rien remonté.")"
                                 @onclick="SendWakeOnLanAsync">
-                            <i class="ti @(_isWaking ? "ti-loader-2 glpi-spin" : "ti-power") me-1"></i>Réveiller (Wake-on-LAN)
+                            <i class="ti @(_isWaking ? "ti-loader-2 glping-spin" : "ti-power") me-1"></i>Réveiller (Wake-on-LAN)
                         </button>
                     </li>
                     <li><hr class="dropdown-divider" /></li>
@@ -53,11 +53,11 @@ else
             </div>
             @if (_total > 0)
             {
-                <span class="glpi-fiche-pager-count">@_position/@_total</span>
-                <a class="glpi-fiche-pager-btn @(_previousId is null ? "disabled" : "")" href="@(_previousId is { } prevId ? $"/parc/computer/{prevId}" : "#")">
+                <span class="glping-fiche-pager-count">@_position/@_total</span>
+                <a class="glping-fiche-pager-btn @(_previousId is null ? "disabled" : "")" href="@(_previousId is { } prevId ? $"/parc/computer/{prevId}" : "#")">
                     <i class="ti ti-chevron-left"></i>
                 </a>
-                <a class="glpi-fiche-pager-btn @(_nextId is null ? "disabled" : "")" href="@(_nextId is { } nextId ? $"/parc/computer/{nextId}" : "#")">
+                <a class="glping-fiche-pager-btn @(_nextId is null ? "disabled" : "")" href="@(_nextId is { } nextId ? $"/parc/computer/{nextId}" : "#")">
                     <i class="ti ti-chevron-right"></i>
                 </a>
             }
@@ -80,22 +80,22 @@ else
         </div>
     }
 
-    <div class="glpi-fiche-layout">
-        <aside class="glpi-fiche-sidebar">
+    <div class="glping-fiche-layout">
+        <aside class="glping-fiche-sidebar">
             @foreach (var tab in _tabs)
             {
-                <button type="button" class="glpi-fiche-tab-item @(_activeTabKey == tab.Key ? "active" : "")" @onclick="() => SetTab(tab.Key)">
+                <button type="button" class="glping-fiche-tab-item @(_activeTabKey == tab.Key ? "active" : "")" @onclick="() => SetTab(tab.Key)">
                     <i class="ti @tab.Icon"></i>
                     <span>@tab.Label</span>
                     @if (tab.Count is { } count)
                     {
-                        <span class="glpi-fiche-tab-count">@count</span>
+                        <span class="glping-fiche-tab-count">@count</span>
                     }
                 </button>
             }
         </aside>
 
-        <div class="glpi-fiche-panel @(FillPanelTabKeys.Contains(_activeTabKey) ? "glpi-fiche-panel-fill" : "")">
+        <div class="glping-fiche-panel @(FillPanelTabKeys.Contains(_activeTabKey) ? "glping-fiche-panel-fill" : "")">
             @switch (_activeTabKey)
             {
                 case "computer":
@@ -104,18 +104,18 @@ else
                         <div class="d-flex justify-content-end gap-2 mb-3">
                             <button type="button" class="btn btn-sm" disabled="@_editSaving" @onclick="CancelEdit">Annuler</button>
                             <button type="button" class="btn btn-sm btn-primary" disabled="@_editSaving" @onclick="SaveEditAsync">
-                                <i class="ti ti-device-floppy me-1 @(_editSaving ? "glpi-spin" : "")"></i>Enregistrer
+                                <i class="ti ti-device-floppy me-1 @(_editSaving ? "glping-spin" : "")"></i>Enregistrer
                             </button>
                         </div>
                     }
-                    <div class="glpi-fiche-form">
+                    <div class="glping-fiche-form">
                         <div class="row">
                             <div class="col-md-6">
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Nom<FieldLockToggle Field="Name" IsLocked='@IsFieldLocked("Name")' OnToggle="ToggleFieldLockAsync" /></label>
-                                    <div class="glpi-fiche-value-box">@_computer.Name</div>
+                                    <div class="glping-fiche-value-box">@_computer.Name</div>
                                 </div>
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Emplacement</label>
                                     @if (_editMode)
                                     {
@@ -130,10 +130,10 @@ else
                                     }
                                     else
                                     {
-                                        <div class="glpi-fiche-value-box">@(LocationLabel(_computer) ?? "—")</div>
+                                        <div class="glping-fiche-value-box">@(LocationLabel(_computer) ?? "—")</div>
                                     }
                                 </div>
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Utilisateur assigné</label>
                                     @if (_editMode)
                                     {
@@ -147,20 +147,20 @@ else
                                     }
                                     else
                                     {
-                                        <div class="glpi-fiche-value-box">@(_computer.AssignedUser ?? "—")</div>
+                                        <div class="glping-fiche-value-box">@(_computer.AssignedUser ?? "—")</div>
                                     }
                                 </div>
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Dernier utilisateur connecté<FieldLockToggle Field="LastLoggedUser" IsLocked='@IsFieldLocked("LastLoggedUser")' OnToggle="ToggleFieldLockAsync" /></label>
-                                    <div class="glpi-fiche-value-box">@(_computer.LastLoggedUser ?? "—")</div>
+                                    <div class="glping-fiche-value-box">@(_computer.LastLoggedUser ?? "—")</div>
                                 </div>
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>UUID matériel<FieldLockToggle Field="HardwareUuid" IsLocked='@IsFieldLocked("HardwareUuid")' OnToggle="ToggleFieldLockAsync" /></label>
-                                    <div class="glpi-fiche-value-box"><code>@(_computer.HardwareUuid ?? "—")</code></div>
+                                    <div class="glping-fiche-value-box"><code>@(_computer.HardwareUuid ?? "—")</code></div>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Statut</label>
                                     @if (_editMode)
                                     {
@@ -175,12 +175,12 @@ else
                                     }
                                     else
                                     {
-                                        <div class="glpi-fiche-value-box">
+                                        <div class="glping-fiche-value-box">
                                             <StatusBadge Status="_computer.StatusItem" />
                                         </div>
                                     }
                                 </div>
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Type<FieldLockToggle Field="ChassisType" IsLocked='@IsFieldLocked("ChassisType")' OnToggle="ToggleFieldLockAsync" /></label>
                                     @if (_editMode)
                                     {
@@ -194,10 +194,10 @@ else
                                     }
                                     else
                                     {
-                                        <div class="glpi-fiche-value-box">@(_computer.ChassisType ?? "—")</div>
+                                        <div class="glping-fiche-value-box">@(_computer.ChassisType ?? "—")</div>
                                     }
                                 </div>
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Fabricant<FieldLockToggle Field="Manufacturer" IsLocked='@IsFieldLocked("Manufacturer")' OnToggle="ToggleFieldLockAsync" /></label>
                                     @if (_editMode)
                                     {
@@ -211,10 +211,10 @@ else
                                     }
                                     else
                                     {
-                                        <div class="glpi-fiche-value-box">@(_computer.Manufacturer ?? "—")</div>
+                                        <div class="glping-fiche-value-box">@(_computer.Manufacturer ?? "—")</div>
                                     }
                                 </div>
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Modèle<FieldLockToggle Field="Model" IsLocked='@IsFieldLocked("Model")' OnToggle="ToggleFieldLockAsync" /></label>
                                     @if (_editMode)
                                     {
@@ -228,16 +228,16 @@ else
                                     }
                                     else
                                     {
-                                        <div class="glpi-fiche-value-box">@(_computer.Model ?? "—")</div>
+                                        <div class="glping-fiche-value-box">@(_computer.Model ?? "—")</div>
                                     }
                                 </div>
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>N° de série<FieldLockToggle Field="SerialNumber" IsLocked='@IsFieldLocked("SerialNumber")' OnToggle="ToggleFieldLockAsync" /></label>
-                                    <div class="glpi-fiche-value-box">@(_computer.SerialNumber ?? "—")</div>
+                                    <div class="glping-fiche-value-box">@(_computer.SerialNumber ?? "—")</div>
                                 </div>
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Virtualisation<FieldLockToggle Field="VmSystem" IsLocked='@IsFieldLocked("VmSystem")' OnToggle="ToggleFieldLockAsync" /></label>
-                                    <div class="glpi-fiche-value-box">@(_computer.VmSystem is { Length: > 0 } vm && vm != "Physical" ? vm : "Machine physique")</div>
+                                    <div class="glping-fiche-value-box">@(_computer.VmSystem is { Length: > 0 } vm && vm != "Physical" ? vm : "Machine physique")</div>
                                 </div>
                             </div>
                         </div>
@@ -245,64 +245,64 @@ else
 
                     @if (_computer.Agent is { } agent)
                     {
-                        <div class="glpi-fiche-inventory-panel">
-                            <div class="glpi-fiche-inventory-title"><i class="ti ti-cloud-upload"></i>Informations d'inventaire</div>
+                        <div class="glping-fiche-inventory-panel">
+                            <div class="glping-fiche-inventory-title"><i class="ti ti-cloud-upload"></i>Informations d'inventaire</div>
                             <div class="row">
                                 <div class="col-md-4">
-                                    <div class="glpi-fiche-inventory-label">Agent</div>
+                                    <div class="glping-fiche-inventory-label">Agent</div>
                                     <div>
                                         @(agent.AgentName ?? agent.Hostname ?? agent.DeviceId ?? "—")
                                         @if (AgentWebUrl(agent, _computer) is { } agentWebUrl)
                                         {
-                                            <a href="@agentWebUrl" target="_blank" rel="noopener noreferrer" title="Ouvrir la page web de l'agent" class="glpi-fiche-inventory-agent-link">
+                                            <a href="@agentWebUrl" target="_blank" rel="noopener noreferrer" title="Ouvrir la page web de l'agent" class="glping-fiche-inventory-agent-link">
                                                 <i class="ti ti-external-link"></i>
                                             </a>
                                         }
                                     </div>
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="glpi-fiche-inventory-label">UserAgent</div>
+                                    <div class="glping-fiche-inventory-label">UserAgent</div>
                                     <div>@(agent.LastUserAgent ?? "—")</div>
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="glpi-fiche-inventory-label">Tag d'inventaire</div>
+                                    <div class="glping-fiche-inventory-label">Tag d'inventaire</div>
                                     <div>@(agent.Tag ?? "—")</div>
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="glpi-fiche-inventory-label">Adresse publique de contact</div>
+                                    <div class="glping-fiche-inventory-label">Adresse publique de contact</div>
                                     <div>@(agent.LastContactIp ?? "—")</div>
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="glpi-fiche-inventory-label">Dernier contact</div>
+                                    <div class="glping-fiche-inventory-label">Dernier contact</div>
                                     <div>@Display.DateTime(agent.LastContactAt)</div>
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="glpi-fiche-inventory-label">Dernière mise à jour de l'inventaire</div>
+                                    <div class="glping-fiche-inventory-label">Dernière mise à jour de l'inventaire</div>
                                     <div>@LastInventoryLabel(_computer)</div>
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="glpi-fiche-inventory-label">
+                                    <div class="glping-fiche-inventory-label">
                                         Statut de l'agent
-                                        <i class="ti ti-refresh @(_agentStatusLoading ? "glpi-spin" : "")" role="button" title="Interroger l'agent" @onclick="RefreshAgentStatusAsync"></i>
+                                        <i class="ti ti-refresh @(_agentStatusLoading ? "glping-spin" : "")" role="button" title="Interroger l'agent" @onclick="RefreshAgentStatusAsync"></i>
                                     </div>
                                     <div>@(_agentStatus ?? "Inconnu")</div>
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="glpi-fiche-inventory-label">
+                                    <div class="glping-fiche-inventory-label">
                                         Demander un inventaire
-                                        <i class="ti ti-refresh @(_inventoryRequestLoading ? "glpi-spin" : "")" role="button" title="Demander un inventaire immédiat" @onclick="RequestInventoryAsync"></i>
+                                        <i class="ti ti-refresh @(_inventoryRequestLoading ? "glping-spin" : "")" role="button" title="Demander un inventaire immédiat" @onclick="RequestInventoryAsync"></i>
                                     </div>
                                     <div>@(_inventoryRequestResult ?? "Inconnu")</div>
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="glpi-fiche-inventory-label">
+                                    <div class="glping-fiche-inventory-label">
                                         Lancer les tâches de l'hôte
-                                        <i class="ti ti-refresh @(_hostTasksRequestLoading ? "glpi-spin" : "")" role="button" title="Lancer les tâches de l'hôte" @onclick="RequestHostTasksAsync"></i>
+                                        <i class="ti ti-refresh @(_hostTasksRequestLoading ? "glping-spin" : "")" role="button" title="Lancer les tâches de l'hôte" @onclick="RequestHostTasksAsync"></i>
                                     </div>
                                     <div>@(_hostTasksRequestResult ?? "Inconnu")</div>
                                 </div>
                             </div>
-                            <div class="glpi-fiche-inventory-footer">
+                            <div class="glping-fiche-inventory-footer">
                                 <span>Créé le @Display.DateTime(_computer.CreatedAt)</span>
                                 <span>Dernière mise à jour le @LastInventoryLabel(_computer)</span>
                             </div>
@@ -316,14 +316,14 @@ else
                         <div class="d-flex justify-content-end gap-2 mb-3">
                             <button type="button" class="btn btn-sm" disabled="@_editSaving" @onclick="CancelEdit">Annuler</button>
                             <button type="button" class="btn btn-sm btn-primary" disabled="@_editSaving" @onclick="SaveEditAsync">
-                                <i class="ti ti-device-floppy me-1 @(_editSaving ? "glpi-spin" : "")"></i>Enregistrer
+                                <i class="ti ti-device-floppy me-1 @(_editSaving ? "glping-spin" : "")"></i>Enregistrer
                             </button>
                         </div>
                     }
-                    <div class="glpi-fiche-form">
+                    <div class="glping-fiche-form">
                         <div class="row">
                             <div class="col-md-6">
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Système d'exploitation<FieldLockToggle Field="OperatingSystem" IsLocked='@IsFieldLocked("OperatingSystem")' OnToggle="ToggleFieldLockAsync" /></label>
                                     @if (_editMode)
                                     {
@@ -337,10 +337,10 @@ else
                                     }
                                     else
                                     {
-                                        <div class="glpi-fiche-value-box">@(_computer.OperatingSystem ?? "—")</div>
+                                        <div class="glping-fiche-value-box">@(_computer.OperatingSystem ?? "—")</div>
                                     }
                                 </div>
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Version<FieldLockToggle Field="OsVersion" IsLocked='@IsFieldLocked("OsVersion")' OnToggle="ToggleFieldLockAsync" /></label>
                                     @if (_editMode)
                                     {
@@ -354,22 +354,22 @@ else
                                     }
                                     else
                                     {
-                                        <div class="glpi-fiche-value-box">@(_computer.OsVersion ?? "—")</div>
+                                        <div class="glping-fiche-value-box">@(_computer.OsVersion ?? "—")</div>
                                     }
                                 </div>
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Version du noyau<FieldLockToggle Field="OsKernelVersion" IsLocked='@IsFieldLocked("OsKernelVersion")' OnToggle="ToggleFieldLockAsync" /></label>
-                                    <div class="glpi-fiche-value-box">@(_computer.OsKernelVersion ?? "—")</div>
+                                    <div class="glping-fiche-value-box">@(_computer.OsKernelVersion ?? "—")</div>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Mémoire totale<FieldLockToggle Field="TotalMemoryMb" IsLocked='@IsFieldLocked("TotalMemoryMb")' OnToggle="ToggleFieldLockAsync" /></label>
-                                    <div class="glpi-fiche-value-box">@(_computer.TotalMemoryMb is { } mb ? $"{mb} Mo" : "—")</div>
+                                    <div class="glping-fiche-value-box">@(_computer.TotalMemoryMb is { } mb ? $"{mb} Mo" : "—")</div>
                                 </div>
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Dernière remontée</label>
-                                    <div class="glpi-fiche-value-box">@LastInventoryLabel(_computer)</div>
+                                    <div class="glping-fiche-value-box">@LastInventoryLabel(_computer)</div>
                                 </div>
                             </div>
                         </div>
@@ -379,7 +379,7 @@ else
                 case "components":
                     @if (_computer.Components.Count == 0)
                     {
-                        <div class="glpi-config-placeholder">
+                        <div class="glping-config-placeholder">
                             <i class="ti ti-cpu-off"></i>
                             <p class="mb-0">Aucun composant remonté.</p>
                         </div>
@@ -388,8 +388,8 @@ else
                     {
                         @foreach (var group in ComponentGroups(_computer))
                         {
-                            <div class="glpi-fiche-block">
-                                <div class="glpi-fiche-block-title">
+                            <div class="glping-fiche-block">
+                                <div class="glping-fiche-block-title">
                                     <i class="ti @ComponentTypeIcon(group.Key)"></i>@ComponentTypeLabel(group.Key) (@group.Count())
                                 </div>
                                 <div class="table-responsive">
@@ -421,15 +421,15 @@ else
                 case "batteries":
                     @if (_computer.Batteries.Count == 0)
                     {
-                        <div class="glpi-config-placeholder">
+                        <div class="glping-config-placeholder">
                             <i class="ti ti-battery-off"></i>
                             <p class="mb-0">Aucune batterie remontée.</p>
                         </div>
                     }
                     else
                     {
-                        <div class="glpi-fiche-block">
-                            <div class="glpi-fiche-block-title"><i class="ti ti-battery"></i>Batteries (@_computer.Batteries.Count)</div>
+                        <div class="glping-fiche-block">
+                            <div class="glping-fiche-block-title"><i class="ti ti-battery"></i>Batteries (@_computer.Batteries.Count)</div>
                             <div class="table-responsive">
                                 <table class="table table-vcenter card-table mb-0">
                                     <thead>
@@ -480,17 +480,17 @@ else
                 case "software":
                     @if (_computer.Softwares.Count == 0)
                     {
-                        <div class="glpi-config-placeholder">
+                        <div class="glping-config-placeholder">
                             <i class="ti ti-apps-off"></i>
                             <p class="mb-0">Aucun logiciel remonté.</p>
                         </div>
                     }
                     else
                     {
-                        <div class="glpi-fiche-block">
-                            <div class="glpi-fiche-block-title">
+                        <div class="glping-fiche-block">
+                            <div class="glping-fiche-block-title">
                                 <i class="ti ti-apps"></i>Logiciels installés (@_softwareFiltered.Count)
-                                <div class="glpi-fiche-block-filter">
+                                <div class="glping-fiche-block-filter">
                                     <i class="ti ti-search"></i>
                                     <input type="text" placeholder="Filtrer..." value="@_softwareFilter" @oninput="OnSoftwareFilterInput" />
                                 </div>
@@ -560,15 +560,15 @@ else
                 case "volumes":
                     @if (_computer.Volumes.Count == 0)
                     {
-                        <div class="glpi-config-placeholder">
+                        <div class="glping-config-placeholder">
                             <i class="ti ti-server-off"></i>
                             <p class="mb-0">Aucun volume remonté.</p>
                         </div>
                     }
                     else
                     {
-                        <div class="glpi-fiche-block">
-                            <div class="glpi-fiche-block-title"><i class="ti ti-server-2"></i>Volumes (@_computer.Volumes.Count)</div>
+                        <div class="glping-fiche-block">
+                            <div class="glping-fiche-block-title"><i class="ti ti-server-2"></i>Volumes (@_computer.Volumes.Count)</div>
                             <div class="table-responsive">
                                 <table class="table table-vcenter card-table mb-0">
                                     <thead>
@@ -598,8 +598,8 @@ else
                                                 <td>
                                                     @if (UsagePercent(volume) is { } percent)
                                                     {
-                                                        <div class="glpi-usage-bar">
-                                                            <div class="glpi-usage-bar-fill" style="width: @(percent)%"></div>
+                                                        <div class="glping-usage-bar">
+                                                            <div class="glping-usage-bar-fill" style="width: @(percent)%"></div>
                                                             <span>@percent %</span>
                                                         </div>
                                                     }
@@ -621,7 +621,7 @@ else
                 case "connections":
                     @if (_computer.Peripherals.Count == 0)
                     {
-                        <div class="glpi-config-placeholder">
+                        <div class="glping-config-placeholder">
                             <i class="ti ti-device-tv-off"></i>
                             <p class="mb-0">Aucun périphérique connecté remonté.</p>
                         </div>
@@ -630,8 +630,8 @@ else
                     {
                         @foreach (var group in PeripheralGroups(_computer))
                         {
-                            <div class="glpi-fiche-block">
-                                <div class="glpi-fiche-block-title">
+                            <div class="glping-fiche-block">
+                                <div class="glping-fiche-block-title">
                                     <i class="ti @PeripheralKindIcon(group.Key)"></i>@PeripheralKindLabel(group.Key) (@group.Count())
                                 </div>
                                 <div class="table-responsive">
@@ -672,15 +672,15 @@ else
                 case "networkports":
                     @if (_computer.NetworkPorts.Count == 0)
                     {
-                        <div class="glpi-config-placeholder">
+                        <div class="glping-config-placeholder">
                             <i class="ti ti-network-off"></i>
                             <p class="mb-0">Aucun port réseau remonté.</p>
                         </div>
                     }
                     else
                     {
-                        <div class="glpi-fiche-block">
-                            <div class="glpi-fiche-block-title"><i class="ti ti-network"></i>Ports réseau (@_computer.NetworkPorts.Count)</div>
+                        <div class="glping-fiche-block">
+                            <div class="glping-fiche-block-title"><i class="ti ti-network"></i>Ports réseau (@_computer.NetworkPorts.Count)</div>
                             <div class="table-responsive">
                                 <table class="table table-vcenter card-table mb-0">
                                     <thead>
@@ -730,15 +730,15 @@ else
                        branché) et de « Ports réseau » (les interfaces IP configurées). *@
                     @if (_computer.Connectors.Count == 0)
                     {
-                        <div class="glpi-config-placeholder">
+                        <div class="glping-config-placeholder">
                             <i class="ti ti-usb"></i>
                             <p class="mb-0">Aucun connecteur remonté par l'inventaire.</p>
                         </div>
                     }
                     else
                     {
-                        <div class="glpi-fiche-block">
-                            <div class="glpi-fiche-block-title"><i class="ti ti-usb"></i>Connecteurs (@_computer.Connectors.Count)</div>
+                        <div class="glping-fiche-block">
+                            <div class="glping-fiche-block-title"><i class="ti ti-usb"></i>Connecteurs (@_computer.Connectors.Count)</div>
                             <div class="table-responsive">
                                 <table class="table table-vcenter card-table mb-0">
                                     <thead>
@@ -769,15 +769,15 @@ else
                 case "antivirus":
                     @if (_computer.Antiviruses.Count == 0)
                     {
-                        <div class="glpi-config-placeholder">
+                        <div class="glping-config-placeholder">
                             <i class="ti ti-shield-off"></i>
                             <p class="mb-0">Aucun antivirus remonté.</p>
                         </div>
                     }
                     else
                     {
-                        <div class="glpi-fiche-block">
-                            <div class="glpi-fiche-block-title"><i class="ti ti-shield-check"></i>Antivirus (@_computer.Antiviruses.Count)</div>
+                        <div class="glping-fiche-block">
+                            <div class="glping-fiche-block-title"><i class="ti ti-shield-check"></i>Antivirus (@_computer.Antiviruses.Count)</div>
                             <div class="table-responsive">
                                 <table class="table table-vcenter card-table mb-0">
                                     <thead>
@@ -819,8 +819,8 @@ else
                        qui est verrouillé sur ce poste, par qui, depuis quand ». L'onglet liste tout
                        le catalogue et pas seulement les champs verrouillés, sinon il serait vide au
                        moment précis où l'on cherche quoi verrouiller. *@
-                    <div class="glpi-fiche-block">
-                        <div class="glpi-fiche-block-title"><i class="ti ti-lock"></i>Verrous (@_locks.Count / @ComputerLockableFields.All.Count)</div>
+                    <div class="glping-fiche-block">
+                        <div class="glping-fiche-block-title"><i class="ti ti-lock"></i>Verrous (@_locks.Count / @ComputerLockableFields.All.Count)</div>
                         <p class="text-muted small px-3 pt-2 mb-0">
                             Un champ verrouillé n'est plus mis à jour par les remontées d'agent : la valeur
                             saisie à la main est conservée. Les champs non verrouillés sont réécrits au
@@ -878,7 +878,7 @@ else
                     {
                         @* Le module Déploiement n'est pas chargé : rien ne définit ni ne rapatrie de
                            collecte. Le dire, plutôt qu'un vide qui se lit comme une panne. *@
-                        <div class="glpi-config-placeholder">
+                        <div class="glping-config-placeholder">
                             <i class="ti ti-cloud-off"></i>
                             <p class="mb-0">Le module Déploiement n'est pas activé : aucune collecte n'est définie.</p>
                         </div>
@@ -887,8 +887,8 @@ else
                     {
                         @foreach (ComputerCollectGroup group in _collectInfo.Groups)
                         {
-                            <div class="glpi-fiche-block">
-                                <div class="glpi-fiche-block-title">
+                            <div class="glping-fiche-block">
+                                <div class="glping-fiche-block-title">
                                     <i class="ti ti-cloud-upload"></i>@group.Name
                                     <span class="badge bg-secondary-lt ms-2">@group.TypeLabel</span>
                                     @if (group.LastCollectedAt is { } collectedAt)
@@ -951,7 +951,7 @@ else
 
                         @if (_collectInfo.Groups.Count == 0 && _collectInfo.PendingCollects.Count == 0)
                         {
-                            <div class="glpi-config-placeholder">
+                            <div class="glping-config-placeholder">
                                 <i class="ti ti-cloud-off"></i>
                                 <p class="mb-1">Aucune information de collecte pour ce poste.</p>
                                 <p class="mb-0 text-secondary" style="max-width: 46rem;">
@@ -990,7 +990,7 @@ else
 
                     @if (_notes.Count == 0)
                     {
-                        <div class="glpi-config-placeholder">
+                        <div class="glping-config-placeholder">
                             <i class="ti ti-notes-off"></i>
                             <p class="mb-0">Aucune note pour ce poste.</p>
                         </div>
@@ -1072,15 +1072,15 @@ else
                 case "domains":
                     @if (_computer.Domain is null)
                     {
-                        <div class="glpi-config-placeholder">
+                        <div class="glping-config-placeholder">
                             <i class="ti ti-world-www"></i>
                             <p class="mb-0">Aucun domaine remonté.</p>
                         </div>
                     }
                     else
                     {
-                        <div class="glpi-fiche-block">
-                            <div class="glpi-fiche-block-title"><i class="ti ti-world-www"></i>Domaines (1)</div>
+                        <div class="glping-fiche-block">
+                            <div class="glping-fiche-block-title"><i class="ti ti-world-www"></i>Domaines (1)</div>
                             <div class="table-responsive">
                                 <table class="table table-vcenter card-table mb-0">
                                     <thead>
@@ -1102,17 +1102,17 @@ else
                 case "importinfo":
                     @if (_computer.ImportHistories.Count == 0)
                     {
-                        <div class="glpi-config-placeholder">
+                        <div class="glping-config-placeholder">
                             <i class="ti ti-file-import"></i>
                             <p class="mb-0">Aucun import d'inventaire enregistré.</p>
                         </div>
                     }
                     else
                     {
-                        <div class="glpi-fiche-block">
-                            <div class="glpi-fiche-block-title">
+                        <div class="glping-fiche-block">
+                            <div class="glping-fiche-block-title">
                                 <i class="ti ti-history"></i>Historique des règles d'import (@_importHistoryFiltered.Count)
-                                <div class="glpi-fiche-block-filter">
+                                <div class="glping-fiche-block-filter">
                                     <i class="ti ti-search"></i>
                                     <input type="text" placeholder="Filtrer..." value="@_importHistoryFilter" @oninput="OnImportHistoryFilterInput" />
                                 </div>
@@ -1149,17 +1149,17 @@ else
                 case "history":
                     @if (_historySorted.Count == 0)
                     {
-                        <div class="glpi-config-placeholder">
+                        <div class="glping-config-placeholder">
                             <i class="ti ti-history"></i>
                             <p class="mb-0">Aucune modification enregistrée.</p>
                         </div>
                     }
                     else
                     {
-                        <div class="glpi-fiche-block">
-                            <div class="glpi-fiche-block-title">
+                        <div class="glping-fiche-block">
+                            <div class="glping-fiche-block-title">
                                 <i class="ti ti-history"></i>Historique (@_historyFiltered.Count)
-                                <div class="glpi-fiche-block-filter">
+                                <div class="glping-fiche-block-filter">
                                     <i class="ti ti-search"></i>
                                     <input type="text" placeholder="Filtrer..." value="@_historyFilter" @oninput="OnHistoryFilterInput" />
                                 </div>
@@ -1231,14 +1231,14 @@ else
                 case "tasks":
                     @if (_deploymentTasksInfo is null)
                     {
-                        <div class="glpi-config-placeholder">
+                        <div class="glping-config-placeholder">
                             <i class="ti ti-checklist"></i>
                             <p class="mb-0">Module de déploiement non disponible.</p>
                         </div>
                     }
                     else if (_deploymentTasksInfo.Tasks.Count == 0 && _deploymentTasksInfo.Groups.Count == 0)
                     {
-                        <div class="glpi-config-placeholder">
+                        <div class="glping-config-placeholder">
                             <i class="ti ti-checklist"></i>
                             <p class="mb-0">Aucune tâche de déploiement ni groupe pour ce poste.</p>
                         </div>
@@ -1247,8 +1247,8 @@ else
                     {
                         @if (_deploymentTasksInfo.Tasks.Count > 0)
                         {
-                            <div class="glpi-fiche-block">
-                                <div class="glpi-fiche-block-title"><i class="ti ti-checklist"></i>Tâches (@_deploymentTasksInfo.Tasks.Count)</div>
+                            <div class="glping-fiche-block">
+                                <div class="glping-fiche-block-title"><i class="ti ti-checklist"></i>Tâches (@_deploymentTasksInfo.Tasks.Count)</div>
                                 <div class="table-responsive">
                                     <table class="table table-vcenter card-table mb-0">
                                         <thead>
@@ -1294,7 +1294,7 @@ else
                                                     {
                                                         <tr>
                                                             <td colspan="6">
-                                                                <div class="glpi-job-log">@RenderLog(execution.Log)</div>
+                                                                <div class="glping-job-log">@RenderLog(execution.Log)</div>
                                                             </td>
                                                         </tr>
                                                     }
@@ -1307,8 +1307,8 @@ else
                         }
                         @if (_deploymentTasksInfo.Groups.Count > 0)
                         {
-                            <div class="glpi-fiche-block">
-                                <div class="glpi-fiche-block-title"><i class="ti ti-users-group"></i>Groupes (@_deploymentTasksInfo.Groups.Count)</div>
+                            <div class="glping-fiche-block">
+                                <div class="glping-fiche-block-title"><i class="ti ti-users-group"></i>Groupes (@_deploymentTasksInfo.Groups.Count)</div>
                                 <div class="table-responsive">
                                     <table class="table table-vcenter card-table mb-0">
                                         <thead>
@@ -1336,24 +1336,24 @@ else
                 case "deploy":
                     @if (DeploymentAssignmentService is null)
                     {
-                        <div class="glpi-config-placeholder">
+                        <div class="glping-config-placeholder">
                             <i class="ti ti-package"></i>
                             <p class="mb-0">Module de déploiement non disponible.</p>
                         </div>
                     }
                     else if (_computer.Agent is null)
                     {
-                        <div class="glpi-config-placeholder">
+                        <div class="glping-config-placeholder">
                             <i class="ti ti-package-off"></i>
                             <p class="mb-0">Ce poste n'est associé à aucun agent GLPI-Agent : le déploiement de package n'est pas disponible.</p>
                         </div>
                     }
                     else
                     {
-                        <div class="glpi-fiche-block">
-                            <div class="glpi-fiche-block-title"><i class="ti ti-package"></i>Paquets assignés (@_deploymentAssignments.Count)</div>
+                        <div class="glping-fiche-block">
+                            <div class="glping-fiche-block-title"><i class="ti ti-package"></i>Paquets assignés (@_deploymentAssignments.Count)</div>
 
-                            <div class="glpi-fiche-block-body">
+                            <div class="glping-fiche-block-body">
                                 @if (_deploymentAssignments.Count > 0)
                                 {
                                     <div class="table-responsive mb-3">
@@ -1394,7 +1394,7 @@ else
                                                                             title="@(IsInProgress(assignment) ? "Journal mis à jour automatiquement" : null)">
                                                                         @if (IsInProgress(assignment))
                                                                         {
-                                                                            <i class="ti ti-refresh glpi-spin me-1"></i>
+                                                                            <i class="ti ti-refresh glping-spin me-1"></i>
                                                                         }
                                                                         else
                                                                         {
@@ -1412,7 +1412,7 @@ else
                                                                 @if (assignment.CanRetry)
                                                                 {
                                                                     <button type="button" class="btn btn-sm px-3" title="Relancer cette assignation" disabled="@(_retryingJobId is not null)" @onclick="() => RetryAssignmentAsync(assignment.JobId)">
-                                                                        <i class="ti ti-bolt @(_retryingJobId == assignment.JobId ? "glpi-spin" : "")"></i>
+                                                                        <i class="ti ti-bolt @(_retryingJobId == assignment.JobId ? "glping-spin" : "")"></i>
                                                                     </button>
                                                                 }
                                                             </div>
@@ -1422,7 +1422,7 @@ else
                                                     {
                                                         <tr>
                                                             <td colspan="6">
-                                                                <div class="glpi-job-log" @ref="_expandedAssignmentLogRef">@RenderLog(assignment.Log)</div>
+                                                                <div class="glping-job-log" @ref="_expandedAssignmentLogRef">@RenderLog(assignment.Log)</div>
                                                             </td>
                                                         </tr>
                                                     }
@@ -1436,13 +1436,13 @@ else
                                     <p class="text-secondary small mb-3">Aucun paquet assigné à ce poste pour le moment.</p>
                                 }
 
-                                <div class="glpi-fiche-add-row">
+                                <div class="glping-fiche-add-row">
                                     <label class="form-label">Sélectionner les paquets à installer</label>
-                                    <div class="glpi-tag-select">
+                                    <div class="glping-tag-select">
                                         @foreach (DeploymentPackageOption package in _selectedPackagesToAssign)
                                         {
-                                            <span class="glpi-tag">
-                                                <button type="button" class="glpi-tag-remove" title="Retirer" @onclick="() => RemovePackageToAssign(package.Id)">
+                                            <span class="glping-tag">
+                                                <button type="button" class="glping-tag-remove" title="Retirer" @onclick="() => RemovePackageToAssign(package.Id)">
                                                     <i class="ti ti-x"></i>
                                                 </button>
                                                 @package.Name
@@ -1451,7 +1451,7 @@ else
                                         @{
                                             var packagesLeftToAdd = _availablePackages.Where(p => !_selectedPackagesToAssign.Any(s => s.Id == p.Id)).ToList();
                                         }
-                                        <select class="glpi-tag-select-input" @key="_selectedPackagesToAssign.Count" disabled="@(packagesLeftToAdd.Count == 0)" @onchange="AddPackageToAssign">
+                                        <select class="glping-tag-select-input" @key="_selectedPackagesToAssign.Count" disabled="@(packagesLeftToAdd.Count == 0)" @onchange="AddPackageToAssign">
                                             <option value="">@(packagesLeftToAdd.Count == 0 ? "Aucun autre paquet disponible" : "+ Ajouter un paquet…")</option>
                                             @foreach (DeploymentPackageOption package in packagesLeftToAdd)
                                             {
@@ -1462,7 +1462,7 @@ else
 
                                     <div class="d-flex gap-2 mt-3">
                                         <button type="button" class="btn" disabled="@(_prepareInstallLoading || _selectedPackagesToAssign.Count == 0)" @onclick="PrepareInstallationAsync">
-                                            <i class="ti ti-player-play @(_prepareInstallLoading ? "glpi-spin" : "")"></i>
+                                            <i class="ti ti-player-play @(_prepareInstallLoading ? "glping-spin" : "")"></i>
                                             Préparer l'installation
                                         </button>
                                         <div class="dropdown">
@@ -1517,7 +1517,7 @@ else
 
                 default:
                     var current = _tabs.First(t => t.Key == _activeTabKey);
-                    <div class="glpi-config-placeholder">
+                    <div class="glping-config-placeholder">
                         <i class="ti @current.Icon"></i>
                         <p class="mb-0">L'onglet « @current.Label » n'est pas encore disponible.</p>
                     </div>

@@ -70,7 +70,7 @@ public partial class ImportBlacklistList : ComponentBase
         // pour la même raison : éviter un futur INSERT avec un Id déjà pris).
         _newEntry = new ImportBlacklistEntry { Name = string.Empty, Value = string.Empty };
 
-        await JS.InvokeVoidAsync("glpiNg.hideModal", "newImportBlacklistEntryModal");
+        await JS.InvokeVoidAsync("glping.hideModal", "newImportBlacklistEntryModal");
         await LoadAsync();
     }
 }

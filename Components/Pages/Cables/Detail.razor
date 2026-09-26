@@ -14,48 +14,48 @@
 }
 else
 {
-    <div class="glpi-fiche-topbar">
-        <div class="glpi-fiche-crumb">
+    <div class="glping-fiche-topbar">
+        <div class="glping-fiche-crumb">
             <i class="ti ti-cable"></i>
             <span>Câble - @_item.Name - ID @_item.Id</span>
         </div>
-        <div class="glpi-fiche-toolbar">
+        <div class="glping-fiche-toolbar">
             @if (_total > 0)
             {
-                <span class="glpi-fiche-pager-count">@_position/@_total</span>
-                <a class="glpi-fiche-pager-btn @(_previousId is null ? "disabled" : "")" href="@(_previousId is { } prevId ? $"/parc/cables/{prevId}" : "#")">
+                <span class="glping-fiche-pager-count">@_position/@_total</span>
+                <a class="glping-fiche-pager-btn @(_previousId is null ? "disabled" : "")" href="@(_previousId is { } prevId ? $"/parc/cables/{prevId}" : "#")">
                     <i class="ti ti-chevron-left"></i>
                 </a>
-                <a class="glpi-fiche-pager-btn @(_nextId is null ? "disabled" : "")" href="@(_nextId is { } nextId ? $"/parc/cables/{nextId}" : "#")">
+                <a class="glping-fiche-pager-btn @(_nextId is null ? "disabled" : "")" href="@(_nextId is { } nextId ? $"/parc/cables/{nextId}" : "#")">
                     <i class="ti ti-chevron-right"></i>
                 </a>
             }
         </div>
     </div>
 
-    <div class="glpi-fiche-layout">
-        <aside class="glpi-fiche-sidebar">
-            <button type="button" class="glpi-fiche-tab-item @(_activeTabKey == "main" ? "active" : "")" @onclick='() => SetTab("main")'>
+    <div class="glping-fiche-layout">
+        <aside class="glping-fiche-sidebar">
+            <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "main" ? "active" : "")" @onclick='() => SetTab("main")'>
                 <i class="ti ti-cable"></i>
                 <span>Câble</span>
             </button>
-            <button type="button" class="glpi-fiche-tab-item @(_activeTabKey == "history" ? "active" : "")" @onclick='() => SetTab("history")'>
+            <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "history" ? "active" : "")" @onclick='() => SetTab("history")'>
                 <i class="ti ti-history"></i>
                 <span>Historique</span>
-                <span class="glpi-fiche-tab-count">@_item.HistoryEntries.Count</span>
+                <span class="glping-fiche-tab-count">@_item.HistoryEntries.Count</span>
             </button>
-            <button type="button" class="glpi-fiche-tab-item @(_activeTabKey == "links" ? "active" : "")" @onclick='() => SetTab("links")'>
+            <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "links" ? "active" : "")" @onclick='() => SetTab("links")'>
                 <i class="ti ti-external-link"></i>
                 <span>Liens externes</span>
             </button>
         </aside>
 
-        <div class="glpi-fiche-panel">
+        <div class="glping-fiche-panel">
             @switch (_activeTabKey)
             {
                 case "main":
-                    <div class="glpi-fiche-block mb-3">
-                        <div class="glpi-fiche-block-title"><i class="ti ti-plug-connected"></i>Liaison</div>
+                    <div class="glping-fiche-block mb-3">
+                        <div class="glping-fiche-block-title"><i class="ti ti-plug-connected"></i>Liaison</div>
                         <div class="d-flex align-items-center gap-2 flex-wrap">
                             <a href="@CableEndpointCatalog.Route(_item.EndpointAType, _item.EndpointAId)" class="badge bg-blue-lt text-decoration-none">
                                 <i class="ti @CableEndpointCatalog.Icon(_item.EndpointAType) me-1"></i>@EndpointLabel(_item.EndpointAType, _item.EndpointAId)
@@ -89,11 +89,11 @@ else
                     break;
 
                 case "history":
-                    <div class="glpi-fiche-block">
-                        <div class="glpi-fiche-block-title"><i class="ti ti-history"></i>Historique (@_item.HistoryEntries.Count)</div>
+                    <div class="glping-fiche-block">
+                        <div class="glping-fiche-block-title"><i class="ti ti-history"></i>Historique (@_item.HistoryEntries.Count)</div>
                         @if (_item.HistoryEntries.Count == 0)
                         {
-                            <div class="glpi-config-placeholder">
+                            <div class="glping-config-placeholder">
                                 <i class="ti ti-history"></i>
                                 <p class="mb-0">Aucune modification enregistrée.</p>
                             </div>

@@ -11,30 +11,30 @@
     <div class="card-header">
         <h3 class="card-title"><i class="ti ti-plug-connected me-1"></i>Connexion à la base GLPI source</h3>
     </div>
-    <div class="glpi-config">
-        <div class="glpi-config-body">
-            <EditForm Model="State" OnValidSubmit="AnalyzeAsync" class="glpi-config-form glpi-config-form-wide">
-                <div class="glpi-config-field">
-                    <label for="glpi-import-server">Adresse du serveur</label>
-                    <input id="glpi-import-server" type="text" placeholder="ex. glpi-mysql.exemple.local"
+    <div class="glping-config">
+        <div class="glping-config-body">
+            <EditForm Model="State" OnValidSubmit="AnalyzeAsync" class="glping-config-form glping-config-form-wide">
+                <div class="glping-config-field">
+                    <label for="glping-import-server">Adresse du serveur</label>
+                    <input id="glping-import-server" type="text" placeholder="ex. glping-mysql.exemple.local"
                            @bind="State.Server" disabled="@(State.IsRunning || State.IsAnalyzing)" />
                 </div>
 
-                <div class="glpi-config-field">
-                    <label for="glpi-import-database">Base de données</label>
-                    <input id="glpi-import-database" type="text" placeholder="glpi"
+                <div class="glping-config-field">
+                    <label for="glping-import-database">Base de données</label>
+                    <input id="glping-import-database" type="text" placeholder="glpi"
                            @bind="State.Database" disabled="@(State.IsRunning || State.IsAnalyzing)" />
                 </div>
 
-                <div class="glpi-config-field">
-                    <label for="glpi-import-username">Utilisateur</label>
-                    <input id="glpi-import-username" type="text" autocomplete="off"
+                <div class="glping-config-field">
+                    <label for="glping-import-username">Utilisateur</label>
+                    <input id="glping-import-username" type="text" autocomplete="off"
                            @bind="State.Username" disabled="@(State.IsRunning || State.IsAnalyzing)" />
                 </div>
 
-                <div class="glpi-config-field">
-                    <label for="glpi-import-password">Mot de passe</label>
-                    <input id="glpi-import-password" type="password" autocomplete="off"
+                <div class="glping-config-field">
+                    <label for="glping-import-password">Mot de passe</label>
+                    <input id="glping-import-password" type="password" autocomplete="off"
                            @bind="State.Password" disabled="@(State.IsRunning || State.IsAnalyzing)" />
                 </div>
 
@@ -47,7 +47,7 @@
                    l'installation source au même titre que son serveur. Tout ce que l'import va
                    chercher sur disque en descend — les documents directement, les fichiers de
                    paquets sous _plugins/. *@
-                <div class="glpi-config-divider">
+                <div class="glping-config-divider">
                     <span><i class="ti ti-folder"></i> Fichiers de l'installation GLPI</span>
                 </div>
 
@@ -56,9 +56,9 @@
                     documents et fichiers de paquets sont repris en fiches, mais sans contenu téléchargeable.
                 </p>
 
-                <div class="glpi-config-field">
-                    <label for="glpi-import-files-root">Dossier <code>files/</code> de GLPI</label>
-                    <input id="glpi-import-files-root" type="text" class="glpi-config-input"
+                <div class="glping-config-field">
+                    <label for="glping-import-files-root">Dossier <code>files/</code> de GLPI</label>
+                    <input id="glping-import-files-root" type="text" class="glping-config-input"
                            placeholder="/var/www/glpi/files"
                            @bind="State.GlpiFilesPath" disabled="@State.IsRunning" />
                 </div>
@@ -67,16 +67,16 @@
                 @* Optionnels : un partage déjà accessible au compte sous lequel tourne GlpiNg n'en
                    a pas besoin. Ils ne servent qu'aux chemins UNC — sur un chemin local ils sont
                    simplement ignorés. *@
-                <div class="glpi-config-field">
-                    <label for="glpi-import-files-user">Identifiant du partage <span class="text-secondary">(optionnel)</span></label>
-                    <input id="glpi-import-files-user" type="text" class="glpi-config-input"
+                <div class="glping-config-field">
+                    <label for="glping-import-files-user">Identifiant du partage <span class="text-secondary">(optionnel)</span></label>
+                    <input id="glping-import-files-user" type="text" class="glping-config-input"
                            placeholder="DOMAINE\utilisateur"
                            @bind="State.GlpiFilesUserName" disabled="@State.IsRunning" />
                 </div>
 
-                <div class="glpi-config-field">
-                    <label for="glpi-import-files-password">Mot de passe du partage</label>
-                    <input id="glpi-import-files-password" type="password" class="glpi-config-input"
+                <div class="glping-config-field">
+                    <label for="glping-import-files-password">Mot de passe du partage</label>
+                    <input id="glping-import-files-password" type="password" class="glping-config-input"
                            autocomplete="new-password"
                            @bind="State.GlpiFilesPassword" disabled="@State.IsRunning" />
                 </div>
@@ -86,7 +86,7 @@
                     réseau n'est possible que sous Windows ; ailleurs, montez-le avant de lancer l'import.
                 </p>
 
-                <button type="submit" class="glpi-config-save" disabled="@(!State.CanAnalyze)">
+                <button type="submit" class="glping-config-save" disabled="@(!State.CanAnalyze)">
                     @if (State.IsAnalyzing)
                     {
                         <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
@@ -132,18 +132,18 @@
                 (int Selected, int Available) pluginTally = PluginTally(plugin);
             }
 
-            <ul class="nav nav-tabs glpi-import-tabs mb-3">
+            <ul class="nav nav-tabs glping-import-tabs mb-3">
                 <li class="nav-item">
                     <span class="nav-link @(_tab == ImportTab.Parc ? "active" : "")" role="button" @onclick="() => _tab = ImportTab.Parc">
                         <i class="ti ti-device-desktop"></i>
                         <span>Parc</span>
                         <span class="badge bg-secondary-lt">@parcTally.Selected / @parcTally.Available</span>
-                        <label class="glpi-switch" title="Tout activer ou désactiver dans cet onglet"
+                        <label class="glping-switch" title="Tout activer ou désactiver dans cet onglet"
                                @onclick="() => { }" @onclick:stopPropagation="true">
                             <input type="checkbox" checked="@(parcTally.Available > 0 && parcTally.Selected == parcTally.Available)"
                                    disabled="@(State.IsRunning || parcTally.Available == 0)"
                                    @onchange="@((ChangeEventArgs e) => SetAllParc(analysis, (bool)(e.Value ?? false)))" />
-                            <span class="glpi-switch-slider"></span>
+                            <span class="glping-switch-slider"></span>
                         </label>
                     </span>
                 </li>
@@ -152,12 +152,12 @@
                         <i class="ti ti-users-group"></i>
                         <span>Administration</span>
                         <span class="badge bg-secondary-lt">@adminTally.Selected / @adminTally.Available</span>
-                        <label class="glpi-switch" title="Tout activer ou désactiver dans cet onglet"
+                        <label class="glping-switch" title="Tout activer ou désactiver dans cet onglet"
                                @onclick="() => { }" @onclick:stopPropagation="true">
                             <input type="checkbox" checked="@(adminTally.Available > 0 && adminTally.Selected == adminTally.Available)"
                                    disabled="@(State.IsRunning || adminTally.Available == 0)"
                                    @onchange="@((ChangeEventArgs e) => SetAllAdmin(adminAnalysis, (bool)(e.Value ?? false)))" />
-                            <span class="glpi-switch-slider"></span>
+                            <span class="glping-switch-slider"></span>
                         </label>
                     </span>
                 </li>
@@ -168,12 +168,12 @@
                         @if (State.KnowledgeBaseAnalysis is { IsPresent: true } kbTab)
                         {
                             <span class="badge bg-secondary-lt">@knowledgeBaseTally.Selected / @knowledgeBaseTally.Available</span>
-                            <label class="glpi-switch" title="Tout activer ou désactiver dans cet onglet"
+                            <label class="glping-switch" title="Tout activer ou désactiver dans cet onglet"
                                    @onclick="() => { }" @onclick:stopPropagation="true">
                                 <input type="checkbox" checked="@(knowledgeBaseTally.Available > 0 && knowledgeBaseTally.Selected == knowledgeBaseTally.Available)"
                                        disabled="@(State.IsRunning || knowledgeBaseTally.Available == 0)"
                                        @onchange="@((ChangeEventArgs e) => SetAllKnowledgeBase(kbTab, (bool)(e.Value ?? false)))" />
-                                <span class="glpi-switch-slider"></span>
+                                <span class="glping-switch-slider"></span>
                             </label>
                         }
                         else
@@ -189,12 +189,12 @@
                         @if (plugin.IsPresent)
                         {
                             <span class="badge bg-secondary-lt">@pluginTally.Selected / @pluginTally.Available</span>
-                            <label class="glpi-switch" title="Tout activer ou désactiver dans cet onglet"
+                            <label class="glping-switch" title="Tout activer ou désactiver dans cet onglet"
                                    @onclick="() => { }" @onclick:stopPropagation="true">
                                 <input type="checkbox" checked="@(pluginTally.Available > 0 && pluginTally.Selected == pluginTally.Available)"
                                        disabled="@(State.IsRunning || pluginTally.Available == 0)"
                                        @onchange="@((ChangeEventArgs e) => SetAllPlugin(plugin, (bool)(e.Value ?? false)))" />
-                                <span class="glpi-switch-slider"></span>
+                                <span class="glping-switch-slider"></span>
                             </label>
                         }
                         else
@@ -207,85 +207,85 @@
 
             @if (_tab == ImportTab.Parc)
             {
-                <div class="glpi-config-field-grid">
-                    <div class="glpi-config-field checkbox">
-                        <label for="glpi-import-sel-computers"><i class="ti ti-device-desktop me-2"></i>Ordinateurs (@analysis.ComputersCount)</label>
-                        <label class="glpi-switch">
-                            <input id="glpi-import-sel-computers" type="checkbox" @bind="State.Selection.ImportComputers"
+                <div class="glping-config-field-grid">
+                    <div class="glping-config-field checkbox">
+                        <label for="glping-import-sel-computers"><i class="ti ti-device-desktop me-2"></i>Ordinateurs (@analysis.ComputersCount)</label>
+                        <label class="glping-switch">
+                            <input id="glping-import-sel-computers" type="checkbox" @bind="State.Selection.ImportComputers"
                                    disabled="@(State.IsRunning || analysis.ComputersCount == 0)" />
-                            <span class="glpi-switch-slider"></span>
+                            <span class="glping-switch-slider"></span>
                         </label>
                     </div>
 
-                    <div class="glpi-config-field checkbox">
-                        <label for="glpi-import-sel-monitors"><i class="ti ti-device-tv me-2"></i>Moniteurs (@analysis.MonitorsCount)</label>
-                        <label class="glpi-switch">
-                            <input id="glpi-import-sel-monitors" type="checkbox" @bind="State.Selection.ImportMonitors"
+                    <div class="glping-config-field checkbox">
+                        <label for="glping-import-sel-monitors"><i class="ti ti-device-tv me-2"></i>Moniteurs (@analysis.MonitorsCount)</label>
+                        <label class="glping-switch">
+                            <input id="glping-import-sel-monitors" type="checkbox" @bind="State.Selection.ImportMonitors"
                                    disabled="@(State.IsRunning || analysis.MonitorsCount == 0)" />
-                            <span class="glpi-switch-slider"></span>
+                            <span class="glping-switch-slider"></span>
                         </label>
                     </div>
 
-                    <div class="glpi-config-field checkbox">
-                        <label for="glpi-import-sel-agents"><i class="ti ti-robot me-2"></i>Agents (@analysis.AgentsCount)</label>
-                        <label class="glpi-switch">
-                            <input id="glpi-import-sel-agents" type="checkbox" @bind="State.Selection.ImportAgents"
+                    <div class="glping-config-field checkbox">
+                        <label for="glping-import-sel-agents"><i class="ti ti-robot me-2"></i>Agents (@analysis.AgentsCount)</label>
+                        <label class="glping-switch">
+                            <input id="glping-import-sel-agents" type="checkbox" @bind="State.Selection.ImportAgents"
                                    disabled="@(State.IsRunning || analysis.AgentsCount == 0)" />
-                            <span class="glpi-switch-slider"></span>
+                            <span class="glping-switch-slider"></span>
                         </label>
                     </div>
 
-                    <div class="glpi-config-field checkbox">
-                        <label for="glpi-import-sel-components"><i class="ti ti-cpu me-2"></i>Composants matériels (@analysis.ComponentsCount)</label>
-                        <label class="glpi-switch">
-                            <input id="glpi-import-sel-components" type="checkbox" @bind="State.Selection.ImportComponents"
+                    <div class="glping-config-field checkbox">
+                        <label for="glping-import-sel-components"><i class="ti ti-cpu me-2"></i>Composants matériels (@analysis.ComponentsCount)</label>
+                        <label class="glping-switch">
+                            <input id="glping-import-sel-components" type="checkbox" @bind="State.Selection.ImportComponents"
                                    disabled="@(State.IsRunning || analysis.ComponentsCount == 0)" />
-                            <span class="glpi-switch-slider"></span>
+                            <span class="glping-switch-slider"></span>
                         </label>
                     </div>
 
-                    <div class="glpi-config-field checkbox">
-                        <label for="glpi-import-sel-softwares"><i class="ti ti-apps me-2"></i>Logiciels (@analysis.SoftwaresCount)</label>
-                        <label class="glpi-switch">
-                            <input id="glpi-import-sel-softwares" type="checkbox" @bind="State.Selection.ImportSoftwares"
+                    <div class="glping-config-field checkbox">
+                        <label for="glping-import-sel-softwares"><i class="ti ti-apps me-2"></i>Logiciels (@analysis.SoftwaresCount)</label>
+                        <label class="glping-switch">
+                            <input id="glping-import-sel-softwares" type="checkbox" @bind="State.Selection.ImportSoftwares"
                                    disabled="@(State.IsRunning || analysis.SoftwaresCount == 0)" />
-                            <span class="glpi-switch-slider"></span>
+                            <span class="glping-switch-slider"></span>
                         </label>
                     </div>
 
-                    <div class="glpi-config-field checkbox">
-                        <label for="glpi-import-sel-printers"><i class="ti ti-printer me-2"></i>Imprimantes (@analysis.PrintersCount)</label>
-                        <label class="glpi-switch">
-                            <input id="glpi-import-sel-printers" type="checkbox" @bind="State.Selection.ImportPrinters"
+                    <div class="glping-config-field checkbox">
+                        <label for="glping-import-sel-printers"><i class="ti ti-printer me-2"></i>Imprimantes (@analysis.PrintersCount)</label>
+                        <label class="glping-switch">
+                            <input id="glping-import-sel-printers" type="checkbox" @bind="State.Selection.ImportPrinters"
                                    disabled="@(State.IsRunning || analysis.PrintersCount == 0)" />
-                            <span class="glpi-switch-slider"></span>
+                            <span class="glping-switch-slider"></span>
                         </label>
                     </div>
 
-                    <div class="glpi-config-field checkbox">
-                        <label for="glpi-import-sel-peripherals"><i class="ti ti-mouse me-2"></i>Périphériques (@analysis.PeripheralsCount)</label>
-                        <label class="glpi-switch">
-                            <input id="glpi-import-sel-peripherals" type="checkbox" @bind="State.Selection.ImportPeripherals"
+                    <div class="glping-config-field checkbox">
+                        <label for="glping-import-sel-peripherals"><i class="ti ti-mouse me-2"></i>Périphériques (@analysis.PeripheralsCount)</label>
+                        <label class="glping-switch">
+                            <input id="glping-import-sel-peripherals" type="checkbox" @bind="State.Selection.ImportPeripherals"
                                    disabled="@(State.IsRunning || analysis.PeripheralsCount == 0)" />
-                            <span class="glpi-switch-slider"></span>
+                            <span class="glping-switch-slider"></span>
                         </label>
                     </div>
 
-                    <div class="glpi-config-field checkbox">
-                        <label for="glpi-import-sel-volumes"><i class="ti ti-server-2 me-2"></i>Volumes (@analysis.VolumesCount)</label>
-                        <label class="glpi-switch">
-                            <input id="glpi-import-sel-volumes" type="checkbox" @bind="State.Selection.ImportVolumes"
+                    <div class="glping-config-field checkbox">
+                        <label for="glping-import-sel-volumes"><i class="ti ti-server-2 me-2"></i>Volumes (@analysis.VolumesCount)</label>
+                        <label class="glping-switch">
+                            <input id="glping-import-sel-volumes" type="checkbox" @bind="State.Selection.ImportVolumes"
                                    disabled="@(State.IsRunning || analysis.VolumesCount == 0)" />
-                            <span class="glpi-switch-slider"></span>
+                            <span class="glping-switch-slider"></span>
                         </label>
                     </div>
 
-                    <div class="glpi-config-field checkbox">
-                        <label for="glpi-import-sel-batteries"><i class="ti ti-battery me-2"></i>Batteries (@analysis.BatteriesCount)</label>
-                        <label class="glpi-switch">
-                            <input id="glpi-import-sel-batteries" type="checkbox" @bind="State.Selection.ImportBatteries"
+                    <div class="glping-config-field checkbox">
+                        <label for="glping-import-sel-batteries"><i class="ti ti-battery me-2"></i>Batteries (@analysis.BatteriesCount)</label>
+                        <label class="glping-switch">
+                            <input id="glping-import-sel-batteries" type="checkbox" @bind="State.Selection.ImportBatteries"
                                    disabled="@(State.IsRunning || analysis.BatteriesCount == 0)" />
-                            <span class="glpi-switch-slider"></span>
+                            <span class="glping-switch-slider"></span>
                         </label>
                     </div>
                 </div>
@@ -298,49 +298,49 @@
 
             @if (_tab == ImportTab.Administration)
             {
-                <div class="glpi-config-field-grid">
-                    <div class="glpi-config-field checkbox">
-                        <label for="glpi-import-sel-entities"><i class="ti ti-building me-2"></i>Entités (@adminAnalysis.EntitiesCount)</label>
-                        <label class="glpi-switch">
-                            <input id="glpi-import-sel-entities" type="checkbox" @bind="State.AdminSelection.ImportEntities"
+                <div class="glping-config-field-grid">
+                    <div class="glping-config-field checkbox">
+                        <label for="glping-import-sel-entities"><i class="ti ti-building me-2"></i>Entités (@adminAnalysis.EntitiesCount)</label>
+                        <label class="glping-switch">
+                            <input id="glping-import-sel-entities" type="checkbox" @bind="State.AdminSelection.ImportEntities"
                                    disabled="@(State.IsRunning || adminAnalysis.EntitiesCount == 0)" />
-                            <span class="glpi-switch-slider"></span>
+                            <span class="glping-switch-slider"></span>
                         </label>
                     </div>
 
-                    <div class="glpi-config-field checkbox">
-                        <label for="glpi-import-sel-groups"><i class="ti ti-users me-2"></i>Groupes (@adminAnalysis.GroupsCount)</label>
-                        <label class="glpi-switch">
-                            <input id="glpi-import-sel-groups" type="checkbox" @bind="State.AdminSelection.ImportGroups"
+                    <div class="glping-config-field checkbox">
+                        <label for="glping-import-sel-groups"><i class="ti ti-users me-2"></i>Groupes (@adminAnalysis.GroupsCount)</label>
+                        <label class="glping-switch">
+                            <input id="glping-import-sel-groups" type="checkbox" @bind="State.AdminSelection.ImportGroups"
                                    disabled="@(State.IsRunning || adminAnalysis.GroupsCount == 0)" />
-                            <span class="glpi-switch-slider"></span>
+                            <span class="glping-switch-slider"></span>
                         </label>
                     </div>
 
-                    <div class="glpi-config-field checkbox">
-                        <label for="glpi-import-sel-profiles"><i class="ti ti-shield-lock me-2"></i>Profils (@adminAnalysis.ProfilesCount)</label>
-                        <label class="glpi-switch">
-                            <input id="glpi-import-sel-profiles" type="checkbox" @bind="State.AdminSelection.ImportProfiles"
+                    <div class="glping-config-field checkbox">
+                        <label for="glping-import-sel-profiles"><i class="ti ti-shield-lock me-2"></i>Profils (@adminAnalysis.ProfilesCount)</label>
+                        <label class="glping-switch">
+                            <input id="glping-import-sel-profiles" type="checkbox" @bind="State.AdminSelection.ImportProfiles"
                                    disabled="@(State.IsRunning || adminAnalysis.ProfilesCount == 0)" />
-                            <span class="glpi-switch-slider"></span>
+                            <span class="glping-switch-slider"></span>
                         </label>
                     </div>
 
-                    <div class="glpi-config-field checkbox">
-                        <label for="glpi-import-sel-users"><i class="ti ti-user me-2"></i>Utilisateurs (@adminAnalysis.UsersCount)</label>
-                        <label class="glpi-switch">
-                            <input id="glpi-import-sel-users" type="checkbox" @bind="State.AdminSelection.ImportUsers"
+                    <div class="glping-config-field checkbox">
+                        <label for="glping-import-sel-users"><i class="ti ti-user me-2"></i>Utilisateurs (@adminAnalysis.UsersCount)</label>
+                        <label class="glping-switch">
+                            <input id="glping-import-sel-users" type="checkbox" @bind="State.AdminSelection.ImportUsers"
                                    disabled="@(State.IsRunning || adminAnalysis.UsersCount == 0)" />
-                            <span class="glpi-switch-slider"></span>
+                            <span class="glping-switch-slider"></span>
                         </label>
                     </div>
 
-                    <div class="glpi-config-field checkbox">
-                        <label for="glpi-import-sel-config"><i class="ti ti-settings me-2"></i>Configuration générale</label>
-                        <label class="glpi-switch">
-                            <input id="glpi-import-sel-config" type="checkbox" @bind="State.AdminSelection.ImportGeneralConfig"
+                    <div class="glping-config-field checkbox">
+                        <label for="glping-import-sel-config"><i class="ti ti-settings me-2"></i>Configuration générale</label>
+                        <label class="glping-switch">
+                            <input id="glping-import-sel-config" type="checkbox" @bind="State.AdminSelection.ImportGeneralConfig"
                                    disabled="@(State.IsRunning || !adminAnalysis.GeneralConfigAvailable)" />
-                            <span class="glpi-switch-slider"></span>
+                            <span class="glping-switch-slider"></span>
                         </label>
                     </div>
                 </div>
@@ -356,65 +356,65 @@
             {
                 @if (State.KnowledgeBaseAnalysis is not { IsPresent: true } kb)
                 {
-                    <div class="glpi-import-plugin-empty">
+                    <div class="glping-import-plugin-empty">
                         <i class="ti ti-book-off"></i>
                         <p class="mb-0">Aucune base de connaissances sur cette base source (table <code>glpi_knowbaseitems</code> absente).</p>
                     </div>
                 }
                 else
                 {
-                    <div class="glpi-config-field-grid">
-                        <div class="glpi-config-field checkbox">
-                            <label for="glpi-import-sel-kbcategories"><i class="ti ti-category me-2"></i>Catégories (@kb.CategoriesCount)</label>
-                            <label class="glpi-switch">
-                                <input id="glpi-import-sel-kbcategories" type="checkbox" @bind="State.KnowledgeBaseSelection.ImportCategories"
+                    <div class="glping-config-field-grid">
+                        <div class="glping-config-field checkbox">
+                            <label for="glping-import-sel-kbcategories"><i class="ti ti-category me-2"></i>Catégories (@kb.CategoriesCount)</label>
+                            <label class="glping-switch">
+                                <input id="glping-import-sel-kbcategories" type="checkbox" @bind="State.KnowledgeBaseSelection.ImportCategories"
                                        disabled="@(State.IsRunning || kb.CategoriesCount == 0)" />
-                                <span class="glpi-switch-slider"></span>
+                                <span class="glping-switch-slider"></span>
                             </label>
                         </div>
 
-                        <div class="glpi-config-field checkbox">
-                            <label for="glpi-import-sel-kbarticles"><i class="ti ti-book me-2"></i>Articles (@kb.ArticlesCount)</label>
-                            <label class="glpi-switch">
-                                <input id="glpi-import-sel-kbarticles" type="checkbox" @bind="State.KnowledgeBaseSelection.ImportArticles"
+                        <div class="glping-config-field checkbox">
+                            <label for="glping-import-sel-kbarticles"><i class="ti ti-book me-2"></i>Articles (@kb.ArticlesCount)</label>
+                            <label class="glping-switch">
+                                <input id="glping-import-sel-kbarticles" type="checkbox" @bind="State.KnowledgeBaseSelection.ImportArticles"
                                        disabled="@(State.IsRunning || kb.ArticlesCount == 0)" />
-                                <span class="glpi-switch-slider"></span>
+                                <span class="glping-switch-slider"></span>
                             </label>
                         </div>
 
-                        <div class="glpi-config-field checkbox">
-                            <label for="glpi-import-sel-kbtargets"><i class="ti ti-lock me-2"></i>Cibles de visibilité (@kb.TargetsCount)</label>
-                            <label class="glpi-switch">
-                                <input id="glpi-import-sel-kbtargets" type="checkbox" @bind="State.KnowledgeBaseSelection.ImportTargets"
+                        <div class="glping-config-field checkbox">
+                            <label for="glping-import-sel-kbtargets"><i class="ti ti-lock me-2"></i>Cibles de visibilité (@kb.TargetsCount)</label>
+                            <label class="glping-switch">
+                                <input id="glping-import-sel-kbtargets" type="checkbox" @bind="State.KnowledgeBaseSelection.ImportTargets"
                                        disabled="@(State.IsRunning || kb.TargetsCount == 0)" />
-                                <span class="glpi-switch-slider"></span>
+                                <span class="glping-switch-slider"></span>
                             </label>
                         </div>
 
-                        <div class="glpi-config-field checkbox">
-                            <label for="glpi-import-sel-kbrevisions"><i class="ti ti-history me-2"></i>Révisions (@kb.RevisionsCount)</label>
-                            <label class="glpi-switch">
-                                <input id="glpi-import-sel-kbrevisions" type="checkbox" @bind="State.KnowledgeBaseSelection.ImportRevisions"
+                        <div class="glping-config-field checkbox">
+                            <label for="glping-import-sel-kbrevisions"><i class="ti ti-history me-2"></i>Révisions (@kb.RevisionsCount)</label>
+                            <label class="glping-switch">
+                                <input id="glping-import-sel-kbrevisions" type="checkbox" @bind="State.KnowledgeBaseSelection.ImportRevisions"
                                        disabled="@(State.IsRunning || kb.RevisionsCount == 0)" />
-                                <span class="glpi-switch-slider"></span>
+                                <span class="glping-switch-slider"></span>
                             </label>
                         </div>
 
-                        <div class="glpi-config-field checkbox">
-                            <label for="glpi-import-sel-kbdocuments"><i class="ti ti-paperclip me-2"></i>Documents (@kb.DocumentsCount)</label>
-                            <label class="glpi-switch">
-                                <input id="glpi-import-sel-kbdocuments" type="checkbox" @bind="State.KnowledgeBaseSelection.ImportDocuments"
+                        <div class="glping-config-field checkbox">
+                            <label for="glping-import-sel-kbdocuments"><i class="ti ti-paperclip me-2"></i>Documents (@kb.DocumentsCount)</label>
+                            <label class="glping-switch">
+                                <input id="glping-import-sel-kbdocuments" type="checkbox" @bind="State.KnowledgeBaseSelection.ImportDocuments"
                                        disabled="@(State.IsRunning || kb.DocumentsCount == 0)" />
-                                <span class="glpi-switch-slider"></span>
+                                <span class="glping-switch-slider"></span>
                             </label>
                         </div>
 
-                        <div class="glpi-config-field checkbox">
-                            <label for="glpi-import-sel-kbnotes"><i class="ti ti-notes me-2"></i>Notes (@kb.NotesCount)</label>
-                            <label class="glpi-switch">
-                                <input id="glpi-import-sel-kbnotes" type="checkbox" @bind="State.KnowledgeBaseSelection.ImportNotes"
+                        <div class="glping-config-field checkbox">
+                            <label for="glping-import-sel-kbnotes"><i class="ti ti-notes me-2"></i>Notes (@kb.NotesCount)</label>
+                            <label class="glping-switch">
+                                <input id="glping-import-sel-kbnotes" type="checkbox" @bind="State.KnowledgeBaseSelection.ImportNotes"
                                        disabled="@(State.IsRunning || kb.NotesCount == 0)" />
-                                <span class="glpi-switch-slider"></span>
+                                <span class="glping-switch-slider"></span>
                             </label>
                         </div>
                     </div>
@@ -453,17 +453,17 @@
                    savoir ce qu'il y a. *@
                 @if (!plugin.IsPresent)
                 {
-                    <div class="glpi-config-placeholder">
+                    <div class="glping-config-placeholder">
                         <i class="ti ti-plug-off"></i>
                         <p class="mb-0">Aucun plugin d'inventaire (GLPI Inventory ou FusionInventory) sur cette base.</p>
                     </div>
                 }
                 else
                 {
-                    <div class="glpi-import-plugin-head">
+                    <div class="glping-import-plugin-head">
                         <i class="ti ti-plug"></i>
                         <div>
-                            <div class="glpi-import-plugin-name">
+                            <div class="glping-import-plugin-name">
                                 @(plugin.Name ?? plugin.Directory)
                                 @if (plugin.Version is { Length: > 0 } version)
                                 {
@@ -497,40 +497,40 @@
                         @* Les quatre catégories d'un bloc, sans rien qui les sépare : la liste doit se
                            lire d'un coup d'œil. Ce que la sélection des paquets ouvre en plus vient
                            après, dans sa propre section. *@
-                        <div class="glpi-config-field-grid">
-                            <div class="glpi-config-field checkbox">
-                                <label for="glpi-import-sel-ipranges"><i class="ti ti-network me-2"></i>Plages IP (@plugin.IpRangesCount)</label>
-                                <label class="glpi-switch">
-                                    <input id="glpi-import-sel-ipranges" type="checkbox" @bind="State.PluginSelection.ImportIpRanges"
+                        <div class="glping-config-field-grid">
+                            <div class="glping-config-field checkbox">
+                                <label for="glping-import-sel-ipranges"><i class="ti ti-network me-2"></i>Plages IP (@plugin.IpRangesCount)</label>
+                                <label class="glping-switch">
+                                    <input id="glping-import-sel-ipranges" type="checkbox" @bind="State.PluginSelection.ImportIpRanges"
                                            disabled="@(State.IsRunning || plugin.IpRangesCount == 0)" />
-                                    <span class="glpi-switch-slider"></span>
+                                    <span class="glping-switch-slider"></span>
                                 </label>
                             </div>
 
-                            <div class="glpi-config-field checkbox">
-                                <label for="glpi-import-sel-snmp"><i class="ti ti-key me-2"></i>Identifiants SNMP (@plugin.SnmpCredentialsCount)</label>
-                                <label class="glpi-switch">
-                                    <input id="glpi-import-sel-snmp" type="checkbox" @bind="State.PluginSelection.ImportSnmpCredentials"
+                            <div class="glping-config-field checkbox">
+                                <label for="glping-import-sel-snmp"><i class="ti ti-key me-2"></i>Identifiants SNMP (@plugin.SnmpCredentialsCount)</label>
+                                <label class="glping-switch">
+                                    <input id="glping-import-sel-snmp" type="checkbox" @bind="State.PluginSelection.ImportSnmpCredentials"
                                            disabled="@(State.IsRunning || plugin.SnmpCredentialsCount == 0)" />
-                                    <span class="glpi-switch-slider"></span>
+                                    <span class="glping-switch-slider"></span>
                                 </label>
                             </div>
 
-                            <div class="glpi-config-field checkbox">
-                                <label for="glpi-import-sel-packages"><i class="ti ti-package me-2"></i>Paquets de déploiement (@plugin.DeployPackagesCount)</label>
-                                <label class="glpi-switch">
-                                    <input id="glpi-import-sel-packages" type="checkbox" @bind="State.PluginSelection.ImportDeployPackages"
+                            <div class="glping-config-field checkbox">
+                                <label for="glping-import-sel-packages"><i class="ti ti-package me-2"></i>Paquets de déploiement (@plugin.DeployPackagesCount)</label>
+                                <label class="glping-switch">
+                                    <input id="glping-import-sel-packages" type="checkbox" @bind="State.PluginSelection.ImportDeployPackages"
                                            disabled="@(State.IsRunning || plugin.DeployPackagesCount == 0)" />
-                                    <span class="glpi-switch-slider"></span>
+                                    <span class="glping-switch-slider"></span>
                                 </label>
                             </div>
 
-                            <div class="glpi-config-field checkbox">
-                                <label for="glpi-import-sel-unmanaged"><i class="ti ti-help me-2"></i>Actifs non gérés (@plugin.UnmanagedDevicesCount)</label>
-                                <label class="glpi-switch">
-                                    <input id="glpi-import-sel-unmanaged" type="checkbox" @bind="State.PluginSelection.ImportUnmanagedDevices"
+                            <div class="glping-config-field checkbox">
+                                <label for="glping-import-sel-unmanaged"><i class="ti ti-help me-2"></i>Actifs non gérés (@plugin.UnmanagedDevicesCount)</label>
+                                <label class="glping-switch">
+                                    <input id="glping-import-sel-unmanaged" type="checkbox" @bind="State.PluginSelection.ImportUnmanagedDevices"
                                            disabled="@(State.IsRunning || plugin.UnmanagedDevicesCount == 0)" />
-                                    <span class="glpi-switch-slider"></span>
+                                    <span class="glping-switch-slider"></span>
                                 </label>
                             </div>
                         </div>
@@ -541,7 +541,7 @@
                                interrupteurs : ce ne sont pas des catégories à cocher mais le
                                réglage d'une seule d'entre elles, et les mêler couperait la liste
                                en deux. *@
-                            <div class="glpi-config-divider">
+                            <div class="glping-config-divider">
                                 <span><i class="ti ti-file-download"></i> Contenu des fichiers de paquets</span>
                             </div>
 
@@ -552,11 +552,11 @@
                                 depuis sa fiche.
                             </p>
 
-                            <div class="glpi-config-field">
-                                <label for="glpi-import-files-path">
+                            <div class="glping-config-field">
+                                <label for="glping-import-files-path">
                                     Répertoire des fichiers du plugin <span class="text-secondary">(optionnel)</span>
                                 </label>
-                                <input id="glpi-import-files-path" type="text" class="glpi-config-input"
+                                <input id="glping-import-files-path" type="text" class="glping-config-input"
                                        placeholder="Déduit du dossier files/ et du plugin détecté"
                                        @bind="State.DeployFilesPathOverride" disabled="@State.IsRunning" />
                             </div>
@@ -568,9 +568,9 @@
                                 sont ceux de la connexion — c'est le même partage.
                             </p>
 
-                            <div class="glpi-config-field">
-                                <label for="glpi-import-base-url">URL de GLPI</label>
-                                <input id="glpi-import-base-url" type="text" class="glpi-config-input"
+                            <div class="glping-config-field">
+                                <label for="glping-import-base-url">URL de GLPI</label>
+                                <input id="glping-import-base-url" type="text" class="glping-config-input"
                                        placeholder="https://glpi.exemple.local"
                                        @bind="State.GlpiBaseUrl" disabled="@State.IsRunning" />
                             </div>
@@ -587,16 +587,16 @@
                             @* Le point d'accès qui rend un fichier entier (front/deployfile_download.php)
                                vérifie un droit GLPI : sans compte, la route HTTP ne peut rien récupérer
                                d'autre que ce qu'un miroir statique expose. *@
-                            <div class="glpi-config-field">
-                                <label for="glpi-import-web-user">Compte GLPI <span class="text-secondary">(optionnel)</span></label>
-                                <input id="glpi-import-web-user" type="text" class="glpi-config-input"
+                            <div class="glping-config-field">
+                                <label for="glping-import-web-user">Compte GLPI <span class="text-secondary">(optionnel)</span></label>
+                                <input id="glping-import-web-user" type="text" class="glping-config-input"
                                        placeholder="compte ayant le droit de lecture sur les paquets"
                                        @bind="State.GlpiUserName" disabled="@State.IsRunning" />
                             </div>
 
-                            <div class="glpi-config-field">
-                                <label for="glpi-import-web-password">Mot de passe GLPI</label>
-                                <input id="glpi-import-web-password" type="password" class="glpi-config-input"
+                            <div class="glping-config-field">
+                                <label for="glping-import-web-password">Mot de passe GLPI</label>
+                                <input id="glping-import-web-password" type="password" class="glping-config-input"
                                        autocomplete="new-password"
                                        @bind="State.GlpiPassword" disabled="@State.IsRunning" />
                             </div>
@@ -620,7 +620,7 @@
                             </p>
                         }
 
-                        <div class="glpi-config-divider">
+                        <div class="glping-config-divider">
                             <span><i class="ti ti-ban"></i> Non repris</span>
                         </div>
 
@@ -633,7 +633,7 @@
                 }
             }
 
-            <button type="button" class="glpi-config-save mt-2" disabled="@(!State.CanRun)" @onclick="RunImportAsync">
+            <button type="button" class="glping-config-save mt-2" disabled="@(!State.CanRun)" @onclick="RunImportAsync">
                 @if (State.IsRunning)
                 {
                     <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
@@ -666,7 +666,7 @@
 
             <div class="d-flex justify-content-between align-items-baseline mb-1">
                 <span class="fw-medium text-truncate">
-                    <i class="ti ti-loader-2 glpi-spin me-1"></i>@(State.CurrentPhase ?? "Préparation…")
+                    <i class="ti ti-loader-2 glping-spin me-1"></i>@(State.CurrentPhase ?? "Préparation…")
                     @if (State.CurrentDetail is { Length: > 0 } detail)
                     {
                         @* Ce qui se passe quand le compteur, lui, ne bouge pas — le téléchargement
@@ -692,7 +692,7 @@
                 }
                 else
                 {
-                    <div class="progress-bar glpi-progress-indeterminate"></div>
+                    <div class="progress-bar glping-progress-indeterminate"></div>
                 }
             </div>
         }
@@ -800,7 +800,7 @@
 
             @if (result.Warnings.Count > 0)
             {
-                <div class="glpi-fiche-block-title"><i class="ti ti-alert-triangle"></i>Avertissements</div>
+                <div class="glping-fiche-block-title"><i class="ti ti-alert-triangle"></i>Avertissements</div>
                 <ul>
                     @foreach (string warning in result.Warnings)
                     {
@@ -864,7 +864,7 @@
 
             @if (adminResult.Warnings.Count > 0)
             {
-                <div class="glpi-fiche-block-title"><i class="ti ti-alert-triangle"></i>Avertissements (Administration)</div>
+                <div class="glping-fiche-block-title"><i class="ti ti-alert-triangle"></i>Avertissements (Administration)</div>
                 <ul>
                     @foreach (string warning in adminResult.Warnings)
                     {
@@ -965,7 +965,7 @@
 
             @if (kbResult.Warnings.Count > 0)
             {
-                <div class="glpi-fiche-block-title"><i class="ti ti-alert-triangle"></i>Avertissements (Base de connaissances)</div>
+                <div class="glping-fiche-block-title"><i class="ti ti-alert-triangle"></i>Avertissements (Base de connaissances)</div>
                 <ul>
                     @foreach (string warning in kbResult.Warnings)
                     {
@@ -1044,7 +1044,7 @@
 
             @if (pluginResult.Warnings.Count > 0)
             {
-                <div class="glpi-fiche-block-title"><i class="ti ti-alert-triangle"></i>Avertissements (plugin d'inventaire)</div>
+                <div class="glping-fiche-block-title"><i class="ti ti-alert-triangle"></i>Avertissements (plugin d'inventaire)</div>
                 <ul>
                     @foreach (string warning in pluginResult.Warnings)
                     {

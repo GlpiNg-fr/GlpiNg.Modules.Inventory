@@ -3,9 +3,9 @@
 
 <PageTitle>Matériels réseau — GlpiNg</PageTitle>
 
-<div class="glpi-list-page">
+<div class="glping-list-page">
 <div class="card">
-    <div class="card-header d-flex align-items-center justify-content-between glpi-list-toolbar">
+    <div class="card-header d-flex align-items-center justify-content-between glping-list-toolbar">
         <div class="btn-list">
             <SearchCriteriaPanel Fields="SearchFields" Criteria="_criteria" DistinctValues="DistinctValues" OnApply="ApplyFilterAndSort" />
             <SortCriteriaPanel Fields="SearchFields" SortCriteria="_sortCriteria" OnApply="ApplyFilterAndSort" />
@@ -53,12 +53,12 @@
                                @onchange="@((ChangeEventArgs e) => ToggleSelectAll((bool)(e.Value ?? false)))" />
                     </th>
                     <th style="width: 2rem;"></th>
-                    <th class="glpi-sortable-th" @onclick='() => SetSort("name")'>Nom @SortIndicator("name")</th>
-                    <th class="glpi-sortable-th" @onclick='() => SetSort("status")'>Statut @SortIndicator("status")</th>
-                    <th class="glpi-sortable-th" @onclick='() => SetSort("manufacturer")'>Fabricant @SortIndicator("manufacturer")</th>
-                    <th class="glpi-sortable-th" @onclick='() => SetSort("location")'>Lieu @SortIndicator("location")</th>
-                    <th class="glpi-sortable-th" @onclick='() => SetSort("type")'>Type @SortIndicator("type")</th>
-                    <th class="glpi-sortable-th" @onclick='() => SetSort("model")'>Modèle @SortIndicator("model")</th>
+                    <th class="glping-sortable-th" @onclick='() => SetSort("name")'>Nom @SortIndicator("name")</th>
+                    <th class="glping-sortable-th" @onclick='() => SetSort("status")'>Statut @SortIndicator("status")</th>
+                    <th class="glping-sortable-th" @onclick='() => SetSort("manufacturer")'>Fabricant @SortIndicator("manufacturer")</th>
+                    <th class="glping-sortable-th" @onclick='() => SetSort("location")'>Lieu @SortIndicator("location")</th>
+                    <th class="glping-sortable-th" @onclick='() => SetSort("type")'>Type @SortIndicator("type")</th>
+                    <th class="glping-sortable-th" @onclick='() => SetSort("model")'>Modèle @SortIndicator("model")</th>
                     <th>Cartouches</th>
                 </tr>
             </thead>

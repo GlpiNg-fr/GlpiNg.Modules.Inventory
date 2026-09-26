@@ -12,37 +12,37 @@
 }
 else
 {
-    <div class="glpi-fiche-topbar">
-        <div class="glpi-fiche-crumb">
+    <div class="glping-fiche-topbar">
+        <div class="glping-fiche-crumb">
             <i class="ti ti-bookmark"></i>
             <span>Recherche sauvegardée - @_savedSearch.Name - ID @_savedSearch.Id</span>
         </div>
-        <div class="glpi-fiche-toolbar">
+        <div class="glping-fiche-toolbar">
             @if (_total > 0)
             {
-                <span class="glpi-fiche-pager-count">@_position/@_total</span>
-                <a class="glpi-fiche-pager-btn @(_previousId is null ? "disabled" : "")" href="@(_previousId is { } prevId ? $"/tools/saved-searches/{prevId}" : "#")">
+                <span class="glping-fiche-pager-count">@_position/@_total</span>
+                <a class="glping-fiche-pager-btn @(_previousId is null ? "disabled" : "")" href="@(_previousId is { } prevId ? $"/tools/saved-searches/{prevId}" : "#")">
                     <i class="ti ti-chevron-left"></i>
                 </a>
-                <a class="glpi-fiche-pager-btn @(_nextId is null ? "disabled" : "")" href="@(_nextId is { } nextId ? $"/tools/saved-searches/{nextId}" : "#")">
+                <a class="glping-fiche-pager-btn @(_nextId is null ? "disabled" : "")" href="@(_nextId is { } nextId ? $"/tools/saved-searches/{nextId}" : "#")">
                     <i class="ti ti-chevron-right"></i>
                 </a>
             }
         </div>
     </div>
 
-    <div class="glpi-fiche-layout">
-        <aside class="glpi-fiche-sidebar">
+    <div class="glping-fiche-layout">
+        <aside class="glping-fiche-sidebar">
             @foreach (FicheTab tab in Tabs)
             {
-                <button type="button" class="glpi-fiche-tab-item @(_activeTabKey == tab.Key ? "active" : "")" @onclick="() => SetTab(tab.Key)">
+                <button type="button" class="glping-fiche-tab-item @(_activeTabKey == tab.Key ? "active" : "")" @onclick="() => SetTab(tab.Key)">
                     <i class="ti @tab.Icon"></i>
                     <span>@tab.Label</span>
                 </button>
             }
         </aside>
 
-        <div class="glpi-fiche-panel">
+        <div class="glping-fiche-panel">
             @switch (_activeTabKey)
             {
                 case "savedsearch":
@@ -90,8 +90,8 @@ else
                     break;
 
                 case "all":
-                    <div class="glpi-fiche-block">
-                        <div class="glpi-fiche-block-title"><i class="ti ti-bookmark"></i>Recherche sauvegardée</div>
+                    <div class="glping-fiche-block">
+                        <div class="glping-fiche-block-title"><i class="ti ti-bookmark"></i>Recherche sauvegardée</div>
                         <p class="mb-1"><strong>Nom :</strong> @_savedSearch.Name</p>
                         <p class="mb-1"><strong>Type d'élément :</strong> @SavedSearchItemTypes.LabelFor(_savedSearch.ItemType)</p>
                         <p class="mb-1"><strong>Compter :</strong> @(_savedSearch.CountMode switch { SavedSearchCountMode.Yes => "Oui", SavedSearchCountMode.No => "Non", _ => "Auto" })</p>
@@ -105,7 +105,7 @@ else
 
                 default:
                     var current = Tabs.First(t => t.Key == _activeTabKey);
-                    <div class="glpi-config-placeholder">
+                    <div class="glping-config-placeholder">
                         <i class="ti @current.Icon"></i>
                         <p class="mb-0">L'onglet « @current.Label » n'est pas encore disponible.</p>
                     </div>

@@ -3,12 +3,12 @@
 
 <PageTitle>Moniteurs — GlpiNg</PageTitle>
 
-<div class="glpi-list-page">
-<div class="d-flex gap-3 glpi-computers-layout">
+<div class="glping-list-page">
+<div class="d-flex gap-3 glping-computers-layout">
     @if (_savedSearchesOpen)
     {
-        <div class="glpi-saved-searches-panel @(_savedSearchesPinned ? "pinned" : "")">
-            <div class="glpi-saved-searches-heading d-flex align-items-center justify-content-between">
+        <div class="glping-saved-searches-panel @(_savedSearchesPinned ? "pinned" : "")">
+            <div class="glping-saved-searches-heading d-flex align-items-center justify-content-between">
                 <span class="d-flex align-items-center gap-2">
                     <i class="ti ti-bookmarks"></i>Recherches sauvegardées
                 </span>
@@ -30,7 +30,7 @@
                     }
                 </div>
             </div>
-            <ul class="nav nav-tabs glpi-saved-searches-tabs">
+            <ul class="nav nav-tabs glping-saved-searches-tabs">
                 <li class="nav-item">
                     <button type="button" class="nav-link @(_savedSearchesTab == SavedSearchesTab.Monitor ? "active" : "")"
                             @onclick="() => _savedSearchesTab = SavedSearchesTab.Monitor">
@@ -44,7 +44,7 @@
                     </button>
                 </li>
             </ul>
-            <div class="list-group list-group-flush glpi-saved-searches-list">
+            <div class="list-group list-group-flush glping-saved-searches-list">
                 @if (_savedSearchesTab == SavedSearchesTab.Other)
                 {
                     @if (FilteredOtherSavedSearches.Count == 0)
@@ -75,12 +75,12 @@
                 {
                     @foreach (SavedSearch saved in FilteredSavedSearches)
                     {
-                        <div class="list-group-item d-flex align-items-center gap-1 glpi-draggable-row"
+                        <div class="list-group-item d-flex align-items-center gap-1 glping-draggable-row"
                              draggable="true"
                              @ondragstart="() => OnSavedSearchDragStart(saved)"
                              @ondragover:preventDefault="true"
                              @ondrop="() => OnSavedSearchDropAsync(saved)" @ondrop:preventDefault="true">
-                            <i class="ti ti-grip-vertical glpi-drag-handle" title="Glisser pour réordonner"></i>
+                            <i class="ti ti-grip-vertical glping-drag-handle" title="Glisser pour réordonner"></i>
                             <button type="button" class="btn btn-link text-reset text-truncate flex-grow-1 justify-content-start p-0"
                                     title="Appliquer cette recherche" @onclick="() => ApplySavedSearch(saved)">
                                 <span class="text-truncate">@saved.Name</span>
@@ -97,7 +97,7 @@
                     }
                 }
             </div>
-            <div class="glpi-saved-searches-filter">
+            <div class="glping-saved-searches-filter">
                 <div class="input-icon">
                     <input type="text" class="form-control form-control-sm" placeholder="Filtrer la liste" value="@_savedSearchFilter"
                            @oninput="@((ChangeEventArgs e) => _savedSearchFilter = (string)(e.Value ?? string.Empty))" />
@@ -113,7 +113,7 @@
     }
 
     <div class="card flex-fill" style="min-width: 0;">
-    <div class="card-header d-flex align-items-center justify-content-between glpi-list-toolbar">
+    <div class="card-header d-flex align-items-center justify-content-between glping-list-toolbar">
         <div class="btn-list">
             <button type="button" class="btn btn-icon @(_savedSearchesOpen ? "active" : "")" title="Afficher les recherches sauvegardées"
                     @onclick="() => _savedSearchesOpen = !_savedSearchesOpen">
@@ -131,7 +131,7 @@
             </button>
 
             <button type="button" class="btn btn-icon" @onclick="OnRefreshAsync" disabled="@_isRefreshing" title="Rafraîchir">
-                <i class="ti ti-refresh @(_isRefreshing ? "glpi-spin" : "")"></i>
+                <i class="ti ti-refresh @(_isRefreshing ? "glping-spin" : "")"></i>
             </button>
         </div>
     </div>
@@ -140,17 +140,17 @@
         <table class="table table-vcenter card-table">
             <thead>
                 <tr>
-                    <th class="glpi-sortable-th" title="Ctrl+clic pour ajouter un tri secondaire"
+                    <th class="glping-sortable-th" title="Ctrl+clic pour ajouter un tri secondaire"
                         @onclick="@((MouseEventArgs e) => SetSort("designation", e.CtrlKey))">
                         <span class="d-flex align-items-center gap-1">
                             Désignation
                             @if (GetSortCriterion("designation") is { } designationActive)
                             {
-                                <span class="glpi-sort-indicator">
+                                <span class="glping-sort-indicator">
                                     <i class="ti @(designationActive.Descending ? "ti-caret-up-filled" : "ti-caret-down-filled")"></i>
                                     @if (_sortCriteria.Count > 1)
                                     {
-                                        <span class="glpi-sort-num">@(_sortCriteria.IndexOf(designationActive) + 1)</span>
+                                        <span class="glping-sort-num">@(_sortCriteria.IndexOf(designationActive) + 1)</span>
                                     }
                                 </span>
                             }
@@ -160,17 +160,17 @@
                     {
                         SearchField<MonitorRow>? columnField = FindField(columnKey);
                         SortCriterion? active = GetSortCriterion(columnKey);
-                        <th class="glpi-sortable-th" title="Ctrl+clic pour ajouter un tri secondaire"
+                        <th class="glping-sortable-th" title="Ctrl+clic pour ajouter un tri secondaire"
                             @onclick="@((MouseEventArgs e) => SetSort(columnKey, e.CtrlKey))">
                             <span class="d-flex align-items-center gap-1">
                                 @(columnField?.Label ?? columnKey)
                                 @if (active is not null)
                                 {
-                                    <span class="glpi-sort-indicator">
+                                    <span class="glping-sort-indicator">
                                         <i class="ti @(active.Descending ? "ti-caret-up-filled" : "ti-caret-down-filled")"></i>
                                         @if (_sortCriteria.Count > 1)
                                         {
-                                            <span class="glpi-sort-num">@(_sortCriteria.IndexOf(active) + 1)</span>
+                                            <span class="glping-sort-num">@(_sortCriteria.IndexOf(active) + 1)</span>
                                         }
                                     </span>
                                 }
@@ -315,17 +315,17 @@
                             <i class="ti ti-plus me-1"></i>Ajouter
                         </button>
                     </div>
-                    <div class="list-group list-group-flush glpi-columns-list">
+                    <div class="list-group list-group-flush glping-columns-list">
                         <div class="list-group-item text-secondary">Désignation</div>
                         @foreach (string columnKey in _columns)
                         {
                             SearchField<MonitorRow>? field = FindField(columnKey);
-                            <div class="list-group-item d-flex align-items-center gap-2 glpi-draggable-row"
+                            <div class="list-group-item d-flex align-items-center gap-2 glping-draggable-row"
                                  draggable="true"
                                  @ondragstart="() => OnColumnDragStart(columnKey)"
                                  @ondragover:preventDefault="true"
                                  @ondrop="() => OnColumnDropAsync(columnKey)" @ondrop:preventDefault="true">
-                                <i class="ti ti-grip-vertical glpi-drag-handle"></i>
+                                <i class="ti ti-grip-vertical glping-drag-handle"></i>
                                 <span class="flex-grow-1">@(field?.Label ?? columnKey)</span>
                                 <button type="button" class="btn btn-icon btn-sm text-danger" title="Retirer cette colonne"
                                         @onclick="() => RemoveColumnAsync(columnKey)">

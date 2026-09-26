@@ -14,48 +14,48 @@
 }
 else
 {
-    <div class="glpi-fiche-topbar">
-        <div class="glpi-fiche-crumb">
+    <div class="glping-fiche-topbar">
+        <div class="glping-fiche-crumb">
             <i class="ti ti-mouse"></i>
             <span>Périphérique - @_peripheral.Name - ID @_peripheral.Id</span>
-            <button type="button" class="glpi-fiche-favorite" title="Ajouter aux favoris">
+            <button type="button" class="glping-fiche-favorite" title="Ajouter aux favoris">
                 <i class="ti ti-star"></i>
             </button>
         </div>
-        <div class="glpi-fiche-toolbar">
+        <div class="glping-fiche-toolbar">
             @if (_total > 0)
             {
-                <span class="glpi-fiche-pager-count">@_position/@_total</span>
-                <a class="glpi-fiche-pager-btn @(_previousId is null ? "disabled" : "")" href="@(_previousId is { } prevId ? $"/parc/peripherals/{prevId}" : "#")">
+                <span class="glping-fiche-pager-count">@_position/@_total</span>
+                <a class="glping-fiche-pager-btn @(_previousId is null ? "disabled" : "")" href="@(_previousId is { } prevId ? $"/parc/peripherals/{prevId}" : "#")">
                     <i class="ti ti-chevron-left"></i>
                 </a>
-                <a class="glpi-fiche-pager-btn @(_nextId is null ? "disabled" : "")" href="@(_nextId is { } nextId ? $"/parc/peripherals/{nextId}" : "#")">
+                <a class="glping-fiche-pager-btn @(_nextId is null ? "disabled" : "")" href="@(_nextId is { } nextId ? $"/parc/peripherals/{nextId}" : "#")">
                     <i class="ti ti-chevron-right"></i>
                 </a>
             }
         </div>
     </div>
 
-    <div class="glpi-fiche-layout">
-        <aside class="glpi-fiche-sidebar">
+    <div class="glping-fiche-layout">
+        <aside class="glping-fiche-sidebar">
             @foreach (var tab in _tabs)
             {
-                <button type="button" class="glpi-fiche-tab-item @(_activeTabKey == tab.Key ? "active" : "")" @onclick="() => SetTab(tab.Key)">
+                <button type="button" class="glping-fiche-tab-item @(_activeTabKey == tab.Key ? "active" : "")" @onclick="() => SetTab(tab.Key)">
                     <i class="ti @tab.Icon"></i>
                     <span>@tab.Label</span>
                     @if (tab.Count is { } count)
                     {
-                        <span class="glpi-fiche-tab-count">@count</span>
+                        <span class="glping-fiche-tab-count">@count</span>
                     }
                 </button>
             }
-            <button type="button" class="glpi-fiche-tab-item @(_activeTabKey == "links" ? "active" : "")" @onclick='() => SetTab("links")'>
+            <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "links" ? "active" : "")" @onclick='() => SetTab("links")'>
                 <i class="ti ti-external-link"></i>
                 <span>Liens externes</span>
             </button>
         </aside>
 
-        <div class="glpi-fiche-panel">
+        <div class="glping-fiche-panel">
             @switch (_activeTabKey)
             {
                 case "peripheral":
@@ -74,8 +74,8 @@ else
                     break;
 
                 case "connections":
-                    <div class="glpi-fiche-block">
-                        <div class="glpi-fiche-block-title"><i class="ti ti-plug-connected"></i>Connexion à un ordinateur</div>
+                    <div class="glping-fiche-block">
+                        <div class="glping-fiche-block-title"><i class="ti ti-plug-connected"></i>Connexion à un ordinateur</div>
                         @if (_peripheral.Computer is { } linkedComputer)
                         {
                             <div class="d-flex align-items-center justify-content-between mb-3">
@@ -89,7 +89,7 @@ else
                         }
                         else
                         {
-                            <div class="glpi-config-placeholder">
+                            <div class="glping-config-placeholder">
                                 <i class="ti ti-plug-connected-x"></i>
                                 <p class="mb-0">Ce périphérique n'est connecté à aucun ordinateur.</p>
                             </div>
@@ -110,11 +110,11 @@ else
                     break;
 
                 case "history":
-                    <div class="glpi-fiche-block">
-                        <div class="glpi-fiche-block-title"><i class="ti ti-history"></i>Historique (@_peripheral.HistoryEntries.Count)</div>
+                    <div class="glping-fiche-block">
+                        <div class="glping-fiche-block-title"><i class="ti ti-history"></i>Historique (@_peripheral.HistoryEntries.Count)</div>
                         @if (_peripheral.HistoryEntries.Count == 0)
                         {
-                            <div class="glpi-config-placeholder">
+                            <div class="glping-config-placeholder">
                                 <i class="ti ti-history"></i>
                                 <p class="mb-0">Aucune modification enregistrée.</p>
                             </div>
@@ -151,8 +151,8 @@ else
                     break;
 
                 case "all":
-                    <div class="glpi-fiche-block">
-                        <div class="glpi-fiche-block-title"><i class="ti ti-mouse"></i>Périphérique</div>
+                    <div class="glping-fiche-block">
+                        <div class="glping-fiche-block-title"><i class="ti ti-mouse"></i>Périphérique</div>
                         <p class="mb-1"><strong>Nom :</strong> @_peripheral.Name</p>
                         <p class="mb-1"><strong>Statut :</strong> @(_peripheral.StatusItem?.Name ?? "—")</p>
                         <p class="mb-1"><strong>Type :</strong> @(_peripheral.Type ?? "—")</p>
@@ -161,12 +161,12 @@ else
                         <p class="mb-1"><strong>Numéro de série :</strong> @(_peripheral.SerialNumber ?? "—")</p>
                         <p class="mb-0"><strong>Commentaires :</strong> @(_peripheral.Comment ?? "—")</p>
                     </div>
-                    <div class="glpi-fiche-block">
-                        <div class="glpi-fiche-block-title"><i class="ti ti-plug-connected"></i>Connexions</div>
+                    <div class="glping-fiche-block">
+                        <div class="glping-fiche-block-title"><i class="ti ti-plug-connected"></i>Connexions</div>
                         <p class="mb-0">@(_peripheral.Computer?.Name ?? "Aucune connexion")</p>
                     </div>
-                    <div class="glpi-fiche-block">
-                        <div class="glpi-fiche-block-title"><i class="ti ti-history"></i>Historique (@_peripheral.HistoryEntries.Count)</div>
+                    <div class="glping-fiche-block">
+                        <div class="glping-fiche-block-title"><i class="ti ti-history"></i>Historique (@_peripheral.HistoryEntries.Count)</div>
                         @foreach (PeripheralHistoryEntry entry in Display.Chronological(_peripheral.HistoryEntries, e => e.OccurredAt))
                         {
                             <p class="mb-1">@Display.DateTime(entry.OccurredAt) — @entry.User — @entry.Field : @entry.Description</p>
@@ -176,7 +176,7 @@ else
 
                 default:
                     var current = _tabs.First(t => t.Key == _activeTabKey);
-                    <div class="glpi-config-placeholder">
+                    <div class="glping-config-placeholder">
                         <i class="ti @current.Icon"></i>
                         <p class="mb-0">L'onglet « @current.Label » n'est pas encore disponible.</p>
                     </div>

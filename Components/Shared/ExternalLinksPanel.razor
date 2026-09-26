@@ -7,12 +7,12 @@
 @if (_links is null)
 {
     <div class="text-secondary py-3">
-        <i class="ti ti-loader-2 glpi-spin me-1"></i>Chargement…
+        <i class="ti ti-loader-2 glping-spin me-1"></i>Chargement…
     </div>
 }
 else if (_links.Count == 0)
 {
-    <div class="glpi-config-placeholder">
+    <div class="glping-config-placeholder">
         <i class="ti ti-external-link"></i>
         <p class="mb-1">Aucun lien externe pour ce type d'objet.</p>
         <p class="mb-0 text-secondary" style="max-width: 46rem;">
@@ -25,8 +25,8 @@ else if (_links.Count == 0)
 }
 else
 {
-    <div class="glpi-fiche-block">
-        <div class="glpi-fiche-block-title"><i class="ti ti-external-link"></i>Liens externes (@_links.Count)</div>
+    <div class="glping-fiche-block">
+        <div class="glping-fiche-block-title"><i class="ti ti-external-link"></i>Liens externes (@_links.Count)</div>
         <div class="table-responsive">
             <table class="table table-vcenter card-table mb-0">
                 <thead>

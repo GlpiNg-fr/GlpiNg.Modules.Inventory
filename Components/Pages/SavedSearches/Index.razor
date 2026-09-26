@@ -3,9 +3,9 @@
 
 <PageTitle>Recherches sauvegardées — GlpiNg</PageTitle>
 
-<div class="glpi-list-page">
+<div class="glping-list-page">
 <div class="card">
-    <div class="card-header d-flex align-items-center justify-content-between glpi-list-toolbar">
+    <div class="card-header d-flex align-items-center justify-content-between glping-list-toolbar">
         <div class="btn-list">
             <div class="dropdown">
                 <button type="button" class="btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
@@ -51,16 +51,16 @@
         <table class="table table-vcenter card-table">
             <thead>
                 <tr>
-                    <th class="glpi-sortable-th" @onclick="() => SetSort(SortField.Name)">
+                    <th class="glping-sortable-th" @onclick="() => SetSort(SortField.Name)">
                         <span class="d-flex align-items-center gap-1">Nom @SortIndicator(SortField.Name)</span>
                     </th>
-                    <th class="glpi-sortable-th" @onclick="() => SetSort(SortField.ItemType)">
+                    <th class="glping-sortable-th" @onclick="() => SetSort(SortField.ItemType)">
                         <span class="d-flex align-items-center gap-1">Type d'élément @SortIndicator(SortField.ItemType)</span>
                     </th>
-                    <th class="glpi-sortable-th" @onclick="() => SetSort(SortField.Owner)">
+                    <th class="glping-sortable-th" @onclick="() => SetSort(SortField.Owner)">
                         <span class="d-flex align-items-center gap-1">Utilisateur @SortIndicator(SortField.Owner)</span>
                     </th>
-                    <th class="glpi-sortable-th" @onclick="() => SetSort(SortField.ResultCount)">
+                    <th class="glping-sortable-th" @onclick="() => SetSort(SortField.ResultCount)">
                         <span class="d-flex align-items-center gap-1">Résultats @SortIndicator(SortField.ResultCount)</span>
                     </th>
                     <th>Visibilité</th>

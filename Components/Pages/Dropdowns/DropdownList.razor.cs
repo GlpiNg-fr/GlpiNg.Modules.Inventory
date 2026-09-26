@@ -338,7 +338,7 @@ public partial class DropdownList : ComponentBase
         // (colonne Identity), rejeté par SQL Server (IDENTITY_INSERT OFF).
         _newItem = new DropdownItem { Name = string.Empty, Type = _type };
 
-        await JS.InvokeVoidAsync("glpiNg.hideModal", "newDropdownItemModal");
+        await JS.InvokeVoidAsync("glping.hideModal", "newDropdownItemModal");
         await LoadAsync();
     }
 }

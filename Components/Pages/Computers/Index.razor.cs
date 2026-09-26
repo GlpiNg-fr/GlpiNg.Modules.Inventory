@@ -235,13 +235,13 @@ public partial class Index : ComponentBase
 
         using MemoryStream stream = new(export.Bytes);
         using DotNetStreamReference streamRef = new(stream);
-        await JS.InvokeVoidAsync("glpiNg.downloadFileFromStream", fileName, export.ContentType, streamRef);
+        await JS.InvokeVoidAsync("glping.downloadFileFromStream", fileName, export.ContentType, streamRef);
     }
 
     private async Task CopyNamesToClipboardAsync()
     {
         string names = string.Join('\n', _filteredComputers.Select(computer => computer.Name));
-        await JS.InvokeVoidAsync("glpiNg.copyToClipboard", names);
+        await JS.InvokeVoidAsync("glping.copyToClipboard", names);
     }
 
     private static SearchField<Computer>? FindField(string key) => SearchEngine.Find(SearchFields, key);

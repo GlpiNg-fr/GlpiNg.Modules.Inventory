@@ -5,9 +5,9 @@
 
 <PageTitle>Câbles — GlpiNg</PageTitle>
 
-<div class="glpi-list-page">
+<div class="glping-list-page">
 <div class="card">
-    <div class="card-header d-flex align-items-center justify-content-between glpi-list-toolbar">
+    <div class="card-header d-flex align-items-center justify-content-between glping-list-toolbar">
         <div class="btn-list">
             <SearchCriteriaPanel Fields="SearchFields" Criteria="_criteria" DistinctValues="DistinctValues" OnApply="ApplyFilterAndSort" />
             <SortCriteriaPanel Fields="SearchFields" SortCriteria="_sortCriteria" OnApply="ApplyFilterAndSort" />
@@ -54,12 +54,12 @@
                                checked="@AllSelected"
                                @onchange="@((ChangeEventArgs e) => ToggleSelectAll((bool)(e.Value ?? false)))" />
                     </th>
-                    <th class="glpi-sortable-th" @onclick='() => SetSort("name")'>Nom @SortIndicator("name")</th>
-                    <th class="glpi-sortable-th" @onclick='() => SetSort("status")'>Statut @SortIndicator("status")</th>
-                    <th class="glpi-sortable-th" @onclick='() => SetSort("type")'>Type @SortIndicator("type")</th>
-                    <th class="glpi-sortable-th" @onclick='() => SetSort("color")'>Couleur @SortIndicator("color")</th>
-                    <th class="glpi-sortable-th" @onclick='() => SetSort("endpointA")'>Extrémité A @SortIndicator("endpointA")</th>
-                    <th class="glpi-sortable-th" @onclick='() => SetSort("endpointB")'>Extrémité B @SortIndicator("endpointB")</th>
+                    <th class="glping-sortable-th" @onclick='() => SetSort("name")'>Nom @SortIndicator("name")</th>
+                    <th class="glping-sortable-th" @onclick='() => SetSort("status")'>Statut @SortIndicator("status")</th>
+                    <th class="glping-sortable-th" @onclick='() => SetSort("type")'>Type @SortIndicator("type")</th>
+                    <th class="glping-sortable-th" @onclick='() => SetSort("color")'>Couleur @SortIndicator("color")</th>
+                    <th class="glping-sortable-th" @onclick='() => SetSort("endpointA")'>Extrémité A @SortIndicator("endpointA")</th>
+                    <th class="glping-sortable-th" @onclick='() => SetSort("endpointB")'>Extrémité B @SortIndicator("endpointB")</th>
                 </tr>
             </thead>
             <tbody>

@@ -19,13 +19,13 @@ else
                        Items="@(DropdownTypeCatalog.Group(_type) == DropdownGroup.Components ? DropdownTypeCatalog.Components : DropdownTypeCatalog.Labels)"
                        BaseRoute="@DropdownTypeCatalog.GroupBaseRoute(DropdownTypeCatalog.Group(_type))" />
 
-    <div class="glpi-list-page">
+    <div class="glping-list-page">
     @if (_editError is not null)
     {
         <div class="alert alert-danger"><i class="ti ti-alert-circle me-1"></i>@_editError</div>
     }
     <div class="card">
-        <div class="card-header d-flex align-items-center justify-content-between glpi-list-toolbar">
+        <div class="card-header d-flex align-items-center justify-content-between glping-list-toolbar">
             <p class="text-secondary mb-0"><i class="ti ti-info-circle me-1"></i>@DropdownTypeCatalog.Description(_type)</p>
 
             <div class="btn-list align-items-center">
@@ -207,13 +207,13 @@ else
                     {
                         <div class="alert alert-danger"><i class="ti ti-alert-circle me-1"></i>@_createError</div>
                     }
-                    <div class="glpi-fiche-field">
+                    <div class="glping-fiche-field">
                         <label>Nom</label>
                         <input class="form-control" @bind="_newItem.Name" @bind:event="oninput" />
                     </div>
                     @if (_type == DropdownType.Status)
                     {
-                        <div class="glpi-fiche-field">
+                        <div class="glping-fiche-field">
                             <label>Couleur</label>
                             <div class="d-flex align-items-center gap-2">
                                 <input type="color" class="form-control form-control-color" style="width: 3rem;"
@@ -229,7 +229,7 @@ else
                     }
                     @if (_type == DropdownType.Location)
                     {
-                        <div class="glpi-fiche-field">
+                        <div class="glping-fiche-field">
                             <label>Lieu parent</label>
                             <select class="form-select" value="@(_newItem.ParentId?.ToString() ?? "")"
                                     @onchange="@((ChangeEventArgs e) => _newItem.ParentId = string.IsNullOrEmpty((string?)e.Value) ? null : int.Parse((string)e.Value!))">
@@ -241,7 +241,7 @@ else
                             </select>
                         </div>
                     }
-                    <div class="glpi-fiche-field">
+                    <div class="glping-fiche-field">
                         <label>Commentaires</label>
                         <textarea class="form-control" rows="3" @bind="_newItem.Comment"></textarea>
                     </div>

@@ -2,11 +2,11 @@
 
 <div class="row">
     <div class="col-md-6">
-        <div class="glpi-fiche-field">
+        <div class="glping-fiche-field">
             <label>Nom</label>
             <input class="form-control" @bind="Item.Name" @bind:event="oninput" @bind:after="NotifyChangedAsync" />
         </div>
-        <div class="glpi-fiche-field">
+        <div class="glping-fiche-field">
             <label>Statut</label>
             <select class="form-select" value="@(Item.StatusId?.ToString() ?? "")"
                     @onchange="@((ChangeEventArgs e) => Item.StatusId = string.IsNullOrEmpty((string?)e.Value) ? null : int.Parse((string)e.Value!))">
@@ -17,7 +17,7 @@
                 }
             </select>
         </div>
-        <div class="glpi-fiche-field">
+        <div class="glping-fiche-field">
             <label>Lieu</label>
             <select class="form-select" value="@(Item.LocationId?.ToString() ?? "")"
                     @onchange="@((ChangeEventArgs e) => Item.LocationId = string.IsNullOrEmpty((string?)e.Value) ? null : int.Parse((string)e.Value!))">
@@ -28,51 +28,51 @@
                 }
             </select>
         </div>
-        <div class="glpi-fiche-field">
+        <div class="glping-fiche-field">
             <label>Type</label>
             <input class="form-control" @bind="Item.Type" />
         </div>
-        <div class="glpi-fiche-field">
+        <div class="glping-fiche-field">
             <label>Technicien responsable</label>
             <input class="form-control" @bind="Item.TechnicianInCharge" />
         </div>
     </div>
     <div class="col-md-6">
-        <div class="glpi-fiche-field">
+        <div class="glping-fiche-field">
             <label>Fabricant</label>
             <input class="form-control" @bind="Item.Manufacturer" />
         </div>
-        <div class="glpi-fiche-field">
+        <div class="glping-fiche-field">
             <label>Modèle</label>
             <input class="form-control" @bind="Item.Model" />
         </div>
-        <div class="glpi-fiche-field">
+        <div class="glping-fiche-field">
             <label>Numéro de série</label>
             <input class="form-control" @bind="Item.SerialNumber" />
         </div>
-        <div class="glpi-fiche-field">
+        <div class="glping-fiche-field">
             <label>Numéro d'inventaire</label>
             <input class="form-control" @bind="Item.InventoryNumber" />
         </div>
-        <div class="glpi-fiche-field">
+        <div class="glping-fiche-field">
             <label>Utilisateur</label>
             <input class="form-control" @bind="Item.AssignedUser" />
         </div>
-        <div class="glpi-fiche-field">
+        <div class="glping-fiche-field">
             <label>UUID</label>
             <input class="form-control" @bind="Item.Uuid" />
         </div>
-        <div class="glpi-fiche-field">
+        <div class="glping-fiche-field">
             <label>Compteur de page initial</label>
             <input type="number" class="form-control" value="@Item.InitialPageCount"
                    @onchange="@((ChangeEventArgs e) => Item.InitialPageCount = string.IsNullOrEmpty((string?)e.Value) ? null : int.Parse((string)e.Value!))" />
         </div>
-        <div class="glpi-fiche-field">
+        <div class="glping-fiche-field">
             <label>Compteur de page actuel</label>
             <input type="number" class="form-control" value="@Item.CurrentPageCount"
                    @onchange="@((ChangeEventArgs e) => Item.CurrentPageCount = string.IsNullOrEmpty((string?)e.Value) ? null : int.Parse((string)e.Value!))" />
         </div>
-        <div class="glpi-fiche-field">
+        <div class="glping-fiche-field">
             <label>Commentaires</label>
             <textarea class="form-control" rows="4" @bind="Item.Comment"></textarea>
         </div>
@@ -83,25 +83,25 @@
 
 @* Interrogation SNMP. Les champs suivent la version choisie : montrer une communauté à côté d'une
    passphrase v3 laisserait croire que les deux servent, alors qu'elles s'excluent. *@
-<div class="glpi-config-divider">
+<div class="glping-config-divider">
     <span><i class="ti ti-network"></i> Interrogation SNMP</span>
 </div>
 
 <div class="row">
     <div class="col-md-6">
-        <div class="glpi-fiche-field">
+        <div class="glping-fiche-field">
             <label>Adresse IP</label>
             <input class="form-control @(IpLooksValid ? "" : "is-invalid")" placeholder="192.168.1.50"
                    @bind="Item.IpAddress" @bind:event="oninput" />
         </div>
         @if (!IpLooksValid)
         {
-            <div class="glpi-fiche-field">
+            <div class="glping-fiche-field">
                 <label></label>
                 <div class="text-danger small">Adresse IPv4 ou IPv6 attendue.</div>
             </div>
         }
-        <div class="glpi-fiche-field">
+        <div class="glping-fiche-field">
             <label>Version SNMP</label>
             <select class="form-select" value="@((int)Item.SnmpVersion)"
                     @onchange="@((ChangeEventArgs e) => SetVersion(int.Parse((string)e.Value!)))">
@@ -113,7 +113,7 @@
         </div>
         @if (Item.SnmpVersion != PrinterSnmpVersion.None)
         {
-            <div class="glpi-fiche-field">
+            <div class="glping-fiche-field">
                 <label>Port</label>
                 <input type="number" class="form-control" value="@Item.SnmpPort"
                        @onchange="@((ChangeEventArgs e) => Item.SnmpPort = int.TryParse((string?)e.Value, out int port) ? port : 161)" />
@@ -124,25 +124,25 @@
     <div class="col-md-6">
         @if (Item.SnmpVersion is PrinterSnmpVersion.V1 or PrinterSnmpVersion.V2c)
         {
-            <div class="glpi-fiche-field">
+            <div class="glping-fiche-field">
                 <label>Communauté <span class="text-danger">*</span></label>
                 <input class="form-control @(string.IsNullOrWhiteSpace(Item.SnmpCommunity) ? "is-invalid" : "")"
                        placeholder="public" @bind="Item.SnmpCommunity" @bind:event="oninput" />
             </div>
-            <div class="glpi-fiche-field">
+            <div class="glping-fiche-field">
                 <label></label>
                 <div class="text-secondary small">Requise en v1 et v2c : c'est le seul secret que ces versions connaissent.</div>
             </div>
         }
         else if (Item.SnmpVersion == PrinterSnmpVersion.V3)
         {
-            <div class="glpi-fiche-field">
+            <div class="glping-fiche-field">
                 <label>Nom de sécurité <span class="text-danger">*</span></label>
                 <input class="form-control @(string.IsNullOrWhiteSpace(Item.SnmpUsername) ? "is-invalid" : "")"
                        @bind="Item.SnmpUsername" @bind:event="oninput" />
             </div>
 
-            <div class="glpi-fiche-field">
+            <div class="glping-fiche-field">
                 <label>Authentification</label>
                 <select class="form-select" value="@((int)Item.SnmpAuthProtocol)"
                         @onchange="@((ChangeEventArgs e) => SetAuthProtocol(int.Parse((string)e.Value!)))">
@@ -158,7 +158,7 @@
 
             @if (Item.SnmpAuthProtocol != PrinterSnmpAuthProtocol.None)
             {
-                <div class="glpi-fiche-field">
+                <div class="glping-fiche-field">
                     <label>Phrase d'authentification <span class="text-danger">*</span></label>
                     <input type="password" class="form-control @(string.IsNullOrEmpty(Item.SnmpAuthPassphrase) ? "is-invalid" : "")"
                            autocomplete="new-password" @bind="Item.SnmpAuthPassphrase" @bind:event="oninput" />
@@ -166,7 +166,7 @@
 
                 @* Le chiffrement n'est proposé qu'une fois l'authentification choisie : authPriv
                    suppose authNoPriv, il n'existe pas de mode chiffré sans authentification. *@
-                <div class="glpi-fiche-field">
+                <div class="glping-fiche-field">
                     <label>Chiffrement</label>
                     <select class="form-select" value="@((int)Item.SnmpPrivProtocol)"
                             @onchange="@((ChangeEventArgs e) => SetPrivProtocol(int.Parse((string)e.Value!)))">
@@ -183,7 +183,7 @@
 
                 @if (Item.SnmpPrivProtocol != PrinterSnmpPrivProtocol.None)
                 {
-                    <div class="glpi-fiche-field">
+                    <div class="glping-fiche-field">
                         <label>Phrase de chiffrement <span class="text-danger">*</span></label>
                         <input type="password" class="form-control @(string.IsNullOrEmpty(Item.SnmpPrivPassphrase) ? "is-invalid" : "")"
                                autocomplete="new-password" @bind="Item.SnmpPrivPassphrase" @bind:event="oninput" />
@@ -192,7 +192,7 @@
             }
             else
             {
-                <div class="glpi-fiche-field">
+                <div class="glping-fiche-field">
                     <label></label>
                     <div class="text-secondary small">
                         Sans authentification, le chiffrement n'est pas possible : SNMPv3 n'a pas de mode

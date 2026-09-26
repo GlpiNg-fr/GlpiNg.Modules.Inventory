@@ -14,48 +14,48 @@
 }
 else
 {
-    <div class="glpi-fiche-topbar">
-        <div class="glpi-fiche-crumb">
+    <div class="glping-fiche-topbar">
+        <div class="glping-fiche-crumb">
             <i class="ti ti-printer"></i>
             <span>Imprimante - @_item.Name - ID @_item.Id</span>
         </div>
-        <div class="glpi-fiche-toolbar">
+        <div class="glping-fiche-toolbar">
             @if (_total > 0)
             {
-                <span class="glpi-fiche-pager-count">@_position/@_total</span>
-                <a class="glpi-fiche-pager-btn @(_previousId is null ? "disabled" : "")" href="@(_previousId is { } prevId ? $"/parc/printers/{prevId}" : "#")">
+                <span class="glping-fiche-pager-count">@_position/@_total</span>
+                <a class="glping-fiche-pager-btn @(_previousId is null ? "disabled" : "")" href="@(_previousId is { } prevId ? $"/parc/printers/{prevId}" : "#")">
                     <i class="ti ti-chevron-left"></i>
                 </a>
-                <a class="glpi-fiche-pager-btn @(_nextId is null ? "disabled" : "")" href="@(_nextId is { } nextId ? $"/parc/printers/{nextId}" : "#")">
+                <a class="glping-fiche-pager-btn @(_nextId is null ? "disabled" : "")" href="@(_nextId is { } nextId ? $"/parc/printers/{nextId}" : "#")">
                     <i class="ti ti-chevron-right"></i>
                 </a>
             }
         </div>
     </div>
 
-    <div class="glpi-fiche-layout">
-        <aside class="glpi-fiche-sidebar">
-            <button type="button" class="glpi-fiche-tab-item @(_activeTabKey == "main" ? "active" : "")" @onclick='() => SetTab("main")'>
+    <div class="glping-fiche-layout">
+        <aside class="glping-fiche-sidebar">
+            <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "main" ? "active" : "")" @onclick='() => SetTab("main")'>
                 <i class="ti ti-printer"></i>
                 <span>Imprimante</span>
             </button>
-            <button type="button" class="glpi-fiche-tab-item @(_activeTabKey == "cartridges" ? "active" : "")" @onclick='() => SetTab("cartridges")'>
+            <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "cartridges" ? "active" : "")" @onclick='() => SetTab("cartridges")'>
                 <i class="ti ti-droplet"></i>
                 <span>Cartouches</span>
-                <span class="glpi-fiche-tab-count">@InstalledCartridges.Count()</span>
+                <span class="glping-fiche-tab-count">@InstalledCartridges.Count()</span>
             </button>
-            <button type="button" class="glpi-fiche-tab-item @(_activeTabKey == "history" ? "active" : "")" @onclick='() => SetTab("history")'>
+            <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "history" ? "active" : "")" @onclick='() => SetTab("history")'>
                 <i class="ti ti-history"></i>
                 <span>Historique</span>
-                <span class="glpi-fiche-tab-count">@_item.HistoryEntries.Count</span>
+                <span class="glping-fiche-tab-count">@_item.HistoryEntries.Count</span>
             </button>
-            <button type="button" class="glpi-fiche-tab-item @(_activeTabKey == "links" ? "active" : "")" @onclick='() => SetTab("links")'>
+            <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "links" ? "active" : "")" @onclick='() => SetTab("links")'>
                 <i class="ti ti-external-link"></i>
                 <span>Liens externes</span>
             </button>
         </aside>
 
-        <div class="glpi-fiche-panel">
+        <div class="glping-fiche-panel">
             @switch (_activeTabKey)
             {
                 case "main":
@@ -77,8 +77,8 @@ else
                     @* Les deux moitiés de la question : ce qui est dans l'imprimante en ce moment,
                        et ce qui y est passé. La seconde est ce qui permet de voir la consommation
                        d'une imprimante sans avoir à ouvrir chaque référence de cartouche. *@
-                    <div class="glpi-fiche-block">
-                        <div class="glpi-fiche-block-title"><i class="ti ti-droplet"></i>Cartouches en service (@InstalledCartridges.Count())</div>
+                    <div class="glping-fiche-block">
+                        <div class="glping-fiche-block-title"><i class="ti ti-droplet"></i>Cartouches en service (@InstalledCartridges.Count())</div>
 
                         @if (_cartridgeError is { } cartridgeError)
                         {
@@ -89,7 +89,7 @@ else
 
                         @if (!InstalledCartridges.Any())
                         {
-                            <div class="glpi-config-placeholder">
+                            <div class="glping-config-placeholder">
                                 <i class="ti ti-droplet-off"></i>
                                 <p class="mb-0">Aucune cartouche installée sur cette imprimante.</p>
                             </div>
@@ -145,7 +145,7 @@ else
                             </div>
                         }
 
-                        <div class="glpi-fiche-add-row">
+                        <div class="glping-fiche-add-row">
                             <div class="d-flex gap-2 align-items-center flex-wrap">
                                 <select class="form-select" style="max-width: 360px;" value="@_itemToInstall"
                                         @onchange="@((ChangeEventArgs e) => _itemToInstall = int.Parse((string)e.Value!))">
@@ -179,8 +179,8 @@ else
 
                     @if (PastCartridges.Any())
                     {
-                        <div class="glpi-fiche-block">
-                            <div class="glpi-fiche-block-title"><i class="ti ti-history"></i>Cartouches retirées (@PastCartridges.Count())</div>
+                        <div class="glping-fiche-block">
+                            <div class="glping-fiche-block-title"><i class="ti ti-history"></i>Cartouches retirées (@PastCartridges.Count())</div>
                             <div class="table-responsive">
                                 <table class="table table-vcenter card-table mb-0">
                                     <thead>
@@ -217,11 +217,11 @@ else
                     break;
 
                 case "history":
-                    <div class="glpi-fiche-block">
-                        <div class="glpi-fiche-block-title"><i class="ti ti-history"></i>Historique (@_item.HistoryEntries.Count)</div>
+                    <div class="glping-fiche-block">
+                        <div class="glping-fiche-block-title"><i class="ti ti-history"></i>Historique (@_item.HistoryEntries.Count)</div>
                         @if (_item.HistoryEntries.Count == 0)
                         {
-                            <div class="glpi-config-placeholder">
+                            <div class="glping-config-placeholder">
                                 <i class="ti ti-history"></i>
                                 <p class="mb-0">Aucune modification enregistrée.</p>
                             </div>

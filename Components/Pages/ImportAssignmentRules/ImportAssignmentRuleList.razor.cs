@@ -107,7 +107,7 @@ public partial class ImportAssignmentRuleList : ComponentBase
         await db.SaveChangesAsync();
 
         int newId = _newRule.Id;
-        await JS.InvokeVoidAsync("glpiNg.hideModal", "newImportAssignmentRuleModal");
+        await JS.InvokeVoidAsync("glping.hideModal", "newImportAssignmentRuleModal");
         Nav.NavigateTo($"/admin/import-rules/{newId}");
     }
 }

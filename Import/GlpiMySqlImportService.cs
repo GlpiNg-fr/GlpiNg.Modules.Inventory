@@ -335,7 +335,7 @@ public class GlpiMySqlImportService(DbContext db, IOptions<GlpiImportOptions> op
 
                 Computer? computer = await db.Set<Computer>().FirstOrDefaultAsync(c => c.SourceGlpiId == row.Id, cancellationToken);
                 bool isNew = computer is null;
-                computer ??= new Computer { Name = row.Name ?? $"glpi-{row.Id}", SourceGlpiId = row.Id };
+                computer ??= new Computer { Name = row.Name ?? $"glping-{row.Id}", SourceGlpiId = row.Id };
 
                 if (!string.IsNullOrWhiteSpace(row.Name))
                 {

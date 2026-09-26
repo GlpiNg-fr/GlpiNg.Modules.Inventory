@@ -23,37 +23,37 @@ else
     }
     else
     {
-        <div class="glpi-fiche-layout">
-            <aside class="glpi-fiche-sidebar">
-                <button type="button" class="glpi-fiche-tab-item @(_activeTabKey == "main" ? "active" : "")" @onclick='() => SetTab("main")'>
+        <div class="glping-fiche-layout">
+            <aside class="glping-fiche-sidebar">
+                <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "main" ? "active" : "")" @onclick='() => SetTab("main")'>
                     <i class="ti @(DictionaryRuleTypeCatalog.Icon(_type))"></i>
                     <span>Règle</span>
                 </button>
-                <button type="button" class="glpi-fiche-tab-item @(_activeTabKey == "criteria" ? "active" : "")" @onclick='() => SetTab("criteria")'>
+                <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "criteria" ? "active" : "")" @onclick='() => SetTab("criteria")'>
                     <i class="ti ti-filter"></i>
                     <span>Critères</span>
-                    <span class="glpi-fiche-tab-count">@_rule.Criteria.Count</span>
+                    <span class="glping-fiche-tab-count">@_rule.Criteria.Count</span>
                 </button>
             </aside>
 
-            <div class="glpi-fiche-panel">
+            <div class="glping-fiche-panel">
                 @switch (_activeTabKey)
                 {
                     case "main":
                         <div class="row">
                             <div class="col-md-6">
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Nom</label>
                                     <input class="form-control" @bind="_rule.Name" @bind:event="oninput" />
                                 </div>
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Opérateur logique</label>
                                     <select class="form-select" @bind="_rule.LogicalOperator">
                                         <option value="@DictionaryRuleLogicalOperator.And">ET</option>
                                         <option value="@DictionaryRuleLogicalOperator.Or">OU</option>
                                     </select>
                                 </div>
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Actif</label>
                                     @* Valeur et gestionnaire explicites plutot que @bind : sur un <select> lie a un booleen,
                                        Blazor ecrit dans l'attribut value le resultat de bool.ToString(), soit "True" ou
@@ -67,18 +67,18 @@ else
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="glpi-fiche-field">
+                                <div class="glping-fiche-field">
                                     <label>Commentaires</label>
                                     <textarea class="form-control" rows="3" @bind="_rule.Comment"></textarea>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="glpi-fiche-block">
-                            <div class="glpi-fiche-block-title"><i class="ti ti-bolt"></i>Action</div>
+                        <div class="glping-fiche-block">
+                            <div class="glping-fiche-block-title"><i class="ti ti-bolt"></i>Action</div>
                             <div class="row">
                                 <div class="col-md-6">
-                                    <div class="glpi-fiche-field">
+                                    <div class="glping-fiche-field">
                                         <label>Type d'action</label>
                                         <select class="form-select" @bind="_rule.ActionType">
                                             <option value="@DictionaryActionType.Assign">Remplacer par</option>
@@ -89,7 +89,7 @@ else
                                 @if (_rule.ActionType == DictionaryActionType.Assign)
                                 {
                                     <div class="col-md-6">
-                                        <div class="glpi-fiche-field">
+                                        <div class="glping-fiche-field">
                                             <label>Valeur</label>
                                             <input class="form-control" @bind="_rule.ActionValue" @bind:event="oninput" />
                                         </div>
@@ -115,8 +115,8 @@ else
                         break;
 
                     case "criteria":
-                        <div class="glpi-fiche-block">
-                            <div class="glpi-fiche-block-title"><i class="ti ti-filter"></i>Critères (@_rule.Criteria.Count)</div>
+                        <div class="glping-fiche-block">
+                            <div class="glping-fiche-block-title"><i class="ti ti-filter"></i>Critères (@_rule.Criteria.Count)</div>
                             <p class="text-secondary">
                                 Une règle s'applique si l'ensemble de ses critères, combinés par l'opérateur logique
                                 de l'onglet « Règle » (@(_rule.LogicalOperator == DictionaryRuleLogicalOperator.Or ? "OU" : "ET")), est vérifié.

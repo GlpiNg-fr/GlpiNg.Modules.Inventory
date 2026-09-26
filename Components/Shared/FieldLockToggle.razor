@@ -8,7 +8,7 @@
    qui n'apparaîtrait qu'une fois posé ne l'apprendrait à personne. *@
 
 <button type="button"
-        class="btn btn-icon btn-sm glpi-field-lock @(IsLocked ? "text-warning" : "text-secondary")"
+        class="btn btn-icon btn-sm glping-field-lock @(IsLocked ? "text-warning" : "text-secondary")"
         title="@(IsLocked
                    ? $"Champ verrouillé : l'inventaire ne met plus à jour « {ComputerLockableFields.Label(Field)} ». Cliquer pour déverrouiller."
                    : $"Champ alimenté par l'inventaire. Cliquer pour le verrouiller et conserver la valeur saisie.")"

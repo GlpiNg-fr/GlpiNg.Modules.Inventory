@@ -107,7 +107,7 @@ public partial class ComputerRuleList : ComponentBase
         await db.SaveChangesAsync();
 
         int newId = _newRule.Id;
-        await JS.InvokeVoidAsync("glpiNg.hideModal", "newComputerRuleModal");
+        await JS.InvokeVoidAsync("glping.hideModal", "newComputerRuleModal");
         Nav.NavigateTo($"/admin/rules/{newId}");
     }
 }

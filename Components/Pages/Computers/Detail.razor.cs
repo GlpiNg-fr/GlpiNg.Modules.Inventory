@@ -95,7 +95,7 @@ public partial class Detail : ComponentBase, IDisposable
     private int _softwarePageSize = 25;
 
     // Onglets dont le tableau doit occuper toute la hauteur du panneau (entête/pied fixes, seules
-    // les lignes défilent) — voir .glpi-fiche-panel-fill dans glpi-theme.css.
+    // les lignes défilent) — voir .glping-fiche-panel-fill dans glping-theme.css.
     private static readonly HashSet<string> FillPanelTabKeys = ["software", "importinfo", "history"];
 
     private static readonly int[] HistoryPageSizeOptions = [25, 50, 100, 200];
@@ -739,7 +739,7 @@ public partial class Detail : ComponentBase, IDisposable
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         // Le journal d'un job en cours suit ses dernières lignes à chaque rafraîchissement du
-        // poll (voir glpiNg.followLog) ; un journal terminé s'ouvre, lui, en haut comme avant.
+        // poll (voir glping.followLog) ; un journal terminé s'ouvre, lui, en haut comme avant.
         // Le journal peut être marqué ouvert (AutoExpandRunningAssignmentLog) alors qu'un autre
         // onglet est affiché : la référence ne désigne alors aucun élément, d'où le test d'onglet.
         if (_activeTabKey == "deploy"
@@ -750,7 +750,7 @@ public partial class Detail : ComponentBase, IDisposable
         {
             try
             {
-                await JS.InvokeVoidAsync("glpiNg.followLog", _expandedAssignmentLogRef);
+                await JS.InvokeVoidAsync("glping.followLog", _expandedAssignmentLogRef);
             }
             catch (JSDisconnectedException)
             {
@@ -1024,7 +1024,7 @@ public partial class Detail : ComponentBase, IDisposable
     // IComputerDeploymentAssignmentService), le rendu est donc dupliqué ici plutôt que partagé.
     // Journal ligne par ligne "[HH:mm:ss] [phase] message", horodatage/phase stylés à part et
     // ligne entière colorée selon son issue (ok/succès en vert, ko/erreur en rouge, séparateurs
-    // "====" atténués) — voir les classes .glpi-log-* dans glpi-theme.css.
+    // "====" atténués) — voir les classes .glping-log-* dans glping-theme.css.
     private static readonly Regex LogLinePrefixRegex = new(
         @"^\[(?<time>\d{2}:\d{2}:\d{2})\]\s*(?:\[(?<tag>[a-zA-Z]+)\]\s*)?(?<rest>.*)$",
         RegexOptions.Compiled);
@@ -1039,24 +1039,24 @@ public partial class Detail : ComponentBase, IDisposable
             string trimmed = line.Trim();
 
             string lineClass = trimmed.Length > 0 && trimmed.All(c => c == '=')
-                ? "glpi-log-line glpi-log-sep"
+                ? "glping-log-line glping-log-sep"
                 : Regex.IsMatch(line, @"\(ok\)\s*$", RegexOptions.IgnoreCase) || line.Contains("success", StringComparison.OrdinalIgnoreCase)
-                    ? "glpi-log-line glpi-log-ok"
+                    ? "glping-log-line glping-log-ok"
                     : Regex.IsMatch(line, @"\(ko\)\s*$", RegexOptions.IgnoreCase)
                       || line.Contains("error", StringComparison.OrdinalIgnoreCase)
                       || line.Contains("failed", StringComparison.OrdinalIgnoreCase)
-                        ? "glpi-log-line glpi-log-error"
-                        : "glpi-log-line";
+                        ? "glping-log-line glping-log-error"
+                        : "glping-log-line";
 
             html.Append("<div class=\"").Append(lineClass).Append("\">");
 
             Match match = LogLinePrefixRegex.Match(line);
             if (match.Success)
             {
-                html.Append("<span class=\"glpi-log-time\">[").Append(WebUtility.HtmlEncode(match.Groups["time"].Value)).Append("]</span> ");
+                html.Append("<span class=\"glping-log-time\">[").Append(WebUtility.HtmlEncode(match.Groups["time"].Value)).Append("]</span> ");
                 if (match.Groups["tag"].Success)
                 {
-                    html.Append("<span class=\"glpi-log-tag\">[").Append(WebUtility.HtmlEncode(match.Groups["tag"].Value)).Append("]</span> ");
+                    html.Append("<span class=\"glping-log-tag\">[").Append(WebUtility.HtmlEncode(match.Groups["tag"].Value)).Append("]</span> ");
                 }
 
                 html.Append(WebUtility.HtmlEncode(match.Groups["rest"].Value));
@@ -1267,7 +1267,7 @@ public partial class Detail : ComponentBase, IDisposable
     }
 
     // Onglet "Informations d'import" : pas de pagination (liste généralement courte), seulement
-    // un filtre — voir .glpi-fiche-panel-fill pour le remplissage en hauteur du bloc.
+    // un filtre — voir .glping-fiche-panel-fill pour le remplissage en hauteur du bloc.
     private void ApplyImportHistoryFilter()
     {
         _importHistoryFiltered = string.IsNullOrWhiteSpace(_importHistoryFilter)
