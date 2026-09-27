@@ -1,4 +1,5 @@
 using GlpiNg.Modules.Inventory.Models;
+using GlpiNg.Modules.Abstractions.Localization;
 
 namespace GlpiNg.Modules.Inventory.Services;
 
@@ -13,23 +14,23 @@ public static class ImportAssignmentRuleLabels
     public static string OperatorLabel(ImportAssignmentRuleCriterionOperator op) => op switch
     {
         ImportAssignmentRuleCriterionOperator.Is => "est",
-        ImportAssignmentRuleCriterionOperator.IsNot => "n'est pas",
+        ImportAssignmentRuleCriterionOperator.IsNot => Tr.T("n'est pas"),
         ImportAssignmentRuleCriterionOperator.Contains => "contient",
-        ImportAssignmentRuleCriterionOperator.NotContains => "ne contient pas",
-        ImportAssignmentRuleCriterionOperator.StartsWith => "commence par",
-        ImportAssignmentRuleCriterionOperator.EndsWith => "finit par",
+        ImportAssignmentRuleCriterionOperator.NotContains => Tr.T("ne contient pas"),
+        ImportAssignmentRuleCriterionOperator.StartsWith => Tr.T("commence par"),
+        ImportAssignmentRuleCriterionOperator.EndsWith => Tr.T("finit par"),
         ImportAssignmentRuleCriterionOperator.MatchesRegex => "expression rationnelle vérifie",
         ImportAssignmentRuleCriterionOperator.NotMatchesRegex => "expression rationnelle ne vérifie pas",
         ImportAssignmentRuleCriterionOperator.Exists => "existe",
-        ImportAssignmentRuleCriterionOperator.DoesNotExist => "n'existe pas",
+        ImportAssignmentRuleCriterionOperator.DoesNotExist => Tr.T("n'existe pas"),
         _ => op.ToString()
     };
 
     public static string ActionTypeLabel(ImportAssignmentRuleActionType type) => type switch
     {
-        ImportAssignmentRuleActionType.AssignLocation => "Affecter un lieu",
-        ImportAssignmentRuleActionType.AssignTechnician => "Affecter un technicien responsable",
-        ImportAssignmentRuleActionType.RefuseImport => "Refuser l'import",
+        ImportAssignmentRuleActionType.AssignLocation => Tr.T("Affecter un lieu"),
+        ImportAssignmentRuleActionType.AssignTechnician => Tr.T("Affecter un technicien responsable"),
+        ImportAssignmentRuleActionType.RefuseImport => Tr.T("Refuser l'import"),
         _ => type.ToString()
     };
 

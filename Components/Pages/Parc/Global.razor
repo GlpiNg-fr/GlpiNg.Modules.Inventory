@@ -1,7 +1,7 @@
 ﻿@page "/parc/allassets"
 @rendermode InteractiveServer
 
-<PageTitle>Global — GlpiNg</PageTitle>
+<PageTitle>@T("Global — GlpiNg")</PageTitle>
 
 <div class="glping-list-page">
 <div class="card">
@@ -9,13 +9,13 @@
         <div class="btn-list">
             <div class="input-icon" style="width: 260px;">
                 <span class="input-icon-addon"><i class="ti ti-search"></i></span>
-                <input type="text" class="form-control" placeholder="Rechercher..." value="@_search"
+                <input type="text" class="form-control" placeholder="@(T("Rechercher..."))" value="@_search"
                        @oninput="@((ChangeEventArgs e) => OnSearchInput((string?)e.Value))" />
             </div>
         </div>
 
         <div class="btn-list align-items-center">
-            <button type="button" class="btn btn-icon" @onclick="LoadAsync" title="Rafraîchir">
+            <button type="button" class="btn btn-icon" @onclick="LoadAsync" title="@(T("Rafraîchir"))">
                 <i class="ti ti-refresh"></i>
             </button>
         </div>
@@ -25,17 +25,17 @@
         <table class="table table-vcenter card-table">
             <thead>
                 <tr>
-                    <th class="glping-sortable-th" @onclick='() => SetSort("name")'>Nom @SortIndicator("name")</th>
-                    <th class="glping-sortable-th" @onclick='() => SetSort("type")'>Type @SortIndicator("type")</th>
-                    <th class="glping-sortable-th" @onclick='() => SetSort("status")'>Statut @SortIndicator("status")</th>
-                    <th class="glping-sortable-th" @onclick='() => SetSort("location")'>Lieu @SortIndicator("location")</th>
+                    <th class="glping-sortable-th" @onclick='() => SetSort("name")'>@T("Nom") @SortIndicator("name")</th>
+                    <th class="glping-sortable-th" @onclick='() => SetSort("type")'>@T("Type") @SortIndicator("type")</th>
+                    <th class="glping-sortable-th" @onclick='() => SetSort("status")'>@T("Statut") @SortIndicator("status")</th>
+                    <th class="glping-sortable-th" @onclick='() => SetSort("location")'>@T("Lieu") @SortIndicator("location")</th>
                 </tr>
             </thead>
             <tbody>
                 @if (_filtered.Count == 0)
                 {
                     <tr>
-                        <td colspan="4" class="text-center text-secondary py-4">Aucun actif trouvé.</td>
+                        <td colspan="4" class="text-center text-secondary py-4">@T("Aucun actif trouvé.")</td>
                     </tr>
                 }
                 else
@@ -48,7 +48,7 @@
                                     <i class="ti @item.Icon me-1 text-secondary"></i>@item.Name
                                 </a>
                             </td>
-                            <td>@item.TypeLabel</td>
+                            <td>@T(item.TypeLabel)</td>
                             <td><StatusBadge Status="item.Status" /></td>
                             <td>@(item.Location ?? "—")</td>
                         </tr>
@@ -60,7 +60,7 @@
 
     <div class="card-footer d-flex align-items-center justify-content-between flex-wrap gap-2">
         <div class="d-flex align-items-center gap-2 text-secondary">
-            <span>Éléments par page</span>
+            <span>@T("Éléments par page")</span>
             <select class="form-select form-select-sm w-auto" value="@_pageSize"
                     @onchange="@((ChangeEventArgs e) => SetPageSize(int.Parse((string)e.Value!)))">
                 @foreach (int size in PageSizeOptions)
@@ -74,7 +74,7 @@
         {
             <div class="d-flex align-items-center gap-3">
                 <span class="text-secondary">
-                    @(((_currentPage - 1) * _pageSize) + 1)–@(Math.Min(_currentPage * _pageSize, _filtered.Count)) sur @_filtered.Count
+                    @T("{0}–{1} sur {2}", ((_currentPage - 1) * _pageSize) + 1, Math.Min(_currentPage * _pageSize, _filtered.Count), _filtered.Count)
                 </span>
                 <ul class="pagination pagination-sm m-0">
                     <li class="page-item @(_currentPage <= 1 ? "disabled" : "")">
@@ -82,7 +82,7 @@
                             <i class="ti ti-chevron-left"></i>
                         </button>
                     </li>
-                    <li class="page-item disabled"><span class="page-link">Page @_currentPage / @TotalPages</span></li>
+                    <li class="page-item disabled"><span class="page-link">@T("Page {0} / {1}", _currentPage, TotalPages)</span></li>
                     <li class="page-item @(_currentPage >= TotalPages ? "disabled" : "")">
                         <button type="button" class="page-link" @onclick="() => GoToPage(_currentPage + 1)" disabled="@(_currentPage >= TotalPages)">
                             <i class="ti ti-chevron-right"></i>

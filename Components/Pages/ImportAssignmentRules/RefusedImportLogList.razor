@@ -1,23 +1,23 @@
 ﻿@page "/admin/import-rules/refused"
 @rendermode InteractiveServer
 
-<PageTitle>Historique des équipements refusés — GlpiNg</PageTitle>
+<PageTitle>@T("Historique des équipements refusés — GlpiNg")</PageTitle>
 
-<h3 class="mb-3"><i class="ti ti-history me-2"></i>Historique des équipements refusés</h3>
+<h3 class="mb-3"><i class="ti ti-history me-2"></i>@T("Historique des équipements refusés")</h3>
 
 <ImportRulesTopMenu Current="refused" />
 
 <div class="glping-list-page">
 <div class="card">
     <div class="card-header d-flex align-items-center justify-content-between glping-list-toolbar">
-        <p class="text-secondary mb-0"><i class="ti ti-info-circle me-1"></i>Inventaires rejetés par une règle d'import (action « Refuser l'import »).</p>
+        <p class="text-secondary mb-0"><i class="ti ti-info-circle me-1"></i>@T("Inventaires rejetés par une règle d'import (action « Refuser l'import »).")</p>
 
         <div class="btn-list align-items-center">
-            <button type="button" class="btn btn-icon" @onclick="LoadAsync" title="Rafraîchir">
+            <button type="button" class="btn btn-icon" @onclick="LoadAsync" title="@(T("Rafraîchir"))">
                 <i class="ti ti-refresh"></i>
             </button>
             <button type="button" class="btn btn-outline-danger" disabled="@(_entries.Count == 0)" @onclick="ClearAllAsync">
-                <i class="ti ti-trash me-1"></i>Vider l'historique
+                <i class="ti ti-trash me-1"></i>@T("Vider l'historique")
             </button>
         </div>
     </div>
@@ -26,21 +26,21 @@
         <table class="table table-vcenter card-table">
             <thead>
                 <tr>
-                    <th>Date</th>
-                    <th>Règle</th>
-                    <th>Nom de l'équipement</th>
-                    <th>Numéro de série</th>
-                    <th>Domaine</th>
-                    <th>Tag</th>
-                    <th>Adresse IP</th>
-                    <th>Agent</th>
+                    <th>@T("Date")</th>
+                    <th>@T("Règle")</th>
+                    <th>@T("Nom de l'équipement")</th>
+                    <th>@T("Numéro de série")</th>
+                    <th>@T("Domaine")</th>
+                    <th>@T("Tag")</th>
+                    <th>@T("Adresse IP")</th>
+                    <th>@T("Agent")</th>
                 </tr>
             </thead>
             <tbody>
                 @if (_entries.Count == 0)
                 {
                     <tr>
-                        <td colspan="8" class="text-center text-secondary py-4">Aucun équipement refusé.</td>
+                        <td colspan="8" class="text-center text-secondary py-4">@T("Aucun équipement refusé.")</td>
                     </tr>
                 }
                 else

@@ -3,13 +3,13 @@
 @using GlpiNg.Modules.Inventory.Services
 @rendermode InteractiveServer
 
-<PageTitle>@(_item?.Name ?? "Modèle de cartouche") — GlpiNg</PageTitle>
+<PageTitle>@(_item?.Name ?? T("Modèle de cartouche")) — GlpiNg</PageTitle>
 
 @if (_item is null)
 {
     <div class="text-center text-secondary py-5">
         <i class="ti ti-droplet-off fs-1"></i>
-        <p class="mt-2">Ce modèle de cartouche est introuvable.</p>
+        <p class="mt-2">@T("Ce modèle de cartouche est introuvable.")</p>
     </div>
 }
 else
@@ -17,7 +17,7 @@ else
     <div class="glping-fiche-topbar">
         <div class="glping-fiche-crumb">
             <i class="ti ti-droplet"></i>
-            <span>Modèle de cartouche - @_item.Name - ID @_item.Id</span>
+            <span>@T("Modèle de cartouche - {0} - ID {1}", _item.Name, _item.Id)</span>
         </div>
     </div>
 
@@ -25,21 +25,21 @@ else
         <aside class="glping-fiche-sidebar">
             <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "main" ? "active" : "")" @onclick='() => SetTab("main")'>
                 <i class="ti ti-droplet"></i>
-                <span>Modèle</span>
+                <span>@T("Modèle")</span>
             </button>
             <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "stock" ? "active" : "")" @onclick='() => SetTab("stock")'>
                 <i class="ti ti-stack-2"></i>
-                <span>Stock</span>
+                <span>@T("Stock")</span>
                 <span class="glping-fiche-tab-count">@_item.Cartridges.Count</span>
             </button>
             <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "history" ? "active" : "")" @onclick='() => SetTab("history")'>
                 <i class="ti ti-history"></i>
-                <span>Historique</span>
+                <span>@T("Historique")</span>
                 <span class="glping-fiche-tab-count">@_item.HistoryEntries.Count</span>
             </button>
             <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "links" ? "active" : "")" @onclick='() => SetTab("links")'>
                 <i class="ti ti-external-link"></i>
-                <span>Liens externes</span>
+                <span>@T("Liens externes")</span>
             </button>
         </aside>
 
@@ -52,10 +52,10 @@ else
 
                         <div class="d-flex justify-content-end gap-2 mt-3">
                             <button type="button" class="btn btn-outline-danger" @onclick="DeleteAsync">
-                                <i class="ti ti-trash me-1"></i>Supprimer définitivement
+                                <i class="ti ti-trash me-1"></i>@T("Supprimer définitivement")
                             </button>
                             <button type="submit" class="btn btn-primary" disabled="@_isSaving">
-                                <i class="ti ti-device-floppy me-1"></i>@(_isSaving ? "Enregistrement…" : "Sauvegarder")
+                                <i class="ti ti-device-floppy me-1"></i>@(_isSaving ? T("Enregistrement…") : T("Sauvegarder"))
                             </button>
                         </div>
                     </EditForm>
@@ -66,29 +66,29 @@ else
                     int inUse = _item.Cartridges.Count(c => c.DateUse is not null && c.DateOut is null);
                     int discarded = _item.Cartridges.Count(c => c.DateOut is not null);
                     <div class="glping-fiche-block">
-                        <div class="glping-fiche-block-title"><i class="ti ti-stack-2"></i>Stock</div>
+                        <div class="glping-fiche-block-title"><i class="ti ti-stack-2"></i>@T("Stock")</div>
                         <div class="row mb-3">
                             <div class="col-md-4">
-                                <div class="text-secondary">Disponible</div>
+                                <div class="text-secondary">@T("Disponible")</div>
                                 <div class="fs-2 fw-bold @(available < _item.AlertThreshold ? "text-danger" : "")">@available</div>
                             </div>
                             <div class="col-md-4">
-                                <div class="text-secondary">En service</div>
+                                <div class="text-secondary">@T("En service")</div>
                                 <div class="fs-2 fw-bold">@inUse</div>
                             </div>
                             <div class="col-md-4">
-                                <div class="text-secondary">Retirées</div>
+                                <div class="text-secondary">@T("Retirées")</div>
                                 <div class="fs-2 fw-bold">@discarded</div>
                             </div>
                         </div>
 
                         <div class="d-flex align-items-end gap-2 mb-3">
                             <div>
-                                <label class="form-label">Réceptionner</label>
+                                <label class="form-label">@T("Réceptionner")</label>
                                 <input type="number" min="1" class="form-control" style="width: 100px;" @bind="_receiveQuantity" />
                             </div>
                             <button type="button" class="btn btn-primary" @onclick="ReceiveStockAsync">
-                                <i class="ti ti-plus me-1"></i>Ajouter au stock
+                                <i class="ti ti-plus me-1"></i>@T("Ajouter au stock")
                             </button>
                         </div>
 
@@ -96,7 +96,7 @@ else
                         {
                             <div class="glping-config-placeholder">
                                 <i class="ti ti-stack-2"></i>
-                                <p class="mb-0">Aucune unité réceptionnée pour ce modèle.</p>
+                                <p class="mb-0">@T("Aucune unité réceptionnée pour ce modèle.")</p>
                             </div>
                         }
                         else
@@ -105,10 +105,10 @@ else
                                 <table class="table table-vcenter card-table mb-0">
                                     <thead>
                                         <tr>
-                                            <th>ID</th>
-                                            <th>Réceptionnée le</th>
-                                            <th>Statut</th>
-                                            <th>Imprimante</th>
+                                            <th>@T("ID")</th>
+                                            <th>@T("Réceptionnée le")</th>
+                                            <th>@T("Statut")</th>
+                                            <th>@T("Imprimante")</th>
                                             <th></th>
                                         </tr>
                                     </thead>
@@ -121,15 +121,15 @@ else
                                                 <td>
                                                     @if (cartridge.DateOut is not null)
                                                     {
-                                                        <span class="badge bg-secondary-lt">Retirée</span>
+                                                        <span class="badge bg-secondary-lt">@T("Retirée")</span>
                                                     }
                                                     else if (cartridge.DateUse is not null)
                                                     {
-                                                        <span class="badge bg-blue-lt">En service</span>
+                                                        <span class="badge bg-blue-lt">@T("En service")</span>
                                                     }
                                                     else
                                                     {
-                                                        <span class="badge bg-green-lt">En stock</span>
+                                                        <span class="badge bg-green-lt">@T("En stock")</span>
                                                     }
                                                 </td>
                                                 <td>@(cartridge.Printer?.Name ?? "—")</td>
@@ -138,20 +138,20 @@ else
                                                     {
                                                         <select class="form-select form-select-sm d-inline-block me-1" style="width: 180px;"
                                                                 @onchange="@((ChangeEventArgs e) => _printerToUse[cartridge.Id] = int.Parse((string)e.Value!))">
-                                                            <option value="0">-- Imprimante --</option>
+                                                            <option value="0">@T("-- Imprimante --")</option>
                                                             @foreach (Printer printer in _printers)
                                                             {
                                                                 <option value="@printer.Id">@printer.Name</option>
                                                             }
                                                         </select>
                                                         <button type="button" class="btn btn-sm btn-outline-primary me-1" @onclick="() => PutIntoUseAsync(cartridge)">
-                                                            Mettre en service
+                                                            @T("Mettre en service")
                                                         </button>
                                                     }
                                                     @if (cartridge.DateOut is null)
                                                     {
                                                         <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => RemoveFromServiceAsync(cartridge)">
-                                                            Retirer
+                                                            @T("Retirer")
                                                         </button>
                                                     }
                                                 </td>
@@ -166,12 +166,12 @@ else
 
                 case "history":
                     <div class="glping-fiche-block">
-                        <div class="glping-fiche-block-title"><i class="ti ti-history"></i>Historique (@_item.HistoryEntries.Count)</div>
+                        <div class="glping-fiche-block-title"><i class="ti ti-history"></i>@T("Historique ({0})", _item.HistoryEntries.Count)</div>
                         @if (_item.HistoryEntries.Count == 0)
                         {
                             <div class="glping-config-placeholder">
                                 <i class="ti ti-history"></i>
-                                <p class="mb-0">Aucune modification enregistrée.</p>
+                                <p class="mb-0">@T("Aucune modification enregistrée.")</p>
                             </div>
                         }
                         else
@@ -180,11 +180,11 @@ else
                                 <table class="table table-vcenter card-table mb-0">
                                     <thead>
                                         <tr>
-                                            <th>ID</th>
-                                            <th>Date</th>
-                                            <th>Utilisateur</th>
-                                            <th>Champ</th>
-                                            <th>Mise à jour</th>
+                                            <th>@T("ID")</th>
+                                            <th>@T("Date")</th>
+                                            <th>@T("Utilisateur")</th>
+                                            <th>@T("Champ")</th>
+                                            <th>@T("Mise à jour")</th>
                                         </tr>
                                     </thead>
                                     <tbody>

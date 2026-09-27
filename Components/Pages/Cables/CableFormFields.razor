@@ -6,11 +6,11 @@
 <div class="row">
     <div class="col-md-6">
         <div class="glping-fiche-field">
-            <label>Nom</label>
+            <label>@T("Nom")</label>
             <input class="form-control" @bind="Item.Name" @bind:event="oninput" @bind:after="NotifyChangedAsync" />
         </div>
         <div class="glping-fiche-field">
-            <label>Statut</label>
+            <label>@T("Statut")</label>
             <select class="form-select" value="@(Item.StatusId?.ToString() ?? "")"
                     @onchange="@((ChangeEventArgs e) => { Item.StatusId = string.IsNullOrEmpty((string?)e.Value) ? null : int.Parse((string)e.Value!); return NotifyChangedAsync(); })">
                 <option value="">—</option>
@@ -23,28 +23,28 @@
     </div>
     <div class="col-md-6">
         <div class="glping-fiche-field">
-            <label>Type</label>
+            <label>@T("Type")</label>
             <input class="form-control" @bind="Item.Type" @bind:after="NotifyChangedAsync" />
         </div>
         <div class="glping-fiche-field">
-            <label>Couleur</label>
+            <label>@T("Couleur")</label>
             <input class="form-control" @bind="Item.Color" @bind:after="NotifyChangedAsync" />
         </div>
     </div>
     <div class="col-12">
         <div class="glping-fiche-field">
-            <label>Commentaires</label>
+            <label>@T("Commentaires")</label>
             <textarea class="form-control" rows="3" @bind="Item.Comment" @bind:after="NotifyChangedAsync"></textarea>
         </div>
     </div>
 </div>
 
 <hr />
-<h4 class="mb-3"><i class="ti ti-plug-connected me-1"></i>Extrémité A</h4>
+<h4 class="mb-3"><i class="ti ti-plug-connected me-1"></i>@T("Extrémité A")</h4>
 <div class="row">
     <div class="col-md-6">
         <div class="glping-fiche-field">
-            <label>Type d'élément</label>
+            <label>@T("Type d'élément")</label>
             <select class="form-select" value="@Item.EndpointAType.ToString()" @onchange="OnEndpointATypeChangedAsync">
                 @foreach (CableEndpointType type in CableEndpointCatalog.AllTypes)
                 {
@@ -55,7 +55,7 @@
     </div>
     <div class="col-md-6">
         <div class="glping-fiche-field">
-            <label>Élément</label>
+            <label>@T("Élément")</label>
             <select class="form-select" value="@Item.EndpointAId.ToString()"
                     @onchange="@((ChangeEventArgs e) => { Item.EndpointAId = int.Parse((string)e.Value!); return NotifyChangedAsync(); })">
                 <option value="0">—</option>
@@ -69,13 +69,13 @@
 </div>
 
 <hr />
-<h4 class="mb-3"><i class="ti ti-plug-connected me-1"></i>Extrémité B (facultative)</h4>
+<h4 class="mb-3"><i class="ti ti-plug-connected me-1"></i>@T("Extrémité B (facultative)")</h4>
 <div class="row">
     <div class="col-md-6">
         <div class="glping-fiche-field">
-            <label>Type d'élément</label>
+            <label>@T("Type d'élément")</label>
             <select class="form-select" value="@(Item.EndpointBType?.ToString() ?? "")" @onchange="OnEndpointBTypeChangedAsync">
-                <option value="">— Aucune —</option>
+                <option value="">@T("— Aucune —")</option>
                 @foreach (CableEndpointType type in CableEndpointCatalog.AllTypes)
                 {
                     <option value="@type.ToString()">@CableEndpointCatalog.DisplayName(type)</option>
@@ -85,7 +85,7 @@
     </div>
     <div class="col-md-6">
         <div class="glping-fiche-field">
-            <label>Élément</label>
+            <label>@T("Élément")</label>
             <select class="form-select" value="@(Item.EndpointBId?.ToString() ?? "0")" disabled="@(Item.EndpointBType is null)"
                     @onchange="@((ChangeEventArgs e) => { int value = int.Parse((string)e.Value!); Item.EndpointBId = value == 0 ? null : value; return NotifyChangedAsync(); })">
                 <option value="0">—</option>

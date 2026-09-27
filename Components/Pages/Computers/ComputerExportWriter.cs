@@ -6,6 +6,7 @@ using GlpiNg.Modules.Inventory.Models;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
+using GlpiNg.Modules.Abstractions.Localization;
 
 namespace GlpiNg.Modules.Inventory.Components.Pages.Computers;
 
@@ -222,7 +223,7 @@ internal static class ComputerExportWriter
     {
         return computer.LastInventoryAt is { } lastInventory
             ? display.DateTime(lastInventory)!
-            : "Jamais";
+            : Tr.T("Jamais");
     }
 
 }

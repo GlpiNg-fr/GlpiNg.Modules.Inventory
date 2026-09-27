@@ -18,9 +18,9 @@ else
 
     private string BadgeStyle => Status?.Color switch
     {
-        null => "background-color: var(--tblr-blue-lt, #ecf5fd); color: var(--tblr-blue, #206bc4);",
-        "transparent" => "background-color: transparent; border: 1px solid currentColor;",
-        { } hex => $"background-color: {hex}; color: {ContrastTextColor(hex)}; border: 1px solid {hex};"
+        null => T("background-color: var(--tblr-blue-lt, #ecf5fd); color: var(--tblr-blue, #206bc4);"),
+        "transparent" => T("background-color: transparent; border: 1px solid currentColor;"),
+        { } hex => T("background-color: {0}; color: {1}; border: 1px solid {2};", hex, ContrastTextColor(hex), hex)
     };
 
     /// <summary>Blanc ou noir selon la luminance relative de la couleur de fond, pour rester lisible quelle que soit la couleur choisie dans le sélecteur.</summary>

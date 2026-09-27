@@ -3,11 +3,11 @@
 <div class="row">
     <div class="col-md-6">
         <div class="glping-fiche-field">
-            <label>Nom</label>
+            <label>@T("Nom")</label>
             <input class="form-control" @bind="Peripheral.Name" @bind:event="oninput" @bind:after="NotifyChangedAsync" />
         </div>
         <div class="glping-fiche-field">
-            <label>Statut</label>
+            <label>@T("Statut")</label>
             <select class="form-select" value="@(Peripheral.StatusId?.ToString() ?? "")"
                     @onchange="@((ChangeEventArgs e) => Peripheral.StatusId = string.IsNullOrEmpty((string?)e.Value) ? null : int.Parse((string)e.Value!))">
                 <option value="">—</option>
@@ -18,68 +18,68 @@
             </select>
         </div>
         <div class="glping-fiche-field">
-            <label>Lieu</label>
+            <label>@T("Lieu")</label>
             <div class="row g-2">
-                <div class="col"><input class="form-control" placeholder="Site" @bind="Peripheral.Site" /></div>
-                <div class="col"><input class="form-control" placeholder="Bâtiment" @bind="Peripheral.Building" /></div>
-                <div class="col"><input class="form-control" placeholder="Salle" @bind="Peripheral.Room" /></div>
+                <div class="col"><input class="form-control" placeholder="@(T("Site"))" @bind="Peripheral.Site" /></div>
+                <div class="col"><input class="form-control" placeholder="@(T("Bâtiment"))" @bind="Peripheral.Building" /></div>
+                <div class="col"><input class="form-control" placeholder="@(T("Salle"))" @bind="Peripheral.Room" /></div>
             </div>
         </div>
         <div class="glping-fiche-field">
-            <label>Type</label>
+            <label>@T("Type")</label>
             <input class="form-control" @bind="Peripheral.Type" />
         </div>
         <div class="glping-fiche-field">
-            <label>Technicien responsable</label>
+            <label>@T("Technicien responsable")</label>
             <input class="form-control" @bind="Peripheral.TechnicianInCharge" />
         </div>
         <div class="glping-fiche-field">
-            <label>Fabricant</label>
+            <label>@T("Fabricant")</label>
             <input class="form-control" @bind="Peripheral.Manufacturer" />
         </div>
         <div class="glping-fiche-field">
-            <label>Modèle</label>
+            <label>@T("Modèle")</label>
             <input class="form-control" @bind="Peripheral.Model" />
         </div>
         <div class="glping-fiche-field">
-            <label>Marque</label>
+            <label>@T("Marque")</label>
             <input class="form-control" @bind="Peripheral.Brand" />
         </div>
     </div>
     <div class="col-md-6">
         <div class="glping-fiche-field">
-            <label>Numéro de série</label>
+            <label>@T("Numéro de série")</label>
             <input class="form-control" @bind="Peripheral.SerialNumber" />
         </div>
         <div class="glping-fiche-field">
-            <label>Numéro d'inventaire</label>
+            <label>@T("Numéro d'inventaire")</label>
             <input class="form-control" @bind="Peripheral.InventoryNumber" />
         </div>
         <div class="glping-fiche-field">
-            <label>Usager numéro</label>
+            <label>@T("Usager numéro")</label>
             <input class="form-control" @bind="Peripheral.ContactNumber" />
         </div>
         <div class="glping-fiche-field">
-            <label>Usager</label>
+            <label>@T("Usager")</label>
             <input class="form-control" @bind="Peripheral.Contact" />
         </div>
         <div class="glping-fiche-field">
-            <label>Utilisateur</label>
+            <label>@T("Utilisateur")</label>
             <input class="form-control" @bind="Peripheral.AssignedUser" />
         </div>
         <div class="glping-fiche-field">
-            <label>Type de gestion</label>
+            <label>@T("Type de gestion")</label>
             <select class="form-select" value="@(Peripheral.IsGlobalManagement ? "true" : "false")" @onchange="@(e => Peripheral.IsGlobalManagement = e.Value?.ToString() == "true")">
-                <option value="false">Gestion unitaire</option>
-                <option value="true">Gestion globale</option>
+                <option value="false">@T("Gestion unitaire")</option>
+                <option value="true">@T("Gestion globale")</option>
             </select>
         </div>
         <div class="glping-fiche-field">
-            <label>UUID</label>
+            <label>@T("UUID")</label>
             <input class="form-control" @bind="Peripheral.Uuid" />
         </div>
         <div class="glping-fiche-field">
-            <label>Commentaires</label>
+            <label>@T("Commentaires")</label>
             <textarea class="form-control" rows="4" @bind="Peripheral.Comment"></textarea>
         </div>
     </div>

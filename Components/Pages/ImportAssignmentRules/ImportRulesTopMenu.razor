@@ -3,17 +3,17 @@
         <ul class="nav nav-tabs card-header-tabs" style="border-bottom: none;">
             <li class="nav-item">
                 <a href="/admin/import-rules" class="nav-link @(Current == "rules" ? "active" : "")">
-                    <i class="ti ti-route me-1"></i>Règles sur l'entité ordinateur
+                    <i class="ti ti-route me-1"></i>@T("Règles sur l'entité ordinateur")
                 </a>
             </li>
             <li class="nav-item">
                 <a href="/admin/import-rules/blacklist" class="nav-link @(Current == "blacklist" ? "active" : "")">
-                    <i class="ti ti-eye-off me-1"></i>Liste noire
+                    <i class="ti ti-eye-off me-1"></i>@T("Liste noire")
                 </a>
             </li>
             <li class="nav-item">
                 <a href="/admin/import-rules/refused" class="nav-link @(Current == "refused" ? "active" : "")">
-                    <i class="ti ti-history me-1"></i>Historique des équipements refusés
+                    <i class="ti ti-history me-1"></i>@T("Historique des équipements refusés")
                 </a>
             </li>
         </ul>

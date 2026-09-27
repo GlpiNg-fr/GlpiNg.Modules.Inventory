@@ -2,6 +2,7 @@ using GlpiNg.Modules.Inventory.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.JSInterop;
+using GlpiNg.Modules.Abstractions.Localization;
 
 namespace GlpiNg.Modules.Inventory.Components.Pages.Dictionaries;
 
@@ -133,6 +134,6 @@ public partial class DictionaryRuleList : ComponentBase
     }
 
     private static string ActionSummary(DictionaryRule rule) => rule.ActionType == DictionaryActionType.Ignore
-        ? (rule.Type == DictionaryRuleType.Software ? "Ignorer l'import du logiciel" : "Conserver la valeur existante")
-        : $"Remplacer par « {rule.ActionValue} »";
+        ? (rule.Type == DictionaryRuleType.Software ? Tr.T("Ignorer l'import du logiciel") : Tr.T("Conserver la valeur existante"))
+        : Tr.T("Remplacer par « {0} »", rule.ActionValue);
 }

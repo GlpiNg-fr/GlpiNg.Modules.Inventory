@@ -1,3 +1,4 @@
+using GlpiNg.Modules.Abstractions.Localization;
 ﻿using GlpiNg.Modules.Inventory.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -160,7 +161,7 @@ public partial class Detail : ComponentBase, IAsyncDisposable
 
         if (available is null)
         {
-            _cartridgeError = "Plus aucune unité de cette référence n'est en stock.";
+            _cartridgeError = Tr.T("Plus aucune unité de cette référence n'est en stock.");
             await LoadCartridgesAsync();
             return;
         }
@@ -251,9 +252,9 @@ public partial class Detail : ComponentBase, IAsyncDisposable
 
     /// <summary>Une communauté est un secret partagé : sa valeur n'a pas sa place dans un journal
     /// que tout lecteur de la fiche peut consulter.</summary>
-    private static string Secret(string? value) => string.IsNullOrEmpty(value) ? "vide" : "renseignée";
+    private static string Secret(string? value) => string.IsNullOrEmpty(value) ? "vide" : Tr.T("renseignée");
 
-    private static string Presence(bool present) => present ? "renseignée" : "vide";
+    private static string Presence(bool present) => present ? Tr.T("renseignée") : "vide";
 
     private static string FormatChange(string? oldValue, string? newValue) =>
         $"{(string.IsNullOrEmpty(oldValue) ? "vide" : oldValue)} → {(string.IsNullOrEmpty(newValue) ? "vide" : newValue)}";

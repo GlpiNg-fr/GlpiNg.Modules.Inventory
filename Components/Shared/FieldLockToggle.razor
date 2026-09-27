@@ -10,8 +10,8 @@
 <button type="button"
         class="btn btn-icon btn-sm glping-field-lock @(IsLocked ? "text-warning" : "text-secondary")"
         title="@(IsLocked
-                   ? $"Champ verrouillé : l'inventaire ne met plus à jour « {ComputerLockableFields.Label(Field)} ». Cliquer pour déverrouiller."
-                   : $"Champ alimenté par l'inventaire. Cliquer pour le verrouiller et conserver la valeur saisie.")"
+                   ? T("Champ verrouillé : l'inventaire ne met plus à jour « {0} ». Cliquer pour déverrouiller.", T(ComputerLockableFields.Label(Field)))
+                   : T("Champ alimenté par l'inventaire. Cliquer pour le verrouiller et conserver la valeur saisie."))"
         @onclick="() => OnToggle.InvokeAsync(Field)">
     <i class="ti @(IsLocked ? "ti-lock" : "ti-lock-open")"></i>
 </button>

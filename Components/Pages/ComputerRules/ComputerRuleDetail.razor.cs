@@ -1,3 +1,4 @@
+using GlpiNg.Modules.Abstractions.Localization;
 ﻿using GlpiNg.Modules.Inventory.Models;
 using GlpiNg.Modules.Inventory.Services;
 using Microsoft.AspNetCore.Components;
@@ -102,7 +103,7 @@ public partial class ComputerRuleDetail : ComponentBase, IAsyncDisposable
     {
         if (ComputerRuleLabels.IsDurationOperator(_newCriterion.Operator))
         {
-            return "nombre d'heures (ex. 24)";
+            return Tr.T("nombre d'heures (ex. 24)");
         }
 
         return _newCriterion.Operator == ComputerRuleCriterionOperator.MatchesRegex ? "expression régulière" : string.Empty;

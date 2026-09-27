@@ -1,3 +1,4 @@
+using GlpiNg.Modules.Abstractions.Localization;
 ﻿using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -391,7 +392,7 @@ public partial class Detail : ComponentBase, IDisposable
             "Domain" => _computer.Domain,
             "VmSystem" => _computer.VmSystem,
             "LastLoggedUser" => _computer.LastLoggedUser,
-            "TotalMemoryMb" => _computer.TotalMemoryMb is { } mb ? $"{mb} Mo" : null,
+            "TotalMemoryMb" => _computer.TotalMemoryMb is { } mb ? Tr.T("{0} Mo", mb) : null,
             "RemoteManagement" => _computer.RemoteManagementId is { Length: > 0 } id
                 ? (_computer.RemoteManagementType is { Length: > 0 } type ? $"{type} : {id}" : id)
                 : null,
@@ -445,8 +446,8 @@ public partial class Detail : ComponentBase, IDisposable
             User = userName,
             Field = "Verrou",
             Description = existing is not null
-                ? $"Verrou retiré sur « {label} » : l'inventaire peut de nouveau le mettre à jour."
-                : $"Verrou posé sur « {label} » : l'inventaire ne le met plus à jour.",
+                ? Tr.T("Verrou retiré sur « {0} » : l'inventaire peut de nouveau le mettre à jour.", label)
+                : Tr.T("Verrou posé sur « {0} » : l'inventaire ne le met plus à jour.", label),
         });
 
         await db.SaveChangesAsync();
@@ -498,14 +499,14 @@ public partial class Detail : ComponentBase, IDisposable
             if (result.Macs.Count == 0)
             {
                 _wakeOnLanFailed = true;
-                _wakeOnLanMessage = "Aucune adresse MAC exploitable sur ce poste : le réveil est impossible tant que l'inventaire réseau n'a rien remonté.";
+                _wakeOnLanMessage = Tr.T("Aucune adresse MAC exploitable sur ce poste : le réveil est impossible tant que l'inventaire réseau n'a rien remonté.");
                 return;
             }
 
             _wakeOnLanFailed = !result.Sent;
             _wakeOnLanMessage = result.Sent
-                ? $"Magic packet envoyé sur {result.Macs.Count} adresse(s) MAC ({result.PacketsSent} datagramme(s))."
-                : "Aucun datagramme n'a pu être émis.";
+                ? Tr.T("Magic packet envoyé sur {0} adresse(s) MAC ({1} datagramme(s)).", result.Macs.Count, result.PacketsSent)
+                : Tr.T("Aucun datagramme n'a pu être émis.");
             _wakeOnLanDetail = $"MAC : {string.Join(", ", result.Macs)} — diffusion : {string.Join(", ", result.Broadcasts)}"
                 + (result.Errors.Count > 0 ? $" — erreurs : {string.Join(" ; ", result.Errors)}" : string.Empty);
 
@@ -526,7 +527,7 @@ public partial class Detail : ComponentBase, IDisposable
         catch (Exception ex)
         {
             _wakeOnLanFailed = true;
-            _wakeOnLanMessage = $"Échec de l'envoi du magic packet : {ex.Message}";
+            _wakeOnLanMessage = Tr.T("Échec de l'envoi du magic packet : {0}", ex.Message);
         }
         finally
         {
@@ -884,13 +885,13 @@ public partial class Detail : ComponentBase, IDisposable
     {
         if (_computer?.Agent is not { } agent)
         {
-            return "Aucun agent associé à ce poste.";
+            return Tr.T("Aucun agent associé à ce poste.");
         }
 
         string? url = AgentWebUrl(agent, _computer);
         if (url is null)
         {
-            return "L'agent ne fournit pas d'interface web locale (httpd-trust).";
+            return Tr.T("L'agent ne fournit pas d'interface web locale (httpd-trust).");
         }
 
         try
@@ -899,11 +900,11 @@ public partial class Detail : ComponentBase, IDisposable
             using HttpResponseMessage response = await client.GetAsync($"{url}/now");
             return response.IsSuccessStatusCode
                 ? null
-                : $"Les paquets ont été assignés, mais le réveil local de l'agent a échoué ({(int)response.StatusCode}).";
+                : Tr.T("Les paquets ont été assignés, mais le réveil local de l'agent a échoué ({0}).", (int)response.StatusCode);
         }
         catch (Exception ex)
         {
-            return $"Les paquets ont été assignés, mais l'agent est injoignable pour le réveil local ({ex.Message}).";
+            return Tr.T("Les paquets ont été assignés, mais l'agent est injoignable pour le réveil local ({0}).", ex.Message);
         }
     }
 
@@ -916,13 +917,13 @@ public partial class Detail : ComponentBase, IDisposable
     {
         if (_computer?.Agent is not { } agent)
         {
-            return "Aucun agent associé à ce poste.";
+            return Tr.T("Aucun agent associé à ce poste.");
         }
 
         string? url = AgentRemoteWebUrl(agent);
         if (url is null)
         {
-            return "L'adresse IP de contact de l'agent est inconnue, impossible de le réveiller à distance.";
+            return Tr.T("L'adresse IP de contact de l'agent est inconnue, impossible de le réveiller à distance.");
         }
 
         try
@@ -931,11 +932,11 @@ public partial class Detail : ComponentBase, IDisposable
             using HttpResponseMessage response = await client.GetAsync($"{url}/now?task=deploy");
             return response.IsSuccessStatusCode
                 ? null
-                : $"Les paquets ont été assignés, mais le réveil à distance de l'agent a échoué ({(int)response.StatusCode}).";
+                : Tr.T("Les paquets ont été assignés, mais le réveil à distance de l'agent a échoué ({0}).", (int)response.StatusCode);
         }
         catch (Exception ex)
         {
-            return $"Les paquets ont été assignés, mais l'agent est injoignable pour le réveil à distance ({ex.Message}).";
+            return Tr.T("Les paquets ont été assignés, mais l'agent est injoignable pour le réveil à distance ({0}).", ex.Message);
         }
     }
 
@@ -1391,7 +1392,7 @@ public partial class Detail : ComponentBase, IDisposable
         }
         catch (Exception ex)
         {
-            _agentStatus = $"Injoignable ({ex.Message})";
+            _agentStatus = Tr.T("Injoignable ({0})", ex.Message);
         }
         finally
         {
@@ -1431,11 +1432,11 @@ public partial class Detail : ComponentBase, IDisposable
             using HttpResponseMessage response = await client.GetAsync($"{url}/now?task=inventory");
             _inventoryRequestResult = response.IsSuccessStatusCode
                 ? Display.DateTime(DateTime.UtcNow)!
-                : $"Erreur ({(int)response.StatusCode})";
+                : Tr.T("Erreur ({0})", (int)response.StatusCode);
         }
         catch (Exception ex)
         {
-            _inventoryRequestResult = $"Injoignable ({ex.Message})";
+            _inventoryRequestResult = Tr.T("Injoignable ({0})", ex.Message);
         }
         finally
         {
@@ -1467,11 +1468,11 @@ public partial class Detail : ComponentBase, IDisposable
             using HttpResponseMessage response = await client.GetAsync($"{url}/now");
             _hostTasksRequestResult = response.IsSuccessStatusCode
                 ? Display.DateTime(DateTime.UtcNow)!
-                : $"Erreur ({(int)response.StatusCode})";
+                : Tr.T("Erreur ({0})", (int)response.StatusCode);
         }
         catch (Exception ex)
         {
-            _hostTasksRequestResult = $"Injoignable ({ex.Message})";
+            _hostTasksRequestResult = Tr.T("Injoignable ({0})", ex.Message);
         }
         finally
         {
@@ -1483,7 +1484,7 @@ public partial class Detail : ComponentBase, IDisposable
     {
         return computer.LastInventoryAt is { } lastInventory
             ? Display.DateTime(lastInventory)!
-            : "Jamais";
+            : Tr.T("Jamais");
     }
 
     private static IEnumerable<IGrouping<ComponentType, ComputerComponent>> ComponentGroups(Computer computer)
@@ -1495,16 +1496,16 @@ public partial class Detail : ComponentBase, IDisposable
 
     private static string ComponentTypeLabel(ComponentType type) => type switch
     {
-        ComponentType.Cpu => "Processeurs",
-        ComponentType.Ram => "Mémoire",
-        ComponentType.Disk => "Disques durs",
-        ComponentType.NetworkCard => "Cartes réseau",
-        ComponentType.Gpu => "Cartes graphiques",
-        ComponentType.Motherboard => "Cartes mères",
-        ComponentType.Controller => "Contrôleurs",
-        ComponentType.SoundCard => "Cartes son",
-        ComponentType.Modem => "Modems",
-        ComponentType.Firmware => "BIOS",
+        ComponentType.Cpu => Tr.T("Processeurs"),
+        ComponentType.Ram => Tr.T("Mémoire"),
+        ComponentType.Disk => Tr.T("Disques durs"),
+        ComponentType.NetworkCard => Tr.T("Cartes réseau"),
+        ComponentType.Gpu => Tr.T("Cartes graphiques"),
+        ComponentType.Motherboard => Tr.T("Cartes mères"),
+        ComponentType.Controller => Tr.T("Contrôleurs"),
+        ComponentType.SoundCard => Tr.T("Cartes son"),
+        ComponentType.Modem => Tr.T("Modems"),
+        ComponentType.Firmware => Tr.T("BIOS"),
         _ => type.ToString()
     };
 
@@ -1530,8 +1531,8 @@ public partial class Detail : ComponentBase, IDisposable
     /// </summary>
     private static string ComponentValueColumnLabel(ComponentType type) => type switch
     {
-        ComponentType.Firmware => "Version",
-        _ => "Capacité"
+        ComponentType.Firmware => Tr.T("Version"),
+        _ => Tr.T("Capacité")
     };
 
     private static IEnumerable<IGrouping<PeripheralKind, ComputerPeripheral>> PeripheralGroups(Computer computer)
@@ -1543,9 +1544,9 @@ public partial class Detail : ComponentBase, IDisposable
 
     private static string PeripheralKindLabel(PeripheralKind kind) => kind switch
     {
-        PeripheralKind.Monitor => "Écrans",
-        PeripheralKind.Printer => "Imprimantes",
-        PeripheralKind.Other => "Autres périphériques",
+        PeripheralKind.Monitor => Tr.T("Écrans"),
+        PeripheralKind.Printer => Tr.T("Imprimantes"),
+        PeripheralKind.Other => Tr.T("Autres périphériques"),
         _ => kind.ToString()
     };
 
@@ -1560,8 +1561,8 @@ public partial class Detail : ComponentBase, IDisposable
     private static string SizeLabel(long? sizeMb) => sizeMb switch
     {
         null => "—",
-        >= 1024 => $"{sizeMb.Value / 1024.0:0.##} Gio",
-        _ => $"{sizeMb} Mio"
+        >= 1024 => Tr.T("{0:0.##} Gio", sizeMb.Value / 1024.0),
+        _ => Tr.T("{0} Mio", sizeMb)
     };
 
     private static int? UsagePercent(ComputerVolume volume)
@@ -1577,9 +1578,9 @@ public partial class Detail : ComponentBase, IDisposable
 
     private static string VoltageLabel(int? voltageMv) => voltageMv is { } mv ? $"{mv / 1000.0:0.##} V" : "—";
 
-    private static string CapacityLabel(int? capacityMwh) => capacityMwh is { } mwh ? $"{mwh / 1000.0:0.##} Wh" : "—";
+    private static string CapacityLabel(int? capacityMwh) => capacityMwh is { } mwh ? Tr.T("{0:0.##} Wh", mwh / 1000.0) : "—";
 
-    private static string RealCapacityLabel(int? realCapacityMwh) => realCapacityMwh is { } mwh ? $"{mwh / 1000.0:0.##} Wh" : "—";
+    private static string RealCapacityLabel(int? realCapacityMwh) => realCapacityMwh is { } mwh ? Tr.T("{0:0.##} Wh", mwh / 1000.0) : "—";
 
     private static int? WearPercent(int? designCapacityMwh, int? realCapacityMwh) =>
         designCapacityMwh is > 0 && realCapacityMwh is { } real
@@ -1616,8 +1617,8 @@ public partial class Detail : ComponentBase, IDisposable
     private static string BoolLabel(bool? value) => value switch
     {
         null => "—",
-        true => "Oui",
-        false => "Non"
+        true => Tr.T("Oui"),
+        false => Tr.T("Non")
     };
 
     private static string BoolBadgeCss(bool? value) => value switch
@@ -1630,7 +1631,7 @@ public partial class Detail : ComponentBase, IDisposable
     private static string SpeedLabel(int? speedMbps) => speedMbps switch
     {
         null => "—",
-        >= 1000 => $"{speedMbps.Value / 1000.0:0.##} Gb/s",
-        _ => $"{speedMbps} Mb/s"
+        >= 1000 => Tr.T("{0:0.##} Gb/s", speedMbps.Value / 1000.0),
+        _ => Tr.T("{0} Mb/s", speedMbps)
     };
 }

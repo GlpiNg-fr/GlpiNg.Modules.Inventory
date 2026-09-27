@@ -3,13 +3,13 @@
 @using GlpiNg.Modules.Inventory.Services
 @rendermode InteractiveServer
 
-<PageTitle>@(_item?.Name ?? "Modèle de consommable") — GlpiNg</PageTitle>
+<PageTitle>@(_item?.Name ?? T("Modèle de consommable")) — GlpiNg</PageTitle>
 
 @if (_item is null)
 {
     <div class="text-center text-secondary py-5">
         <i class="ti ti-package-off fs-1"></i>
-        <p class="mt-2">Ce modèle de consommable est introuvable.</p>
+        <p class="mt-2">@T("Ce modèle de consommable est introuvable.")</p>
     </div>
 }
 else
@@ -17,7 +17,7 @@ else
     <div class="glping-fiche-topbar">
         <div class="glping-fiche-crumb">
             <i class="ti ti-package"></i>
-            <span>Modèle de consommable - @_item.Name - ID @_item.Id</span>
+            <span>@T("Modèle de consommable - {0} - ID {1}", _item.Name, _item.Id)</span>
         </div>
     </div>
 
@@ -25,21 +25,21 @@ else
         <aside class="glping-fiche-sidebar">
             <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "main" ? "active" : "")" @onclick='() => SetTab("main")'>
                 <i class="ti ti-package"></i>
-                <span>Modèle</span>
+                <span>@T("Modèle")</span>
             </button>
             <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "stock" ? "active" : "")" @onclick='() => SetTab("stock")'>
                 <i class="ti ti-stack-2"></i>
-                <span>Stock</span>
+                <span>@T("Stock")</span>
                 <span class="glping-fiche-tab-count">@_item.Consumables.Count</span>
             </button>
             <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "history" ? "active" : "")" @onclick='() => SetTab("history")'>
                 <i class="ti ti-history"></i>
-                <span>Historique</span>
+                <span>@T("Historique")</span>
                 <span class="glping-fiche-tab-count">@_item.HistoryEntries.Count</span>
             </button>
             <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "links" ? "active" : "")" @onclick='() => SetTab("links")'>
                 <i class="ti ti-external-link"></i>
-                <span>Liens externes</span>
+                <span>@T("Liens externes")</span>
             </button>
         </aside>
 
@@ -52,10 +52,10 @@ else
 
                         <div class="d-flex justify-content-end gap-2 mt-3">
                             <button type="button" class="btn btn-outline-danger" @onclick="DeleteAsync">
-                                <i class="ti ti-trash me-1"></i>Supprimer définitivement
+                                <i class="ti ti-trash me-1"></i>@T("Supprimer définitivement")
                             </button>
                             <button type="submit" class="btn btn-primary" disabled="@_isSaving">
-                                <i class="ti ti-device-floppy me-1"></i>@(_isSaving ? "Enregistrement…" : "Sauvegarder")
+                                <i class="ti ti-device-floppy me-1"></i>@(_isSaving ? T("Enregistrement…") : T("Sauvegarder"))
                             </button>
                         </div>
                     </EditForm>
@@ -65,25 +65,25 @@ else
                     int available = _item.Consumables.Count(c => c.DateOut is null);
                     int consumed = _item.Consumables.Count(c => c.DateOut is not null);
                     <div class="glping-fiche-block">
-                        <div class="glping-fiche-block-title"><i class="ti ti-stack-2"></i>Stock</div>
+                        <div class="glping-fiche-block-title"><i class="ti ti-stack-2"></i>@T("Stock")</div>
                         <div class="row mb-3">
                             <div class="col-md-6">
-                                <div class="text-secondary">Disponible</div>
+                                <div class="text-secondary">@T("Disponible")</div>
                                 <div class="fs-2 fw-bold @(available < _item.AlertThreshold ? "text-danger" : "")">@available</div>
                             </div>
                             <div class="col-md-6">
-                                <div class="text-secondary">Consommées</div>
+                                <div class="text-secondary">@T("Consommées")</div>
                                 <div class="fs-2 fw-bold">@consumed</div>
                             </div>
                         </div>
 
                         <div class="d-flex align-items-end gap-2 mb-3">
                             <div>
-                                <label class="form-label">Réceptionner</label>
+                                <label class="form-label">@T("Réceptionner")</label>
                                 <input type="number" min="1" class="form-control" style="width: 100px;" @bind="_receiveQuantity" />
                             </div>
                             <button type="button" class="btn btn-primary" @onclick="ReceiveStockAsync">
-                                <i class="ti ti-plus me-1"></i>Ajouter au stock
+                                <i class="ti ti-plus me-1"></i>@T("Ajouter au stock")
                             </button>
                         </div>
 
@@ -91,7 +91,7 @@ else
                         {
                             <div class="glping-config-placeholder">
                                 <i class="ti ti-stack-2"></i>
-                                <p class="mb-0">Aucune unité réceptionnée pour ce modèle.</p>
+                                <p class="mb-0">@T("Aucune unité réceptionnée pour ce modèle.")</p>
                             </div>
                         }
                         else
@@ -100,9 +100,9 @@ else
                                 <table class="table table-vcenter card-table mb-0">
                                     <thead>
                                         <tr>
-                                            <th>ID</th>
-                                            <th>Réceptionnée le</th>
-                                            <th>Statut</th>
+                                            <th>@T("ID")</th>
+                                            <th>@T("Réceptionnée le")</th>
+                                            <th>@T("Statut")</th>
                                             <th></th>
                                         </tr>
                                     </thead>
@@ -115,18 +115,18 @@ else
                                                 <td>
                                                     @if (consumable.DateOut is not null)
                                                     {
-                                                        <span class="badge bg-secondary-lt">Consommée</span>
+                                                        <span class="badge bg-secondary-lt">@T("Consommée")</span>
                                                     }
                                                     else
                                                     {
-                                                        <span class="badge bg-green-lt">En stock</span>
+                                                        <span class="badge bg-green-lt">@T("En stock")</span>
                                                     }
                                                 </td>
                                                 <td class="text-end">
                                                     @if (consumable.DateOut is null)
                                                     {
                                                         <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => ConsumeAsync(consumable)">
-                                                            Consommer
+                                                            @T("Consommer")
                                                         </button>
                                                     }
                                                 </td>
@@ -141,12 +141,12 @@ else
 
                 case "history":
                     <div class="glping-fiche-block">
-                        <div class="glping-fiche-block-title"><i class="ti ti-history"></i>Historique (@_item.HistoryEntries.Count)</div>
+                        <div class="glping-fiche-block-title"><i class="ti ti-history"></i>@T("Historique ({0})", _item.HistoryEntries.Count)</div>
                         @if (_item.HistoryEntries.Count == 0)
                         {
                             <div class="glping-config-placeholder">
                                 <i class="ti ti-history"></i>
-                                <p class="mb-0">Aucune modification enregistrée.</p>
+                                <p class="mb-0">@T("Aucune modification enregistrée.")</p>
                             </div>
                         }
                         else
@@ -155,11 +155,11 @@ else
                                 <table class="table table-vcenter card-table mb-0">
                                     <thead>
                                         <tr>
-                                            <th>ID</th>
-                                            <th>Date</th>
-                                            <th>Utilisateur</th>
-                                            <th>Champ</th>
-                                            <th>Mise à jour</th>
+                                            <th>@T("ID")</th>
+                                            <th>@T("Date")</th>
+                                            <th>@T("Utilisateur")</th>
+                                            <th>@T("Champ")</th>
+                                            <th>@T("Mise à jour")</th>
                                         </tr>
                                     </thead>
                                     <tbody>

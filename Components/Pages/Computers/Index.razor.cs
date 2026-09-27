@@ -1,3 +1,4 @@
+using GlpiNg.Modules.Abstractions.Localization;
 ﻿using GlpiNg.Modules.Abstractions.Preferences;
 using System.Security.Claims;
 using System.Text.Json;
@@ -633,9 +634,9 @@ public partial class Index : ComponentBase
     /// <summary>Libellé du champ visé, pour l'historique et le récapitulatif.</summary>
     private static string MassActionLabel(MassActionField field) => field switch
     {
-        MassActionField.Status => "Statut",
-        MassActionField.Location => "Lieu",
-        MassActionField.AssignedUser => "Utilisateur assigné",
+        MassActionField.Status => Tr.T("Statut"),
+        MassActionField.Location => Tr.T("Lieu"),
+        MassActionField.AssignedUser => Tr.T("Utilisateur assigné"),
         _ => string.Empty,
     };
 
@@ -700,8 +701,8 @@ public partial class Index : ComponentBase
             await db.SaveChangesAsync();
 
             _massMessage = changed == 0
-                ? $"Aucun changement : les {targets.Count} poste(s) sélectionné(s) avaient déjà cette valeur."
-                : $"{MassActionLabel(_massAction)} modifié sur {changed} poste(s) sur {targets.Count} sélectionné(s).";
+                ? Tr.T("Aucun changement : les {0} poste(s) sélectionné(s) avaient déjà cette valeur.", targets.Count)
+                : Tr.T("{0} modifié sur {1} poste(s) sur {2} sélectionné(s).", MassActionLabel(_massAction), changed, targets.Count);
 
             await LoadAsync();
         }

@@ -1,3 +1,4 @@
+using GlpiNg.Modules.Abstractions.Localization;
 ﻿using GlpiNg.Modules.Inventory.Models;
 using GlpiNg.Modules.Inventory.Services;
 using Microsoft.AspNetCore.Components;
@@ -202,8 +203,8 @@ public partial class DropdownList : ComponentBase
         await db.SaveChangesAsync();
 
         _rebuildMessage = missing.Count == 0
-            ? "Aucun modèle à ajouter : le catalogue est déjà à jour pour cette catégorie."
-            : $"{missing.Count} modèle(s) ajouté(s) depuis le parc.";
+            ? Tr.T("Aucun modèle à ajouter : le catalogue est déjà à jour pour cette catégorie.")
+            : Tr.T("{0} modèle(s) ajouté(s) depuis le parc.", missing.Count);
 
         await LoadAsync();
     }
@@ -311,8 +312,8 @@ public partial class DropdownList : ComponentBase
         DropdownItem? parent = parentId is { } id ? _items.FirstOrDefault(item => item.Id == id) : null;
 
         return parent is null
-            ? "Cette valeur existe déjà à la racine."
-            : $"Cette valeur existe déjà sous « {parent.Name} ».";
+            ? Tr.T("Cette valeur existe déjà à la racine.")
+            : Tr.T("Cette valeur existe déjà sous « {0} ».", parent.Name);
     }
 
     private async Task CreateAsync()

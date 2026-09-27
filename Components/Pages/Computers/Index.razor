@@ -2,7 +2,7 @@
 @using GlpiNg.Modules.Inventory.Services
 @rendermode InteractiveServer
 
-<PageTitle>Ordinateurs — GlpiNg</PageTitle>
+<PageTitle>@T("Ordinateurs — GlpiNg")</PageTitle>
 
 <div class="glping-list-page">
 <div class="d-flex gap-3 glping-computers-layout">
@@ -11,20 +11,20 @@
         <div class="glping-saved-searches-panel @(_savedSearchesPinned ? "pinned" : "")">
             <div class="glping-saved-searches-heading d-flex align-items-center justify-content-between">
                 <span class="d-flex align-items-center gap-2">
-                    <i class="ti ti-bookmarks"></i>Recherches sauvegardées
+                    <i class="ti ti-bookmarks"></i>@T("Recherches sauvegardées")
                 </span>
                 <div class="d-flex align-items-center gap-1">
-                    <a class="btn btn-icon btn-sm btn-ghost-secondary" href="/tools/saved-searches" title="Gérer toutes les recherches sauvegardées">
+                    <a class="btn btn-icon btn-sm btn-ghost-secondary" href="/tools/saved-searches" title="@(T("Gérer toutes les recherches sauvegardées"))">
                         <i class="ti ti-settings"></i>
                     </a>
                     <button type="button" class="btn btn-icon btn-sm btn-ghost-secondary @(_savedSearchesPinned ? "active" : "")"
-                            title="@(_savedSearchesPinned ? "Détacher ce panneau" : "Épingler ce panneau pour cette page")"
+                            title="@(_savedSearchesPinned ? T("Détacher ce panneau") : T("Épingler ce panneau pour cette page"))"
                             @onclick="() => _savedSearchesPinned = !_savedSearchesPinned">
                         <i class="ti ti-pinned"></i>
                     </button>
                     @if (!_savedSearchesPinned)
                     {
-                        <button type="button" class="btn btn-icon btn-sm btn-ghost-secondary" title="Fermer le panneau"
+                        <button type="button" class="btn btn-icon btn-sm btn-ghost-secondary" title="@(T("Fermer le panneau"))"
                                 @onclick="() => _savedSearchesOpen = false">
                             <i class="ti ti-x"></i>
                         </button>
@@ -35,13 +35,13 @@
                 <li class="nav-item">
                     <button type="button" class="nav-link @(_savedSearchesTab == SavedSearchesTab.Computer ? "active" : "")"
                             @onclick="() => _savedSearchesTab = SavedSearchesTab.Computer">
-                        Ordinateur
+                        @T("Ordinateur")
                     </button>
                 </li>
                 <li class="nav-item">
                     <button type="button" class="nav-link @(_savedSearchesTab == SavedSearchesTab.Other ? "active" : "")"
                             @onclick="() => _savedSearchesTab = SavedSearchesTab.Other">
-                        Autres
+                        @T("Autres")
                     </button>
                 </li>
             </ul>
@@ -50,7 +50,7 @@
                 {
                     @if (FilteredOtherSavedSearches.Count == 0)
                     {
-                        <p class="px-3 py-2 text-secondary mb-0">Aucune recherche enregistrée sur les autres types d'éléments.</p>
+                        <p class="px-3 py-2 text-secondary mb-0">@T("Aucune recherche enregistrée sur les autres types d'éléments.")</p>
                     }
                     else
                     {
@@ -58,7 +58,7 @@
                         {
                             <a class="list-group-item d-flex align-items-center gap-2 text-reset"
                                href="@SavedSearchItemTypes.RouteFor(saved.ItemType)"
-                               title="Aller à la liste « @SavedSearchItemTypes.LabelFor(saved.ItemType) »">
+                               title="@(T("Aller à la liste « {0} »", SavedSearchItemTypes.LabelFor(saved.ItemType)))">
                                 <i class="ti @SavedSearchItemTypes.IconFor(saved.ItemType) text-secondary"></i>
                                 <span class="text-truncate flex-grow-1">@saved.Name</span>
                                 <span class="badge bg-secondary-lt ms-auto">@saved.ResultCount</span>
@@ -69,7 +69,7 @@
                 else if (FilteredSavedSearches.Count == 0)
                 {
                     <p class="px-3 py-2 text-secondary mb-0">
-                        @(_savedSearches.Count == 0 ? "Aucune recherche enregistrée." : "Aucun résultat pour ce filtre.")
+                        @(_savedSearches.Count == 0 ? T("Aucune recherche enregistrée.") : T("Aucun résultat pour ce filtre."))
                     </p>
                 }
                 else
@@ -81,14 +81,14 @@
                              @ondragstart="() => OnSavedSearchDragStart(saved)"
                              @ondragover:preventDefault="true"
                              @ondrop="() => OnSavedSearchDropAsync(saved)" @ondrop:preventDefault="true">
-                            <i class="ti ti-grip-vertical glping-drag-handle" title="Glisser pour réordonner"></i>
+                            <i class="ti ti-grip-vertical glping-drag-handle" title="@(T("Glisser pour réordonner"))"></i>
                             <button type="button" class="btn btn-link text-reset text-truncate flex-grow-1 justify-content-start p-0"
-                                    title="Appliquer cette recherche" @onclick="() => ApplySavedSearch(saved)">
+                                    title="@(T("Appliquer cette recherche"))" @onclick="() => ApplySavedSearch(saved)">
                                 <span class="text-truncate">@saved.Name</span>
                             </button>
                             @if (saved.OwnerUserId == _currentUserId)
                             {
-                                <button type="button" class="btn btn-icon btn-sm btn-ghost-secondary" title="Définir par défaut"
+                                <button type="button" class="btn btn-icon btn-sm btn-ghost-secondary" title="@(T("Définir par défaut"))"
                                         @onclick="() => SetDefaultSavedSearchAsync(saved)">
                                     <i class="ti @(saved.IsDefault ? "ti-star-filled text-warning" : "ti-star")"></i>
                                 </button>
@@ -100,11 +100,11 @@
             </div>
             <div class="glping-saved-searches-filter">
                 <div class="input-icon">
-                    <input type="text" class="form-control form-control-sm" placeholder="Filtrer la liste" value="@_savedSearchFilter"
+                    <input type="text" class="form-control form-control-sm" placeholder="@(T("Filtrer la liste"))" value="@_savedSearchFilter"
                            @oninput="@((ChangeEventArgs e) => _savedSearchFilter = (string)(e.Value ?? string.Empty))" />
                     @if (_savedSearchFilter.Length > 0)
                     {
-                        <span class="input-icon-addon" role="button" title="Effacer le filtre" @onclick="() => _savedSearchFilter = string.Empty">
+                        <span class="input-icon-addon" role="button" title="@(T("Effacer le filtre"))" @onclick="() => _savedSearchFilter = string.Empty">
                             <i class="ti ti-x"></i>
                         </span>
                     }
@@ -116,7 +116,7 @@
     <div class="card flex-fill" style="min-width: 0;">
     <div class="card-header d-flex align-items-center justify-content-between glping-list-toolbar">
         <div class="btn-list">
-            <button type="button" class="btn btn-icon @(_savedSearchesOpen ? "active" : "")" title="Afficher les recherches sauvegardées"
+            <button type="button" class="btn btn-icon @(_savedSearchesOpen ? "active" : "")" title="@(T("Afficher les recherches sauvegardées"))"
                     @onclick="() => _savedSearchesOpen = !_savedSearchesOpen">
                 <i class="ti ti-bookmarks"></i>
             </button>
@@ -127,7 +127,7 @@
         </div>
 
         <div class="btn-list align-items-center">
-            <label class="glping-switch glping-switch-danger mx-2" title="Afficher la corbeille">
+            <label class="glping-switch glping-switch-danger mx-2" title="@(T("Afficher la corbeille"))">
                 <input type="checkbox" checked="@_showTrash"
                        @onchange="@((ChangeEventArgs e) => ToggleTrashAsync((bool)(e.Value ?? false)))" />
                 <span class="glping-switch-slider"></span>
@@ -139,7 +139,7 @@
                    rebut par erreur était perdu avec tout son historique, alors que le rebut est
                    justement l'étape censée être réversible. *@
                 <button type="button" class="btn btn-icon" disabled="@(_selectedIds.Count == 0)"
-                        title="Sortir de la corbeille" @onclick="RestoreSelectedAsync">
+                        title="@(T("Sortir de la corbeille"))" @onclick="RestoreSelectedAsync">
                     <i class="ti ti-arrow-back-up"></i>
                 </button>
             }
@@ -149,30 +149,30 @@
                masse y serait effacée à la remontée suivante de l'agent. *@
             <div class="dropdown">
                 <button type="button" class="btn btn-icon" data-bs-toggle="dropdown" data-bs-auto-close="outside"
-                        aria-expanded="false" disabled="@(_selectedIds.Count == 0)" title="Actions de masse">
+                        aria-expanded="false" disabled="@(_selectedIds.Count == 0)" title="@(T("Actions de masse"))">
                     <i class="ti ti-list-check"></i>
                 </button>
                 <div class="dropdown-menu dropdown-menu-end p-3" style="min-width: 340px;">
-                    <p class="mb-2 fw-medium">Modifier @_selectedIds.Count poste(s) sélectionné(s)</p>
+                    <p class="mb-2 fw-medium">@T("Modifier {0} poste(s) sélectionné(s)", _selectedIds.Count)</p>
 
                     <div class="mb-2">
-                        <label class="form-label">Champ</label>
+                        <label class="form-label">@T("Champ")</label>
                         <select class="form-select" value="@((int)_massAction)"
                                 @onchange="@((ChangeEventArgs e) => { _massAction = (MassActionField)int.Parse((string)e.Value!); _massMessage = null; })">
-                            <option value="0">— choisir —</option>
-                            <option value="1">Statut</option>
-                            <option value="2">Lieu</option>
-                            <option value="3">Utilisateur assigné</option>
+                            <option value="0">@T("— choisir —")</option>
+                            <option value="1">@T("Statut")</option>
+                            <option value="2">@T("Lieu")</option>
+                            <option value="3">@T("Utilisateur assigné")</option>
                         </select>
                     </div>
 
                     @if (_massAction == MassActionField.Status)
                     {
                         <div class="mb-2">
-                            <label class="form-label">Nouveau statut</label>
+                            <label class="form-label">@T("Nouveau statut")</label>
                             <select class="form-select" value="@(_massStatusId?.ToString() ?? "")"
                                     @onchange="@((ChangeEventArgs e) => _massStatusId = string.IsNullOrEmpty((string?)e.Value) ? null : int.Parse((string)e.Value!))">
-                                <option value="">— aucun —</option>
+                                <option value="">@T("— aucun —")</option>
                                 @foreach (DropdownItem status in _statusOptions)
                                 {
                                     <option value="@status.Id">@status.Name</option>
@@ -183,10 +183,10 @@
                     else if (_massAction == MassActionField.Location)
                     {
                         <div class="mb-2">
-                            <label class="form-label">Nouveau lieu</label>
+                            <label class="form-label">@T("Nouveau lieu")</label>
                             <select class="form-select" value="@(_massLocationId?.ToString() ?? "")"
                                     @onchange="@((ChangeEventArgs e) => _massLocationId = string.IsNullOrEmpty((string?)e.Value) ? null : int.Parse((string)e.Value!))">
-                                <option value="">— aucun —</option>
+                                <option value="">@T("— aucun —")</option>
                                 @foreach (LocationOption location in _locationOptions)
                                 {
                                     <option value="@location.Id">@location.Path</option>
@@ -197,16 +197,15 @@
                     else if (_massAction == MassActionField.AssignedUser)
                     {
                         <div class="mb-2">
-                            <label class="form-label">Nouvel utilisateur assigné</label>
-                            <input class="form-control" placeholder="Laisser vide pour effacer" @bind="_massAssignedUser" />
+                            <label class="form-label">@T("Nouvel utilisateur assigné")</label>
+                            <input class="form-control" placeholder="@(T("Laisser vide pour effacer"))" @bind="_massAssignedUser" />
                         </div>
                     }
 
                     @if (_massAction != MassActionField.None)
                     {
                         <p class="hint" style="margin-left:0;">
-                            Seuls les postes que ce changement modifie réellement sont touchés, et chacun le
-                            garde dans son historique.
+                            @T("Seuls les postes que ce changement modifie réellement sont touchés, et chacun le garde dans son historique.")
                         </p>
                     }
 
@@ -218,10 +217,10 @@
                     }
 
                     <div class="d-flex justify-content-end gap-2">
-                        <button type="button" class="btn btn-sm">Fermer</button>
+                        <button type="button" class="btn btn-sm">@T("Fermer")</button>
                         <button type="button" class="btn btn-sm btn-primary" disabled="@(!CanApplyMassAction)"
                                 @onclick="ApplyMassActionAsync">
-                            @(_massApplying ? "Application…" : "Appliquer")
+                            @(_massApplying ? T("Application…") : T("Appliquer"))
                         </button>
                     </div>
                 </div>
@@ -229,80 +228,80 @@
 
             <div class="dropdown">
                 <button type="button" class="btn btn-icon text-danger" data-bs-toggle="dropdown" aria-expanded="false"
-                        disabled="@(_selectedIds.Count == 0)" title="@(_showTrash ? "Supprimer définitivement" : "Mettre à la corbeille")">
+                        disabled="@(_selectedIds.Count == 0)" title="@(_showTrash ? T("Supprimer définitivement") : T("Mettre à la corbeille"))">
                     <i class="ti ti-trash"></i>
                 </button>
                 <div class="dropdown-menu dropdown-menu-end p-3" style="min-width: 260px;">
                     @if (_showTrash)
                     {
-                        <p class="mb-2">Supprimer définitivement @_selectedIds.Count poste(s) sélectionné(s) ? Cette action est irréversible.</p>
+                        <p class="mb-2">@T("Supprimer définitivement {0} poste(s) sélectionné(s) ? Cette action est irréversible.", _selectedIds.Count)</p>
                     }
                     else
                     {
-                        <p class="mb-2">Mettre à la corbeille @_selectedIds.Count poste(s) sélectionné(s) ?</p>
+                        <p class="mb-2">@T("Mettre à la corbeille {0} poste(s) sélectionné(s) ?", _selectedIds.Count)</p>
                     }
                     <div class="d-flex justify-content-end gap-2">
-                        <button type="button" class="btn btn-sm">Annuler</button>
+                        <button type="button" class="btn btn-sm">@T("Annuler")</button>
                         <button type="button" class="btn btn-sm btn-danger" @onclick="DeleteSelectedAsync">
-                            @(_showTrash ? "Supprimer" : "Mettre à la corbeille")
+                            @(_showTrash ? T("Supprimer") : T("Mettre à la corbeille"))
                         </button>
                     </div>
                 </div>
             </div>
 
-            <button type="button" class="btn btn-icon" @onclick="() => _showColumnsModal = true" title="Sélectionner les colonnes à afficher">
+            <button type="button" class="btn btn-icon" @onclick="() => _showColumnsModal = true" title="@(T("Sélectionner les colonnes à afficher"))">
                 <i class="ti ti-columns-3"></i>
             </button>
 
-            <button type="button" class="btn btn-icon" @onclick="OnRefreshAsync" disabled="@_isRefreshing" title="Rafraîchir">
+            <button type="button" class="btn btn-icon" @onclick="OnRefreshAsync" disabled="@_isRefreshing" title="@(T("Rafraîchir"))">
                 <i class="ti ti-refresh @(_isRefreshing ? "glping-spin" : "")"></i>
             </button>
 
             <div class="dropdown">
-                <button type="button" class="btn btn-icon" data-bs-toggle="dropdown" aria-expanded="false" title="Exporter">
+                <button type="button" class="btn btn-icon" data-bs-toggle="dropdown" aria-expanded="false" title="@(T("Exporter"))">
                     <i class="ti ti-download"></i>
                 </button>
                 <div class="dropdown-menu dropdown-menu-end p-0 glping-export-menu">
-                    <div class="glping-export-menu-heading">Page courante</div>
+                    <div class="glping-export-menu-heading">@T("Page courante")</div>
                     <button type="button" class="dropdown-item" @onclick='() => ExportAsync("pdf-landscape", false)'>
-                        <i class="ti ti-file-type-pdf"></i>PDF paysage
+                        <i class="ti ti-file-type-pdf"></i>@T("PDF paysage")
                     </button>
                     <button type="button" class="dropdown-item" @onclick='() => ExportAsync("pdf-portrait", false)'>
-                        <i class="ti ti-file-type-pdf"></i>PDF portrait
+                        <i class="ti ti-file-type-pdf"></i>@T("PDF portrait")
                     </button>
                     <button type="button" class="dropdown-item" @onclick='() => ExportAsync("csv", false)'>
-                        <i class="ti ti-file-type-csv"></i>CSV
+                        <i class="ti ti-file-type-csv"></i>@T("CSV")
                     </button>
                     <button type="button" class="dropdown-item" @onclick='() => ExportAsync("ods", false)'>
-                        <i class="ti ti-table"></i>Tableau (ODS)
+                        <i class="ti ti-table"></i>@T("Tableau (ODS)")
                     </button>
                     <button type="button" class="dropdown-item" @onclick='() => ExportAsync("xlsx", false)'>
-                        <i class="ti ti-table"></i>Tableau (XLSX)
+                        <i class="ti ti-table"></i>@T("Tableau (XLSX)")
                     </button>
 
                     <div class="dropdown-divider"></div>
 
-                    <div class="glping-export-menu-heading">Toutes les pages</div>
+                    <div class="glping-export-menu-heading">@T("Toutes les pages")</div>
                     <button type="button" class="dropdown-item" @onclick='() => ExportAsync("pdf-landscape", true)'>
-                        <i class="ti ti-file-type-pdf"></i>PDF paysage
+                        <i class="ti ti-file-type-pdf"></i>@T("PDF paysage")
                     </button>
                     <button type="button" class="dropdown-item" @onclick='() => ExportAsync("pdf-portrait", true)'>
-                        <i class="ti ti-file-type-pdf"></i>PDF portrait
+                        <i class="ti ti-file-type-pdf"></i>@T("PDF portrait")
                     </button>
                     <button type="button" class="dropdown-item" @onclick='() => ExportAsync("csv", true)'>
-                        <i class="ti ti-file-type-csv"></i>CSV
+                        <i class="ti ti-file-type-csv"></i>@T("CSV")
                     </button>
                     <button type="button" class="dropdown-item" @onclick='() => ExportAsync("ods", true)'>
-                        <i class="ti ti-table"></i>Tableau (ODS)
+                        <i class="ti ti-table"></i>@T("Tableau (ODS)")
                     </button>
                     <button type="button" class="dropdown-item" @onclick='() => ExportAsync("xlsx", true)'>
-                        <i class="ti ti-table"></i>Tableau (XLSX)
+                        <i class="ti ti-table"></i>@T("Tableau (XLSX)")
                     </button>
 
                     <div class="dropdown-divider"></div>
 
                     <button type="button" class="dropdown-item" @onclick="CopyNamesToClipboardAsync">
-                        <i class="ti ti-copy"></i>Copier les noms dans le presse-papiers
+                        <i class="ti ti-copy"></i>@T("Copier les noms dans le presse-papiers")
                     </button>
                 </div>
             </div>
@@ -316,14 +315,14 @@
                     <th style="width: 2.5rem;">
                         @* Ne coche que les lignes affichées — la page courante là où le tableau est
                            paginé : cocher ici ne doit jamais engager plus que ce qu'on voit. *@
-                        <input class="form-check-input m-0" type="checkbox" title="Sélectionner les éléments visibles"
+                        <input class="form-check-input m-0" type="checkbox" title="@(T("Sélectionner les éléments visibles"))"
                                checked="@AllSelected"
                                @onchange="@((ChangeEventArgs e) => ToggleSelectAll((bool)(e.Value ?? false)))" />
                     </th>
-                    <th class="glping-sortable-th" title="Ctrl+clic pour ajouter un tri secondaire"
+                    <th class="glping-sortable-th" title="@(T("Ctrl+clic pour ajouter un tri secondaire"))"
                         @onclick="@((MouseEventArgs e) => SetSort("name", e.CtrlKey))">
                         <span class="d-flex align-items-center gap-1">
-                            Nom
+                            @T("Nom")
                             @if (GetSortCriterion("name") is { } nameActive)
                             {
                                 <span class="glping-sort-indicator">
@@ -340,10 +339,10 @@
                     {
                         SearchField<Computer>? columnField = FindField(columnKey);
                         SortCriterion? active = GetSortCriterion(columnKey);
-                        <th class="glping-sortable-th" title="Ctrl+clic pour ajouter un tri secondaire"
+                        <th class="glping-sortable-th" title="@(T("Ctrl+clic pour ajouter un tri secondaire"))"
                             @onclick="@((MouseEventArgs e) => SetSort(columnKey, e.CtrlKey))">
                             <span class="d-flex align-items-center gap-1">
-                                @(columnField?.Label ?? columnKey)
+                                @(T(columnField?.Label ?? columnKey))
                                 @if (active is not null)
                                 {
                                     <span class="glping-sort-indicator">
@@ -363,7 +362,7 @@
                 @if (_filteredComputers.Count == 0)
                 {
                     <tr>
-                        <td colspan="@(2 + _columns.Count)" class="text-center text-secondary py-4">Aucun poste trouvé.</td>
+                        <td colspan="@(2 + _columns.Count)" class="text-center text-secondary py-4">@T("Aucun poste trouvé.")</td>
                     </tr>
                 }
                 else
@@ -402,7 +401,7 @@
 
     <div class="card-footer d-flex align-items-center justify-content-between flex-wrap gap-2">
         <div class="d-flex align-items-center gap-2 text-secondary">
-            <span>Éléments par page</span>
+            <span>@T("Éléments par page")</span>
             <select class="form-select form-select-sm w-auto" value="@_pageSize"
                     @onchange="@((ChangeEventArgs e) => SetPageSize(int.Parse((string)e.Value!)))">
                 @foreach (int size in PageSizeOptions)
@@ -416,7 +415,7 @@
         {
             <div class="d-flex align-items-center gap-3">
                 <span class="text-secondary">
-                    @(((_currentPage - 1) * _pageSize) + 1)–@(Math.Min(_currentPage * _pageSize, _filteredComputers.Count)) sur @_filteredComputers.Count
+                    @T("{0}–{1} sur {2}", ((_currentPage - 1) * _pageSize) + 1, Math.Min(_currentPage * _pageSize, _filteredComputers.Count), _filteredComputers.Count)
                 </span>
                 <ul class="pagination pagination-sm m-0">
                     <li class="page-item @(_currentPage <= 1 ? "disabled" : "")">
@@ -425,7 +424,7 @@
                         </button>
                     </li>
                     <li class="page-item disabled">
-                        <span class="page-link">Page @_currentPage / @TotalPages</span>
+                        <span class="page-link">@T("Page {0} / {1}", _currentPage, TotalPages)</span>
                     </li>
                     <li class="page-item @(_currentPage >= TotalPages ? "disabled" : "")">
                         <button type="button" class="page-link" @onclick="() => GoToPage(_currentPage + 1)" disabled="@(_currentPage >= TotalPages)">
@@ -446,27 +445,27 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="ti ti-bookmark me-2"></i>Sauvegarder la recherche courante</h5>
-                    <button type="button" class="btn-close" aria-label="Fermer" @onclick="() => _showSaveSearchModal = false"></button>
+                    <h5 class="modal-title"><i class="ti ti-bookmark me-2"></i>@T("Sauvegarder la recherche courante")</h5>
+                    <button type="button" class="btn-close" aria-label="@(T("Fermer"))" @onclick="() => _showSaveSearchModal = false"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Nom</label>
-                        <input type="text" class="form-control" placeholder="Nom de la recherche" value="@_newSavedSearchName"
+                        <label class="form-label">@T("Nom")</label>
+                        <input type="text" class="form-control" placeholder="@(T("Nom de la recherche"))" value="@_newSavedSearchName"
                                @onchange="@((ChangeEventArgs e) => _newSavedSearchName = (string)(e.Value ?? string.Empty))" />
                     </div>
                     <div>
-                        <label class="form-label">Visibilité</label>
+                        <label class="form-label">@T("Visibilité")</label>
                         <select class="form-select" value="@(_newSavedSearchIsPublic ? "public" : "private")"
                                 @onchange="@((ChangeEventArgs e) => _newSavedSearchIsPublic = (string)e.Value! == "public")">
-                            <option value="private">Privé</option>
-                            <option value="public">Public</option>
+                            <option value="private">@T("Privé")</option>
+                            <option value="public">@T("Public")</option>
                         </select>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-primary" disabled="@(_newSavedSearchName.Trim().Length == 0)" @onclick="SaveCurrentSearchAsync">
-                        <i class="ti ti-plus me-1"></i>Ajouter
+                        <i class="ti ti-plus me-1"></i>@T("Ajouter")
                     </button>
                 </div>
             </div>
@@ -481,8 +480,8 @@
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="ti ti-columns-3 me-2"></i>Sélectionner les colonnes à afficher — Ordinateur</h5>
-                    <button type="button" class="btn-close" aria-label="Fermer" @onclick="() => _showColumnsModal = false"></button>
+                    <h5 class="modal-title"><i class="ti ti-columns-3 me-2"></i>@T("Sélectionner les colonnes à afficher — Ordinateur")</h5>
+                    <button type="button" class="btn-close" aria-label="@(T("Fermer"))" @onclick="() => _showColumnsModal = false"></button>
                 </div>
                 <div class="modal-body">
                     <div class="d-flex gap-2 mb-3">
@@ -490,15 +489,15 @@
                             <option value="">—</option>
                             @foreach (SearchField<Computer> field in AvailableColumnsToAdd)
                             {
-                                <option value="@field.Key">@field.Label</option>
+                                <option value="@field.Key">@T(field.Label)</option>
                             }
                         </select>
                         <button type="button" class="btn btn-primary text-nowrap" disabled="@string.IsNullOrEmpty(_columnToAdd)" @onclick="AddColumnAsync">
-                            <i class="ti ti-plus me-1"></i>Ajouter
+                            <i class="ti ti-plus me-1"></i>@T("Ajouter")
                         </button>
                     </div>
                     <div class="list-group list-group-flush glping-columns-list">
-                        <div class="list-group-item text-secondary">Nom</div>
+                        <div class="list-group-item text-secondary">@T("Nom")</div>
                         @foreach (string columnKey in _columns)
                         {
                             SearchField<Computer>? field = FindField(columnKey);
@@ -508,8 +507,8 @@
                                  @ondragover:preventDefault="true"
                                  @ondrop="() => OnColumnDropAsync(columnKey)" @ondrop:preventDefault="true">
                                 <i class="ti ti-grip-vertical glping-drag-handle"></i>
-                                <span class="flex-grow-1">@(field?.Label ?? columnKey)</span>
-                                <button type="button" class="btn btn-icon btn-sm text-danger" title="Retirer cette colonne"
+                                <span class="flex-grow-1">@(T(field?.Label ?? columnKey))</span>
+                                <button type="button" class="btn btn-icon btn-sm text-danger" title="@(T("Retirer cette colonne"))"
                                         @onclick="() => RemoveColumnAsync(columnKey)">
                                     <i class="ti ti-x"></i>
                                 </button>

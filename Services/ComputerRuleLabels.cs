@@ -1,3 +1,4 @@
+using GlpiNg.Modules.Abstractions.Localization;
 ﻿using GlpiNg.Modules.Inventory.Models;
 
 namespace GlpiNg.Modules.Inventory.Services;
@@ -35,35 +36,35 @@ public static class ComputerRuleLabels
     public static string OperatorLabel(ComputerRuleCriterionOperator op) => op switch
     {
         ComputerRuleCriterionOperator.Is => "est",
-        ComputerRuleCriterionOperator.IsNot => "n'est pas",
+        ComputerRuleCriterionOperator.IsNot => Tr.T("n'est pas"),
         ComputerRuleCriterionOperator.Contains => "contient",
-        ComputerRuleCriterionOperator.NotContains => "ne contient pas",
-        ComputerRuleCriterionOperator.StartsWith => "commence par",
-        ComputerRuleCriterionOperator.EndsWith => "finit par",
+        ComputerRuleCriterionOperator.NotContains => Tr.T("ne contient pas"),
+        ComputerRuleCriterionOperator.StartsWith => Tr.T("commence par"),
+        ComputerRuleCriterionOperator.EndsWith => Tr.T("finit par"),
         ComputerRuleCriterionOperator.MatchesRegex => "expression régulière vérifie",
         ComputerRuleCriterionOperator.Exists => "existe",
-        ComputerRuleCriterionOperator.DoesNotExist => "n'existe pas",
-        ComputerRuleCriterionOperator.OlderThanHours => "remonte à plus de (heures)",
-        ComputerRuleCriterionOperator.WithinLastHours => "remonte à moins de (heures)",
+        ComputerRuleCriterionOperator.DoesNotExist => Tr.T("n'existe pas"),
+        ComputerRuleCriterionOperator.OlderThanHours => Tr.T("remonte à plus de (heures)"),
+        ComputerRuleCriterionOperator.WithinLastHours => Tr.T("remonte à moins de (heures)"),
         _ => op.ToString()
     };
 
     public static string ActionTypeLabel(ComputerRuleActionType type) => type switch
     {
-        ComputerRuleActionType.Assign => "Affecter",
-        ComputerRuleActionType.Append => "Ajouter à la fin",
+        ComputerRuleActionType.Assign => Tr.T("Affecter"),
+        ComputerRuleActionType.Append => Tr.T("Ajouter à la fin"),
         ComputerRuleActionType.RegexResult => "Résultat d'une expression régulière",
         _ => type.ToString()
     };
 
     public static string AppliesToLabel(ComputerRuleAppliesTo appliesTo) => appliesTo switch
     {
-        ComputerRuleAppliesTo.OnCreateAndUpdate => "Ajout / Mise à jour",
-        ComputerRuleAppliesTo.OnCreate => "Ajout",
-        ComputerRuleAppliesTo.OnUpdate => "Mise à jour",
-        ComputerRuleAppliesTo.OnSchedule => "Exécution périodique",
-        ComputerRuleAppliesTo.OnCreateAndUpdate | ComputerRuleAppliesTo.OnSchedule => "Ajout / Mise à jour / Périodique",
-        ComputerRuleAppliesTo.OnUpdate | ComputerRuleAppliesTo.OnSchedule => "Mise à jour / Périodique",
+        ComputerRuleAppliesTo.OnCreateAndUpdate => Tr.T("Ajout / Mise à jour"),
+        ComputerRuleAppliesTo.OnCreate => Tr.T("Ajout"),
+        ComputerRuleAppliesTo.OnUpdate => Tr.T("Mise à jour"),
+        ComputerRuleAppliesTo.OnSchedule => Tr.T("Exécution périodique"),
+        ComputerRuleAppliesTo.OnCreateAndUpdate | ComputerRuleAppliesTo.OnSchedule => Tr.T("Ajout / Mise à jour / Périodique"),
+        ComputerRuleAppliesTo.OnUpdate | ComputerRuleAppliesTo.OnSchedule => Tr.T("Mise à jour / Périodique"),
         _ => appliesTo.ToString()
     };
 

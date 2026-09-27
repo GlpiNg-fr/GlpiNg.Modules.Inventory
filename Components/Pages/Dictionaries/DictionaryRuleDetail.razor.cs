@@ -1,3 +1,4 @@
+using GlpiNg.Modules.Abstractions.Localization;
 ﻿using GlpiNg.Modules.Inventory.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
@@ -114,36 +115,36 @@ public partial class DictionaryRuleDetail : ComponentBase, IAsyncDisposable
         op is DictionaryCriterionOperator.Exists or DictionaryCriterionOperator.DoesNotExist;
 
     private static string IgnoreActionLabel(DictionaryRuleType type) => type == DictionaryRuleType.Software
-        ? "Ignorer l'import du logiciel"
-        : "Conserver la valeur existante";
+        ? Tr.T("Ignorer l'import du logiciel")
+        : Tr.T("Conserver la valeur existante");
 
     private static string CriterionFieldLabel(DictionaryRuleType type, DictionaryCriterionField field)
     {
-        if (field == DictionaryCriterionField.Publisher) return "Fabricant du logiciel";
+        if (field == DictionaryCriterionField.Publisher) return Tr.T("Fabricant du logiciel");
 
         return type switch
         {
-            DictionaryRuleType.Manufacturer => "Fabricant",
-            DictionaryRuleType.ComputerModel => "Modèle",
-            DictionaryRuleType.OperatingSystem => "Système d'exploitation",
-            DictionaryRuleType.OperatingSystemVersion => "Version de l'OS",
-            DictionaryRuleType.Software => "Nom du logiciel",
-            _ => "Valeur"
+            DictionaryRuleType.Manufacturer => Tr.T("Fabricant"),
+            DictionaryRuleType.ComputerModel => Tr.T("Modèle"),
+            DictionaryRuleType.OperatingSystem => Tr.T("Système d'exploitation"),
+            DictionaryRuleType.OperatingSystemVersion => Tr.T("Version de l'OS"),
+            DictionaryRuleType.Software => Tr.T("Nom du logiciel"),
+            _ => Tr.T("Valeur")
         };
     }
 
     private static string OperatorLabel(DictionaryCriterionOperator op) => op switch
     {
         DictionaryCriterionOperator.Is => "est",
-        DictionaryCriterionOperator.IsNot => "n'est pas",
+        DictionaryCriterionOperator.IsNot => Tr.T("n'est pas"),
         DictionaryCriterionOperator.Contains => "contient",
-        DictionaryCriterionOperator.NotContains => "ne contient pas",
-        DictionaryCriterionOperator.StartsWith => "commence par",
-        DictionaryCriterionOperator.EndsWith => "finit par",
+        DictionaryCriterionOperator.NotContains => Tr.T("ne contient pas"),
+        DictionaryCriterionOperator.StartsWith => Tr.T("commence par"),
+        DictionaryCriterionOperator.EndsWith => Tr.T("finit par"),
         DictionaryCriterionOperator.MatchesRegex => "expression régulière vérifie",
         DictionaryCriterionOperator.NotMatchesRegex => "expression régulière ne vérifie pas",
         DictionaryCriterionOperator.Exists => "existe",
-        DictionaryCriterionOperator.DoesNotExist => "n'existe pas",
+        DictionaryCriterionOperator.DoesNotExist => Tr.T("n'existe pas"),
         _ => op.ToString()
     };
 

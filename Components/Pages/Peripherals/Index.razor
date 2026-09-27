@@ -1,19 +1,19 @@
 ﻿@page "/parc/peripherals"
 @rendermode InteractiveServer
 
-<PageTitle>Périphériques — GlpiNg</PageTitle>
+<PageTitle>@T("Périphériques — GlpiNg")</PageTitle>
 
 <div class="glping-list-page">
 <div class="card">
     <div class="card-header d-flex align-items-center justify-content-between glping-list-toolbar">
         <div class="btn-list">
-            <button type="button" class="btn btn-icon" disabled title="Recherches sauvegardées (à venir)">
+            <button type="button" class="btn btn-icon" disabled title="@(T("Recherches sauvegardées (à venir)"))">
                 <i class="ti ti-bookmark"></i>
             </button>
 
             <div class="dropdown">
                 <button type="button" class="btn dropdown-toggle" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
-                    <i class="ti ti-search me-1"></i>Rechercher
+                    <i class="ti ti-search me-1"></i>@T("Rechercher")
                     @if (ActiveCriteriaCount > 0)
                     {
                         <span class="badge bg-blue-lt ms-1">@ActiveCriteriaCount</span>
@@ -29,14 +29,14 @@
                             <div class="col-auto" style="width: 5.5rem;">
                                 @if (criterionIndex == 0)
                                 {
-                                    <span class="text-secondary">PAS</span>
+                                    <span class="text-secondary">@T("PAS")</span>
                                 }
                                 else
                                 {
                                     <select class="form-select form-select-sm" value="@criterion.Link"
                                             @onchange="@((ChangeEventArgs e) => criterion.Link = (string)e.Value!)">
-                                        <option value="AND">ET</option>
-                                        <option value="OR">OU</option>
+                                        <option value="AND">@T("ET")</option>
+                                        <option value="OR">@T("OU")</option>
                                     </select>
                                 }
                             </div>
@@ -45,7 +45,7 @@
                                         @onchange="@((ChangeEventArgs e) => OnCriterionFieldChanged(criterion, (string)e.Value!))">
                                     @foreach (SearchFieldDefinition option in SearchFields)
                                     {
-                                        <option value="@option.Key">@option.Label</option>
+                                        <option value="@option.Key">@T(option.Label)</option>
                                     }
                                 </select>
                             </div>
@@ -86,7 +86,7 @@
                                 }
                             </div>
                             <div class="col-auto">
-                                <button type="button" class="btn btn-icon btn-sm" title="Supprimer ce critère"
+                                <button type="button" class="btn btn-icon btn-sm" title="@(T("Supprimer ce critère"))"
                                         disabled="@(_criteria.Count <= 1)" @onclick="() => RemoveCriterion(criterion)">
                                     <i class="ti ti-trash"></i>
                                 </button>
@@ -96,12 +96,12 @@
 
                     <div class="d-flex align-items-center justify-content-between mt-3">
                         <button type="button" class="btn btn-sm" @onclick="AddCriterion">
-                            <i class="ti ti-circle-plus me-1"></i>Ajouter un critère
+                            <i class="ti ti-circle-plus me-1"></i>@T("Ajouter un critère")
                         </button>
                         <div class="d-flex gap-2">
-                            <button type="button" class="btn btn-sm" @onclick="ResetSearch">Réinitialiser</button>
+                            <button type="button" class="btn btn-sm" @onclick="ResetSearch">@T("Réinitialiser")</button>
                             <button type="button" class="btn btn-sm btn-primary" @onclick="ApplySearch">
-                                <i class="ti ti-search me-1"></i>Rechercher
+                                <i class="ti ti-search me-1"></i>@T("Rechercher")
                             </button>
                         </div>
                     </div>
@@ -109,8 +109,8 @@
             </div>
 
             <div class="dropdown">
-                <button type="button" class="btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" title="Ctrl+clic (ou depuis les en-têtes de colonnes) pour trier sur plusieurs colonnes">
-                    <i class="ti ti-arrows-sort me-1"></i>Trier
+                <button type="button" class="btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" title="@(T("Ctrl+clic (ou depuis les en-têtes de colonnes) pour trier sur plusieurs colonnes"))">
+                    <i class="ti ti-arrows-sort me-1"></i>@T("Trier")
                 </button>
                 <ul class="dropdown-menu">
                     @foreach ((SortField sortField, string sortLabel) in SortableColumns)
@@ -138,31 +138,31 @@
         </div>
 
         <div class="btn-list align-items-center">
-            <label class="form-check m-0 px-2" title="Tout sélectionner">
+            <label class="form-check m-0 px-2" title="@(T("Tout sélectionner"))">
                 <input class="form-check-input m-0" type="checkbox" checked="@AllSelected"
                        @onchange="@((ChangeEventArgs e) => ToggleSelectAll((bool)(e.Value ?? false)))" />
             </label>
 
             <div class="dropdown">
                 <button type="button" class="btn btn-icon text-danger" data-bs-toggle="dropdown" aria-expanded="false"
-                        disabled="@(_selectedIds.Count == 0)" title="Supprimer la sélection">
+                        disabled="@(_selectedIds.Count == 0)" title="@(T("Supprimer la sélection"))">
                     <i class="ti ti-trash"></i>
                 </button>
                 <div class="dropdown-menu dropdown-menu-end p-3" style="min-width: 260px;">
-                    <p class="mb-2">Supprimer @_selectedIds.Count périphérique(s) sélectionné(s) ? Cette action est définitive.</p>
+                    <p class="mb-2">@T("Supprimer {0} périphérique(s) sélectionné(s) ? Cette action est définitive.", _selectedIds.Count)</p>
                     <div class="d-flex justify-content-end gap-2">
-                        <button type="button" class="btn btn-sm">Annuler</button>
-                        <button type="button" class="btn btn-sm btn-danger" @onclick="DeleteSelectedAsync">Supprimer</button>
+                        <button type="button" class="btn btn-sm">@T("Annuler")</button>
+                        <button type="button" class="btn btn-sm btn-danger" @onclick="DeleteSelectedAsync">@T("Supprimer")</button>
                     </div>
                 </div>
             </div>
 
-            <button type="button" class="btn btn-icon" @onclick="OnRefreshAsync" title="Rafraîchir">
+            <button type="button" class="btn btn-icon" @onclick="OnRefreshAsync" title="@(T("Rafraîchir"))">
                 <i class="ti ti-refresh"></i>
             </button>
 
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newPeripheralModal">
-                <i class="ti ti-plus me-1"></i>Ajouter
+                <i class="ti ti-plus me-1"></i>@T("Ajouter")
             </button>
         </div>
     </div>
@@ -174,14 +174,14 @@
                     <th style="width: 2.5rem;">
                         @* Ne coche que les lignes affichées — la page courante là où le tableau est
                            paginé : cocher ici ne doit jamais engager plus que ce qu'on voit. *@
-                        <input class="form-check-input m-0" type="checkbox" title="Sélectionner les éléments visibles"
+                        <input class="form-check-input m-0" type="checkbox" title="@(T("Sélectionner les éléments visibles"))"
                                checked="@AllSelected"
                                @onchange="@((ChangeEventArgs e) => ToggleSelectAll((bool)(e.Value ?? false)))" />
                     </th>
                     @foreach ((SortField sortField, string sortLabel) in SortableColumns)
                     {
                         SortCriterion? active = GetSortCriterion(sortField);
-                        <th class="glping-sortable-th" title="Ctrl+clic pour ajouter un tri secondaire"
+                        <th class="glping-sortable-th" title="@(T("Ctrl+clic pour ajouter un tri secondaire"))"
                             @onclick="@((MouseEventArgs e) => SetSort(sortField, e.CtrlKey))">
                             <span class="d-flex align-items-center gap-1">
                                 @sortLabel
@@ -204,7 +204,7 @@
                 @if (_filteredPeripherals.Count == 0)
                 {
                     <tr>
-                        <td colspan="9" class="text-center text-secondary py-4">Aucun périphérique trouvé.</td>
+                        <td colspan="9" class="text-center text-secondary py-4">@T("Aucun périphérique trouvé.")</td>
                     </tr>
                 }
                 else
@@ -239,7 +239,7 @@
 
     <div class="card-footer d-flex align-items-center justify-content-between flex-wrap gap-2">
         <div class="d-flex align-items-center gap-2 text-secondary">
-            <span>Éléments par page</span>
+            <span>@T("Éléments par page")</span>
             <select class="form-select form-select-sm w-auto" value="@_pageSize"
                     @onchange="@((ChangeEventArgs e) => SetPageSize(int.Parse((string)e.Value!)))">
                 @foreach (int size in PageSizeOptions)
@@ -253,7 +253,7 @@
         {
             <div class="d-flex align-items-center gap-3">
                 <span class="text-secondary">
-                    @(((_currentPage - 1) * _pageSize) + 1)–@(Math.Min(_currentPage * _pageSize, _filteredPeripherals.Count)) sur @_filteredPeripherals.Count
+                    @T("{0}–{1} sur {2}", ((_currentPage - 1) * _pageSize) + 1, Math.Min(_currentPage * _pageSize, _filteredPeripherals.Count), _filteredPeripherals.Count)
                 </span>
                 <ul class="pagination pagination-sm m-0">
                     <li class="page-item @(_currentPage <= 1 ? "disabled" : "")">
@@ -262,7 +262,7 @@
                         </button>
                     </li>
                     <li class="page-item disabled">
-                        <span class="page-link">Page @_currentPage / @TotalPages</span>
+                        <span class="page-link">@T("Page {0} / {1}", _currentPage, TotalPages)</span>
                     </li>
                     <li class="page-item @(_currentPage >= TotalPages ? "disabled" : "")">
                         <button type="button" class="page-link" @onclick="() => GoToPage(_currentPage + 1)" disabled="@(_currentPage >= TotalPages)">
@@ -280,8 +280,8 @@
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="ti ti-mouse me-2"></i>Nouvel élément - Périphérique</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                <h5 class="modal-title"><i class="ti ti-mouse me-2"></i>@T("Nouvel élément - Périphérique")</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@(T("Fermer"))"></button>
             </div>
             <div class="modal-body">
                 @if (_createError is not null)
@@ -292,7 +292,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary" disabled="@string.IsNullOrWhiteSpace(_newPeripheral.Name)" @onclick="CreatePeripheralAsync">
-                    <i class="ti ti-plus me-1"></i>Ajouter
+                    <i class="ti ti-plus me-1"></i>@T("Ajouter")
                 </button>
             </div>
         </div>

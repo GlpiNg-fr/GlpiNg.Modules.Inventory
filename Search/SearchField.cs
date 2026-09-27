@@ -1,3 +1,4 @@
+using GlpiNg.Modules.Abstractions.Localization;
 namespace GlpiNg.Modules.Inventory.Search;
 
 /// <summary>Nature d'un champ interrogeable : détermine les opérateurs proposés et la façon de comparer.</summary>

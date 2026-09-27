@@ -1,3 +1,4 @@
+using GlpiNg.Modules.Abstractions.Localization;
 ﻿namespace GlpiNg.Modules.Inventory.Models;
 
 /// <summary>
@@ -42,21 +43,21 @@ public static class DictionaryRuleTypeCatalog
 
     public static string Label(DictionaryRuleType type) => type switch
     {
-        DictionaryRuleType.Manufacturer => "Fabricants",
-        DictionaryRuleType.ComputerModel => "Modèles d'ordinateurs",
-        DictionaryRuleType.OperatingSystem => "Systèmes d'exploitation",
-        DictionaryRuleType.OperatingSystemVersion => "Versions de système d'exploitation",
-        DictionaryRuleType.Software => "Logiciels",
+        DictionaryRuleType.Manufacturer => Tr.T("Fabricants"),
+        DictionaryRuleType.ComputerModel => Tr.T("Modèles d'ordinateurs"),
+        DictionaryRuleType.OperatingSystem => Tr.T("Systèmes d'exploitation"),
+        DictionaryRuleType.OperatingSystemVersion => Tr.T("Versions de système d'exploitation"),
+        DictionaryRuleType.Software => Tr.T("Logiciels"),
         _ => type.ToString()
     };
 
     public static string Description(DictionaryRuleType type) => type switch
     {
-        DictionaryRuleType.Manufacturer => "Normalise le nom de fabricant remonté par le BIOS des ordinateurs.",
-        DictionaryRuleType.ComputerModel => "Normalise le nom de modèle remonté par le BIOS des ordinateurs.",
-        DictionaryRuleType.OperatingSystem => "Normalise le nom du système d'exploitation remonté par l'agent.",
-        DictionaryRuleType.OperatingSystemVersion => "Normalise la version du système d'exploitation remontée par l'agent.",
-        DictionaryRuleType.Software => "Normalise le nom des logiciels installés, ou ignore leur import.",
+        DictionaryRuleType.Manufacturer => Tr.T("Normalise le nom de fabricant remonté par le BIOS des ordinateurs."),
+        DictionaryRuleType.ComputerModel => Tr.T("Normalise le nom de modèle remonté par le BIOS des ordinateurs."),
+        DictionaryRuleType.OperatingSystem => Tr.T("Normalise le nom du système d'exploitation remonté par l'agent."),
+        DictionaryRuleType.OperatingSystemVersion => Tr.T("Normalise la version du système d'exploitation remontée par l'agent."),
+        DictionaryRuleType.Software => Tr.T("Normalise le nom des logiciels installés, ou ignore leur import."),
         _ => string.Empty
     };
 

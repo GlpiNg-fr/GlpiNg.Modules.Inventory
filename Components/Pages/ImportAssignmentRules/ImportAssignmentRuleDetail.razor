@@ -2,13 +2,13 @@
 @using GlpiNg.Modules.Inventory.Services
 @rendermode InteractiveServer
 
-<PageTitle>@(_rule?.Name ?? "Règle d'import") — GlpiNg</PageTitle>
+<PageTitle>@(_rule?.Name ?? T("Règle d'import")) — GlpiNg</PageTitle>
 
 @if (_rule is null)
 {
     <div class="text-center text-secondary py-5">
         <i class="ti ti-route-off fs-1"></i>
-        <p class="mt-2">Cette règle est introuvable.</p>
+        <p class="mt-2">@T("Cette règle est introuvable.")</p>
     </div>
 }
 else
@@ -17,16 +17,16 @@ else
         <aside class="glping-fiche-sidebar">
             <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "main" ? "active" : "")" @onclick='() => SetTab("main")'>
                 <i class="ti ti-route"></i>
-                <span>Règle</span>
+                <span>@T("Règle")</span>
             </button>
             <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "criteria" ? "active" : "")" @onclick='() => SetTab("criteria")'>
                 <i class="ti ti-filter"></i>
-                <span>Critères</span>
+                <span>@T("Critères")</span>
                 <span class="glping-fiche-tab-count">@_rule.Criteria.Count</span>
             </button>
             <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "actions" ? "active" : "")" @onclick='() => SetTab("actions")'>
                 <i class="ti ti-bolt"></i>
-                <span>Actions</span>
+                <span>@T("Actions")</span>
                 <span class="glping-fiche-tab-count">@_rule.Actions.Count</span>
             </button>
         </aside>
@@ -38,32 +38,32 @@ else
                     <div class="row">
                         <div class="col-md-6">
                             <div class="glping-fiche-field">
-                                <label>Nom</label>
+                                <label>@T("Nom")</label>
                                 <input class="form-control" @bind="_rule.Name" @bind:event="oninput" />
                             </div>
                             <div class="glping-fiche-field">
-                                <label>Opérateur logique</label>
+                                <label>@T("Opérateur logique")</label>
                                 <select class="form-select" @bind="_rule.LogicalOperator">
-                                    <option value="@ImportAssignmentRuleLogicalOperator.And">ET (tous les critères)</option>
-                                    <option value="@ImportAssignmentRuleLogicalOperator.Or">OU (au moins un critère)</option>
+                                    <option value="@ImportAssignmentRuleLogicalOperator.And">@T("ET (tous les critères)")</option>
+                                    <option value="@ImportAssignmentRuleLogicalOperator.Or">@T("OU (au moins un critère)")</option>
                                 </select>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="glping-fiche-field">
-                                <label>Actif</label>
+                                <label>@T("Actif")</label>
                                 @* Valeur et gestionnaire explicites plutot que @bind : sur un <select> lie a un booleen,
                                    Blazor ecrit dans l'attribut value le resultat de bool.ToString(), soit "True" ou
                                    "False". Aucune option en minuscules ne correspondait alors, la liste restait bloquee
                                    sur son premier choix et le modele n'etait jamais mis a jour. *@
                                 <select class="form-select" value="@(_rule.IsActive ? "true" : "false")"
                                         @onchange="@((ChangeEventArgs e) => _rule.IsActive = (string?)e.Value == "true")">
-                                    <option value="true">Oui</option>
-                                    <option value="false">Non</option>
+                                    <option value="true">@T("Oui")</option>
+                                    <option value="false">@T("Non")</option>
                                 </select>
                             </div>
                             <div class="glping-fiche-field">
-                                <label>Commentaires</label>
+                                <label>@T("Commentaires")</label>
                                 <textarea class="form-control" rows="3" @bind="_rule.Comment"></textarea>
                             </div>
                         </div>
@@ -71,21 +71,21 @@ else
 
                     <div class="d-flex justify-content-end gap-2 mt-3">
                         <button type="button" class="btn btn-outline-danger" @onclick="DeleteAsync">
-                            <i class="ti ti-trash me-1"></i>Supprimer définitivement
+                            <i class="ti ti-trash me-1"></i>@T("Supprimer définitivement")
                         </button>
                         <button type="button" class="btn btn-primary" disabled="@_isSaving" @onclick="SaveAsync">
-                            <i class="ti ti-device-floppy me-1"></i>@(_isSaving ? "Enregistrement…" : "Sauvegarder")
+                            <i class="ti ti-device-floppy me-1"></i>@(_isSaving ? T("Enregistrement…") : T("Sauvegarder"))
                         </button>
                     </div>
                     break;
 
                 case "criteria":
                     <div class="glping-fiche-block">
-                        <div class="glping-fiche-block-title"><i class="ti ti-filter"></i>Critères (@_rule.Criteria.Count)</div>
+                        <div class="glping-fiche-block-title"><i class="ti ti-filter"></i>@T("Critères ({0})", _rule.Criteria.Count)</div>
                         <p class="text-secondary">
-                            Une règle s'applique si l'ensemble de ses critères, combinés par l'opérateur logique
-                            de l'onglet « Règle » (@(_rule.LogicalOperator == ImportAssignmentRuleLogicalOperator.Or ? "OU" : "ET")), est vérifié —
-                            le moteur s'arrête à la première règle vérifiée.
+                            @T("Une règle s'applique si l'ensemble de ses critères, combinés par l'opérateur logique")
+                            de l'onglet « Règle » (@(_rule.LogicalOperator == ImportAssignmentRuleLogicalOperator.Or ? T("OU") : T("ET"))), est vérifié —
+                            @T("le moteur s'arrête à la première règle vérifiée.")
                         </p>
 
                         @if (_rule.Criteria.Count > 0)
@@ -94,9 +94,9 @@ else
                                 <table class="table table-vcenter card-table mb-0">
                                     <thead>
                                         <tr>
-                                            <th>Champ</th>
-                                            <th>Opérateur</th>
-                                            <th>Valeur</th>
+                                            <th>@T("Champ")</th>
+                                            <th>@T("Opérateur")</th>
+                                            <th>@T("Valeur")</th>
                                             <th></th>
                                         </tr>
                                     </thead>
@@ -104,7 +104,7 @@ else
                                         @foreach (ImportAssignmentRuleCriterion criterion in _rule.Criteria)
                                         {
                                             <tr>
-                                                <td>@ImportAssignmentRuleFieldCatalog.Label(criterion.Field)</td>
+                                                <td>@T(ImportAssignmentRuleFieldCatalog.Label(criterion.Field))</td>
                                                 <td>@ImportAssignmentRuleLabels.OperatorLabel(criterion.Operator)</td>
                                                 <td>@(ImportAssignmentRuleLabels.IsValuelessOperator(criterion.Operator) ? "—" : criterion.Value)</td>
                                                 <td class="text-end">
@@ -121,16 +121,16 @@ else
 
                         <div class="row g-2 align-items-end">
                             <div class="col-md-3">
-                                <label class="form-label">Champ</label>
+                                <label class="form-label">@T("Champ")</label>
                                 <select class="form-select" @bind="_newCriterion.Field">
                                     @foreach (ImportAssignmentRuleFieldDefinition field in ImportAssignmentRuleFieldCatalog.All)
                                     {
-                                        <option value="@field.Key">@field.Label</option>
+                                        <option value="@field.Key">@T(field.Label)</option>
                                     }
                                 </select>
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label">Opérateur</label>
+                                <label class="form-label">@T("Opérateur")</label>
                                 <select class="form-select" @bind="_newCriterion.Operator">
                                     @foreach (ImportAssignmentRuleCriterionOperator op in Enum.GetValues<ImportAssignmentRuleCriterionOperator>())
                                     {
@@ -139,7 +139,7 @@ else
                                 </select>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label">Valeur</label>
+                                <label class="form-label">@T("Valeur")</label>
                                 @if (ImportAssignmentRuleLabels.IsValuelessOperator(_newCriterion.Operator))
                                 {
                                     <input class="form-control" disabled placeholder="—" />
@@ -147,12 +147,12 @@ else
                                 else
                                 {
                                     <input class="form-control" @bind="_newCriterion.Value"
-                                           placeholder="@(_newCriterion.Operator is ImportAssignmentRuleCriterionOperator.MatchesRegex or ImportAssignmentRuleCriterionOperator.NotMatchesRegex ? "expression régulière" : "")" />
+                                           placeholder="@(_newCriterion.Operator is ImportAssignmentRuleCriterionOperator.MatchesRegex or ImportAssignmentRuleCriterionOperator.NotMatchesRegex ? T("expression régulière") : "")" />
                                 }
                             </div>
                             <div class="col-md-2">
                                 <button type="button" class="btn btn-primary w-100" @onclick="AddCriterionAsync">
-                                    <i class="ti ti-plus me-1"></i>Ajouter
+                                    <i class="ti ti-plus me-1"></i>@T("Ajouter")
                                 </button>
                             </div>
                         </div>
@@ -161,10 +161,9 @@ else
 
                 case "actions":
                     <div class="glping-fiche-block">
-                        <div class="glping-fiche-block-title"><i class="ti ti-bolt"></i>Actions (@_rule.Actions.Count)</div>
+                        <div class="glping-fiche-block-title"><i class="ti ti-bolt"></i>@T("Actions ({0})", _rule.Actions.Count)</div>
                         <p class="text-secondary">
-                            <i class="ti ti-info-circle me-1"></i>Seule la première règle vérifiée s'applique : ses actions sont
-                            exécutées, les règles suivantes ne sont pas évaluées.
+                            <i class="ti ti-info-circle me-1"></i>@T("Seule la première règle vérifiée s'applique : ses actions sont exécutées, les règles suivantes ne sont pas évaluées.")
                         </p>
 
                         @if (_rule.Actions.Count > 0)
@@ -173,8 +172,8 @@ else
                                 <table class="table table-vcenter card-table mb-0">
                                     <thead>
                                         <tr>
-                                            <th>Type d'action</th>
-                                            <th>Valeur</th>
+                                            <th>@T("Type d'action")</th>
+                                            <th>@T("Valeur")</th>
                                             <th></th>
                                         </tr>
                                     </thead>
@@ -198,7 +197,7 @@ else
 
                         <div class="row g-2 align-items-end">
                             <div class="col-md-4">
-                                <label class="form-label">Type d'action</label>
+                                <label class="form-label">@T("Type d'action")</label>
                                 <select class="form-select" @bind="_newAction.ActionType">
                                     @foreach (ImportAssignmentRuleActionType actionType in Enum.GetValues<ImportAssignmentRuleActionType>())
                                     {
@@ -207,11 +206,11 @@ else
                                 </select>
                             </div>
                             <div class="col-md-5">
-                                <label class="form-label">Valeur</label>
+                                <label class="form-label">@T("Valeur")</label>
                                 @if (ImportAssignmentRuleLabels.ActionHasValue(_newAction.ActionType))
                                 {
                                     <input class="form-control" @bind="_newAction.Value"
-                                           placeholder="@(_newAction.ActionType == ImportAssignmentRuleActionType.AssignLocation ? "nom du lieu" : "nom d'utilisateur")" />
+                                           placeholder="@(_newAction.ActionType == ImportAssignmentRuleActionType.AssignLocation ? "nom du lieu" : T("nom d'utilisateur"))" />
                                 }
                                 else
                                 {
@@ -220,7 +219,7 @@ else
                             </div>
                             <div class="col-md-3">
                                 <button type="button" class="btn btn-primary w-100" @onclick="AddActionAsync">
-                                    <i class="ti ti-plus me-1"></i>Ajouter
+                                    <i class="ti ti-plus me-1"></i>@T("Ajouter")
                                 </button>
                             </div>
                         </div>

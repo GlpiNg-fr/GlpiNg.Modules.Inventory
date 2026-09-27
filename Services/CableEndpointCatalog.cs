@@ -1,5 +1,6 @@
 using GlpiNg.Modules.Inventory.Models;
 using Microsoft.EntityFrameworkCore;
+using GlpiNg.Modules.Abstractions.Localization;
 
 namespace GlpiNg.Modules.Inventory.Services;
 
@@ -16,12 +17,12 @@ public static class CableEndpointCatalog
 
     public static string DisplayName(CableEndpointType type) => type switch
     {
-        CableEndpointType.Computer => "Ordinateur",
-        CableEndpointType.NetworkEquipment => "Matériel réseau",
-        CableEndpointType.Peripheral => "Périphérique",
-        CableEndpointType.Phone => "Téléphone",
-        CableEndpointType.Printer => "Imprimante",
-        CableEndpointType.PassiveEquipment => "Équipement passif",
+        CableEndpointType.Computer => Tr.T("Ordinateur"),
+        CableEndpointType.NetworkEquipment => Tr.T("Matériel réseau"),
+        CableEndpointType.Peripheral => Tr.T("Périphérique"),
+        CableEndpointType.Phone => Tr.T("Téléphone"),
+        CableEndpointType.Printer => Tr.T("Imprimante"),
+        CableEndpointType.PassiveEquipment => Tr.T("Équipement passif"),
         _ => type.ToString(),
     };
 

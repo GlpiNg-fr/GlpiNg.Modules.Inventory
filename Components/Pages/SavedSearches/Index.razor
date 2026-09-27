@@ -1,7 +1,7 @@
 ﻿@page "/tools/saved-searches"
 @rendermode InteractiveServer
 
-<PageTitle>Recherches sauvegardées — GlpiNg</PageTitle>
+<PageTitle>@T("Recherches sauvegardées — GlpiNg")</PageTitle>
 
 <div class="glping-list-page">
 <div class="card">
@@ -9,14 +9,14 @@
         <div class="btn-list">
             <div class="dropdown">
                 <button type="button" class="btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="ti ti-search me-1"></i>Rechercher
+                    <i class="ti ti-search me-1"></i>@T("Rechercher")
                 </button>
                 <div class="dropdown-menu p-3" style="min-width: 280px;">
                     <div class="input-icon">
                         <span class="input-icon-addon">
                             <i class="ti ti-search"></i>
                         </span>
-                        <input type="text" class="form-control" placeholder="Nom de la recherche..."
+                        <input type="text" class="form-control" placeholder="@(T("Nom de la recherche..."))"
                                @bind="_searchTerm" @bind:event="oninput" @onkeyup="OnSearchChanged" />
                     </div>
                 </div>
@@ -24,15 +24,15 @@
 
             <div class="dropdown">
                 <button type="button" class="btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="ti ti-filter me-1"></i>@(_itemTypeFilter.Length == 0 ? "Tous les types" : SavedSearchItemTypes.LabelFor(_itemTypeFilter))
+                    <i class="ti ti-filter me-1"></i>@(_itemTypeFilter.Length == 0 ? T("Tous les types") : SavedSearchItemTypes.LabelFor(_itemTypeFilter))
                 </button>
                 <ul class="dropdown-menu">
-                    <li><button type="button" class="dropdown-item" @onclick='() => SetItemTypeFilter("")'>Tous les types</button></li>
+                    <li><button type="button" class="dropdown-item" @onclick='() => SetItemTypeFilter("")'>@T("Tous les types")</button></li>
                     @foreach ((string itemType, string label, string icon, string _) in SavedSearchItemTypes.All)
                     {
                         <li>
                             <button type="button" class="dropdown-item" @onclick="() => SetItemTypeFilter(itemType)">
-                                <i class="ti @icon me-1"></i>@label
+                                <i class="ti @icon me-1"></i>@T(label)
                             </button>
                         </li>
                     }
@@ -41,7 +41,7 @@
         </div>
 
         <div class="btn-list align-items-center">
-            <button type="button" class="btn btn-icon" @onclick="OnRefreshAsync" title="Rafraîchir">
+            <button type="button" class="btn btn-icon" @onclick="OnRefreshAsync" title="@(T("Rafraîchir"))">
                 <i class="ti ti-refresh"></i>
             </button>
         </div>
@@ -52,26 +52,26 @@
             <thead>
                 <tr>
                     <th class="glping-sortable-th" @onclick="() => SetSort(SortField.Name)">
-                        <span class="d-flex align-items-center gap-1">Nom @SortIndicator(SortField.Name)</span>
+                        <span class="d-flex align-items-center gap-1">@T("Nom") @SortIndicator(SortField.Name)</span>
                     </th>
                     <th class="glping-sortable-th" @onclick="() => SetSort(SortField.ItemType)">
-                        <span class="d-flex align-items-center gap-1">Type d'élément @SortIndicator(SortField.ItemType)</span>
+                        <span class="d-flex align-items-center gap-1">@T("Type d'élément") @SortIndicator(SortField.ItemType)</span>
                     </th>
                     <th class="glping-sortable-th" @onclick="() => SetSort(SortField.Owner)">
-                        <span class="d-flex align-items-center gap-1">Utilisateur @SortIndicator(SortField.Owner)</span>
+                        <span class="d-flex align-items-center gap-1">@T("Utilisateur") @SortIndicator(SortField.Owner)</span>
                     </th>
                     <th class="glping-sortable-th" @onclick="() => SetSort(SortField.ResultCount)">
-                        <span class="d-flex align-items-center gap-1">Résultats @SortIndicator(SortField.ResultCount)</span>
+                        <span class="d-flex align-items-center gap-1">@T("Résultats") @SortIndicator(SortField.ResultCount)</span>
                     </th>
-                    <th>Visibilité</th>
-                    <th>Défaut</th>
+                    <th>@T("Visibilité")</th>
+                    <th>@T("Défaut")</th>
                 </tr>
             </thead>
             <tbody>
                 @if (_filteredSavedSearches.Count == 0)
                 {
                     <tr>
-                        <td colspan="6" class="text-center text-secondary py-4">Aucune recherche sauvegardée.</td>
+                        <td colspan="6" class="text-center text-secondary py-4">@T("Aucune recherche sauvegardée.")</td>
                     </tr>
                 }
                 else
@@ -81,7 +81,7 @@
                         bool isOwner = saved.OwnerUserId == _currentUserId;
                         <tr>
                             <td>
-                                <a href="@($"/tools/saved-searches/{saved.Id}")" class="text-reset fw-semibold" title="Ouvrir cette recherche sauvegardée">
+                                <a href="@($"/tools/saved-searches/{saved.Id}")" class="text-reset fw-semibold" title="@(T("Ouvrir cette recherche sauvegardée"))">
                                     <i class="ti @SavedSearchItemTypes.IconFor(saved.ItemType) me-1 text-secondary"></i>@saved.Name
                                 </a>
                             </td>
@@ -89,19 +89,19 @@
                             <td>@(saved.OwnerName ?? "—")</td>
                             <td>@(saved.CountMode == SavedSearchCountMode.No ? "—" : saved.ResultCount.ToString())</td>
                             <td>
-                                <span class="badge @(saved.IsPublic ? "bg-blue-lt" : "bg-secondary-lt")">@(saved.IsPublic ? "Public" : "Privé")</span>
+                                <span class="badge @(saved.IsPublic ? "bg-blue-lt" : "bg-secondary-lt")">@(saved.IsPublic ? T("Public") : T("Privé"))</span>
                             </td>
                             <td>
                                 @if (isOwner)
                                 {
-                                    <button type="button" class="btn btn-icon btn-sm btn-ghost-secondary" title="Définir par défaut"
+                                    <button type="button" class="btn btn-icon btn-sm btn-ghost-secondary" title="@(T("Définir par défaut"))"
                                             @onclick="() => SetDefaultAsync(saved)">
                                         <i class="ti @(saved.IsDefault ? "ti-star-filled text-warning" : "ti-star")"></i>
                                     </button>
                                 }
                                 else if (saved.IsDefault)
                                 {
-                                    <i class="ti ti-star-filled text-warning" title="Recherche par défaut du propriétaire"></i>
+                                    <i class="ti ti-star-filled text-warning" title="@(T("Recherche par défaut du propriétaire"))"></i>
                                 }
                             </td>
                         </tr>
@@ -113,7 +113,7 @@
 
     <div class="card-footer d-flex align-items-center justify-content-between flex-wrap gap-2">
         <div class="d-flex align-items-center gap-2 text-secondary">
-            <span>Éléments par page</span>
+            <span>@T("Éléments par page")</span>
             <select class="form-select form-select-sm w-auto" value="@_pageSize"
                     @onchange="@((ChangeEventArgs e) => SetPageSize(int.Parse((string)e.Value!)))">
                 @foreach (int size in PageSizeOptions)
@@ -127,7 +127,7 @@
         {
             <div class="d-flex align-items-center gap-3">
                 <span class="text-secondary">
-                    @(((_currentPage - 1) * _pageSize) + 1)–@(Math.Min(_currentPage * _pageSize, _filteredSavedSearches.Count)) sur @_filteredSavedSearches.Count
+                    @T("{0}–{1} sur {2}", ((_currentPage - 1) * _pageSize) + 1, Math.Min(_currentPage * _pageSize, _filteredSavedSearches.Count), _filteredSavedSearches.Count)
                 </span>
                 <ul class="pagination pagination-sm m-0">
                     <li class="page-item @(_currentPage <= 1 ? "disabled" : "")">
@@ -136,7 +136,7 @@
                         </button>
                     </li>
                     <li class="page-item disabled">
-                        <span class="page-link">Page @_currentPage / @TotalPages</span>
+                        <span class="page-link">@T("Page {0} / {1}", _currentPage, TotalPages)</span>
                     </li>
                     <li class="page-item @(_currentPage >= TotalPages ? "disabled" : "")">
                         <button type="button" class="page-link" @onclick="() => GoToPage(_currentPage + 1)" disabled="@(_currentPage >= TotalPages)">

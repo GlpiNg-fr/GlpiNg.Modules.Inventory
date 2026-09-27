@@ -1,3 +1,4 @@
+using GlpiNg.Modules.Abstractions.Localization;
 ﻿using System.Net;
 using GlpiNg.Modules.Inventory.Models;
 using Lextm.SharpSnmpLib;
@@ -50,7 +51,7 @@ public sealed class PrinterSnmpReader
 
         if (!TryParseOid(oid, out ObjectIdentifier? identifier))
         {
-            return new SnmpReadResult(null, $"OID invalide ({oid})");
+            return new SnmpReadResult(null, Tr.T("OID invalide ({0})", oid));
         }
 
         IPEndPoint endpoint = new(address, printer.SnmpPort > 0 ? printer.SnmpPort : 161);
@@ -68,7 +69,7 @@ public sealed class PrinterSnmpReader
 
             return finished == read
                 ? await read
-                : new SnmpReadResult(null, $"pas de réponse en {TimeoutMilliseconds} ms");
+                : new SnmpReadResult(null, Tr.T("pas de réponse en {0} ms", TimeoutMilliseconds));
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -136,7 +137,7 @@ public sealed class PrinterSnmpReader
         ISnmpMessage response = await request.GetResponseAsync(endpoint);
 
         return response.Pdu().ErrorStatus.ToInt32() != 0
-            ? new SnmpReadResult(null, $"erreur SNMP {response.Pdu().ErrorStatus}")
+            ? new SnmpReadResult(null, Tr.T("erreur SNMP {0}", response.Pdu().ErrorStatus))
             : FromReply(response.Pdu().Variables);
     }
 
@@ -153,7 +154,7 @@ public sealed class PrinterSnmpReader
         // contrôle, on enregistrerait « noSuchObject » comme s'il s'agissait d'une valeur.
         if (data.TypeCode is SnmpType.NoSuchObject or SnmpType.NoSuchInstance or SnmpType.EndOfMibView)
         {
-            return new SnmpReadResult(null, $"OID inconnu de l'imprimante ({data.TypeCode})");
+            return new SnmpReadResult(null, Tr.T("OID inconnu de l'imprimante ({0})", data.TypeCode));
         }
 
         if (data.TypeCode == SnmpType.Null)

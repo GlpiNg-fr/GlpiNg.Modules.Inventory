@@ -2,6 +2,7 @@ using GlpiNg.Modules.Inventory.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
+using GlpiNg.Modules.Abstractions.Localization;
 
 namespace GlpiNg.Modules.Inventory.Components.Pages.Peripherals;
 
@@ -166,7 +167,7 @@ public partial class Detail : ComponentBase, IAsyncDisposable
         p.TechnicianInCharge, p.AssignedUser, p.Contact, p.ContactNumber,
         p.IsGlobalManagement, p.Comment, p.ComputerId);
 
-    private static string YesNo(bool value) => value ? "Oui" : "Non";
+    private static string YesNo(bool value) => value ? Tr.T("Oui") : Tr.T("Non");
 
     private IEnumerable<(string Field, string? Old, string? New)> DiffFields(PeripheralSnapshot before, PeripheralSnapshot after)
     {

@@ -5,50 +5,50 @@
 @using GlpiNg.Modules.Abstractions.Notes
 @rendermode InteractiveServer
 
-<PageTitle>@(_computer?.Name ?? "Ordinateur") — GlpiNg</PageTitle>
+<PageTitle>@(_computer?.Name ?? T("Ordinateur")) — GlpiNg</PageTitle>
 
 @if (_computer is null)
 {
     <div class="text-center text-secondary py-5">
         <i class="ti ti-device-desktop-off fs-1"></i>
-        <p class="mt-2">Ce poste est introuvable.</p>
+        <p class="mt-2">@T("Ce poste est introuvable.")</p>
     </div>
 }
 else
 {
     <div class="glping-fiche-topbar">
-        <a class="glping-fiche-pager-btn" href="@_listUrl" title="Retour à la liste">
+        <a class="glping-fiche-pager-btn" href="@_listUrl" title="@(T("Retour à la liste"))">
             <i class="ti ti-list"></i>
         </a>
         <div class="glping-fiche-crumb">
             <i class="ti ti-device-desktop"></i>
-            <span>Ordinateur - @_computer.Name - ID @_computer.Id</span>
-            <button type="button" class="glping-fiche-favorite" title="Ajouter aux favoris">
+            <span>@T("Ordinateur - {0} - ID {1}", _computer.Name, _computer.Id)</span>
+            <button type="button" class="glping-fiche-favorite" title="@(T("Ajouter aux favoris"))">
                 <i class="ti ti-star"></i>
             </button>
         </div>
         <div class="glping-fiche-toolbar">
-            <button type="button" class="glping-fiche-pager-btn" title="Recharger les données" disabled="@_isReloading" @onclick="ReloadComputerAsync">
+            <button type="button" class="glping-fiche-pager-btn" title="@(T("Recharger les données"))" disabled="@_isReloading" @onclick="ReloadComputerAsync">
                 <i class="ti ti-refresh @(_isReloading ? "glping-spin" : "")"></i>
             </button>
             <div class="dropdown">
                 <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="ti ti-dots-vertical me-1"></i>Actions
+                    <i class="ti ti-dots-vertical me-1"></i>@T("Actions")
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end">
-                    <li><button type="button" class="dropdown-item" @onclick="EnterEditModeAsync"><i class="ti ti-pencil me-1"></i>Modifier</button></li>
-                    <li><a class="dropdown-item" href="#"><i class="ti ti-copy me-1"></i>Dupliquer</a></li>
+                    <li><button type="button" class="dropdown-item" @onclick="EnterEditModeAsync"><i class="ti ti-pencil me-1"></i>@T("Modifier")</button></li>
+                    <li><a class="dropdown-item" href="#"><i class="ti ti-copy me-1"></i>@T("Dupliquer")</a></li>
                     <li>
                         <button type="button" class="dropdown-item" disabled="@(_isWaking || !HasWakeableMac)"
                                 title="@(HasWakeableMac
-                                           ? "Diffuse un magic packet sur toutes les adresses MAC connues du poste, depuis le serveur."
-                                           : "Aucune adresse MAC connue : l'inventaire réseau de ce poste n'a rien remonté.")"
+                                           ? T("Diffuse un magic packet sur toutes les adresses MAC connues du poste, depuis le serveur.")
+                                           : T("Aucune adresse MAC connue : l'inventaire réseau de ce poste n'a rien remonté."))"
                                 @onclick="SendWakeOnLanAsync">
-                            <i class="ti @(_isWaking ? "ti-loader-2 glping-spin" : "ti-power") me-1"></i>Réveiller (Wake-on-LAN)
+                            <i class="ti @(_isWaking ? "ti-loader-2 glping-spin" : "ti-power") me-1"></i>@T("Réveiller (Wake-on-LAN)")
                         </button>
                     </li>
                     <li><hr class="dropdown-divider" /></li>
-                    <li><a class="dropdown-item text-danger" href="#"><i class="ti ti-trash me-1"></i>Mettre à la corbeille</a></li>
+                    <li><a class="dropdown-item text-danger" href="#"><i class="ti ti-trash me-1"></i>@T("Mettre à la corbeille")</a></li>
                 </ul>
             </div>
             @if (_total > 0)
@@ -76,7 +76,7 @@ else
                    poste qui ne se rallume pas. *@
                 <div class="small text-muted mt-1">@wakeDetail</div>
             }
-            <button type="button" class="btn-close" aria-label="Fermer" @onclick="DismissWakeOnLanMessage"></button>
+            <button type="button" class="btn-close" aria-label="@(T("Fermer"))" @onclick="DismissWakeOnLanMessage"></button>
         </div>
     }
 
@@ -86,7 +86,7 @@ else
             {
                 <button type="button" class="glping-fiche-tab-item @(_activeTabKey == tab.Key ? "active" : "")" @onclick="() => SetTab(tab.Key)">
                     <i class="ti @tab.Icon"></i>
-                    <span>@tab.Label</span>
+                    <span>@T(tab.Label)</span>
                     @if (tab.Count is { } count)
                     {
                         <span class="glping-fiche-tab-count">@count</span>
@@ -102,9 +102,9 @@ else
                     @if (_editMode)
                     {
                         <div class="d-flex justify-content-end gap-2 mb-3">
-                            <button type="button" class="btn btn-sm" disabled="@_editSaving" @onclick="CancelEdit">Annuler</button>
+                            <button type="button" class="btn btn-sm" disabled="@_editSaving" @onclick="CancelEdit">@T("Annuler")</button>
                             <button type="button" class="btn btn-sm btn-primary" disabled="@_editSaving" @onclick="SaveEditAsync">
-                                <i class="ti ti-device-floppy me-1 @(_editSaving ? "glping-spin" : "")"></i>Enregistrer
+                                <i class="ti ti-device-floppy me-1 @(_editSaving ? "glping-spin" : "")"></i>@T("Enregistrer")
                             </button>
                         </div>
                     }
@@ -112,11 +112,11 @@ else
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="glping-fiche-field">
-                                    <label>Nom<FieldLockToggle Field="Name" IsLocked='@IsFieldLocked("Name")' OnToggle="ToggleFieldLockAsync" /></label>
+                                    <label>@T("Nom")<FieldLockToggle Field="Name" IsLocked='@IsFieldLocked("Name")' OnToggle="ToggleFieldLockAsync" /></label>
                                     <div class="glping-fiche-value-box">@_computer.Name</div>
                                 </div>
                                 <div class="glping-fiche-field">
-                                    <label>Emplacement</label>
+                                    <label>@T("Emplacement")</label>
                                     @if (_editMode)
                                     {
                                         <select class="form-select" value="@(_editLocationId?.ToString() ?? "")"
@@ -134,7 +134,7 @@ else
                                     }
                                 </div>
                                 <div class="glping-fiche-field">
-                                    <label>Utilisateur assigné</label>
+                                    <label>@T("Utilisateur assigné")</label>
                                     @if (_editMode)
                                     {
                                         <input class="form-control" list="assignedUserOptions" @bind="_editAssignedUser" @bind:event="oninput" />
@@ -151,17 +151,17 @@ else
                                     }
                                 </div>
                                 <div class="glping-fiche-field">
-                                    <label>Dernier utilisateur connecté<FieldLockToggle Field="LastLoggedUser" IsLocked='@IsFieldLocked("LastLoggedUser")' OnToggle="ToggleFieldLockAsync" /></label>
+                                    <label>@T("Dernier utilisateur connecté")<FieldLockToggle Field="LastLoggedUser" IsLocked='@IsFieldLocked("LastLoggedUser")' OnToggle="ToggleFieldLockAsync" /></label>
                                     <div class="glping-fiche-value-box">@(_computer.LastLoggedUser ?? "—")</div>
                                 </div>
                                 <div class="glping-fiche-field">
-                                    <label>UUID matériel<FieldLockToggle Field="HardwareUuid" IsLocked='@IsFieldLocked("HardwareUuid")' OnToggle="ToggleFieldLockAsync" /></label>
+                                    <label>@T("UUID matériel")<FieldLockToggle Field="HardwareUuid" IsLocked='@IsFieldLocked("HardwareUuid")' OnToggle="ToggleFieldLockAsync" /></label>
                                     <div class="glping-fiche-value-box"><code>@(_computer.HardwareUuid ?? "—")</code></div>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="glping-fiche-field">
-                                    <label>Statut</label>
+                                    <label>@T("Statut")</label>
                                     @if (_editMode)
                                     {
                                         <select class="form-select" value="@(_editStatusId?.ToString() ?? "")"
@@ -181,7 +181,7 @@ else
                                     }
                                 </div>
                                 <div class="glping-fiche-field">
-                                    <label>Type<FieldLockToggle Field="ChassisType" IsLocked='@IsFieldLocked("ChassisType")' OnToggle="ToggleFieldLockAsync" /></label>
+                                    <label>@T("Type")<FieldLockToggle Field="ChassisType" IsLocked='@IsFieldLocked("ChassisType")' OnToggle="ToggleFieldLockAsync" /></label>
                                     @if (_editMode)
                                     {
                                         <input class="form-control" list="computerTypeOptions" @bind="_editChassisType" @bind:event="oninput" />
@@ -198,7 +198,7 @@ else
                                     }
                                 </div>
                                 <div class="glping-fiche-field">
-                                    <label>Fabricant<FieldLockToggle Field="Manufacturer" IsLocked='@IsFieldLocked("Manufacturer")' OnToggle="ToggleFieldLockAsync" /></label>
+                                    <label>@T("Fabricant")<FieldLockToggle Field="Manufacturer" IsLocked='@IsFieldLocked("Manufacturer")' OnToggle="ToggleFieldLockAsync" /></label>
                                     @if (_editMode)
                                     {
                                         <input class="form-control" list="manufacturerOptions" @bind="_editManufacturer" @bind:event="oninput" />
@@ -215,7 +215,7 @@ else
                                     }
                                 </div>
                                 <div class="glping-fiche-field">
-                                    <label>Modèle<FieldLockToggle Field="Model" IsLocked='@IsFieldLocked("Model")' OnToggle="ToggleFieldLockAsync" /></label>
+                                    <label>@T("Modèle")<FieldLockToggle Field="Model" IsLocked='@IsFieldLocked("Model")' OnToggle="ToggleFieldLockAsync" /></label>
                                     @if (_editMode)
                                     {
                                         <input class="form-control" list="computerModelOptions" @bind="_editModel" @bind:event="oninput" />
@@ -232,12 +232,12 @@ else
                                     }
                                 </div>
                                 <div class="glping-fiche-field">
-                                    <label>N° de série<FieldLockToggle Field="SerialNumber" IsLocked='@IsFieldLocked("SerialNumber")' OnToggle="ToggleFieldLockAsync" /></label>
+                                    <label>@T("N° de série")<FieldLockToggle Field="SerialNumber" IsLocked='@IsFieldLocked("SerialNumber")' OnToggle="ToggleFieldLockAsync" /></label>
                                     <div class="glping-fiche-value-box">@(_computer.SerialNumber ?? "—")</div>
                                 </div>
                                 <div class="glping-fiche-field">
-                                    <label>Virtualisation<FieldLockToggle Field="VmSystem" IsLocked='@IsFieldLocked("VmSystem")' OnToggle="ToggleFieldLockAsync" /></label>
-                                    <div class="glping-fiche-value-box">@(_computer.VmSystem is { Length: > 0 } vm && vm != "Physical" ? vm : "Machine physique")</div>
+                                    <label>@T("Virtualisation")<FieldLockToggle Field="VmSystem" IsLocked='@IsFieldLocked("VmSystem")' OnToggle="ToggleFieldLockAsync" /></label>
+                                    <div class="glping-fiche-value-box">@(_computer.VmSystem is { Length: > 0 } vm && vm != "Physical" ? vm : T("Machine physique"))</div>
                                 </div>
                             </div>
                         </div>
@@ -246,65 +246,65 @@ else
                     @if (_computer.Agent is { } agent)
                     {
                         <div class="glping-fiche-inventory-panel">
-                            <div class="glping-fiche-inventory-title"><i class="ti ti-cloud-upload"></i>Informations d'inventaire</div>
+                            <div class="glping-fiche-inventory-title"><i class="ti ti-cloud-upload"></i>@T("Informations d'inventaire")</div>
                             <div class="row">
                                 <div class="col-md-4">
-                                    <div class="glping-fiche-inventory-label">Agent</div>
+                                    <div class="glping-fiche-inventory-label">@T("Agent")</div>
                                     <div>
                                         @(agent.AgentName ?? agent.Hostname ?? agent.DeviceId ?? "—")
                                         @if (AgentWebUrl(agent, _computer) is { } agentWebUrl)
                                         {
-                                            <a href="@agentWebUrl" target="_blank" rel="noopener noreferrer" title="Ouvrir la page web de l'agent" class="glping-fiche-inventory-agent-link">
+                                            <a href="@agentWebUrl" target="_blank" rel="noopener noreferrer" title="@(T("Ouvrir la page web de l'agent"))" class="glping-fiche-inventory-agent-link">
                                                 <i class="ti ti-external-link"></i>
                                             </a>
                                         }
                                     </div>
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="glping-fiche-inventory-label">UserAgent</div>
+                                    <div class="glping-fiche-inventory-label">@T("UserAgent")</div>
                                     <div>@(agent.LastUserAgent ?? "—")</div>
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="glping-fiche-inventory-label">Tag d'inventaire</div>
+                                    <div class="glping-fiche-inventory-label">@T("Tag d'inventaire")</div>
                                     <div>@(agent.Tag ?? "—")</div>
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="glping-fiche-inventory-label">Adresse publique de contact</div>
+                                    <div class="glping-fiche-inventory-label">@T("Adresse publique de contact")</div>
                                     <div>@(agent.LastContactIp ?? "—")</div>
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="glping-fiche-inventory-label">Dernier contact</div>
+                                    <div class="glping-fiche-inventory-label">@T("Dernier contact")</div>
                                     <div>@Display.DateTime(agent.LastContactAt)</div>
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="glping-fiche-inventory-label">Dernière mise à jour de l'inventaire</div>
+                                    <div class="glping-fiche-inventory-label">@T("Dernière mise à jour de l'inventaire")</div>
                                     <div>@LastInventoryLabel(_computer)</div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="glping-fiche-inventory-label">
-                                        Statut de l'agent
-                                        <i class="ti ti-refresh @(_agentStatusLoading ? "glping-spin" : "")" role="button" title="Interroger l'agent" @onclick="RefreshAgentStatusAsync"></i>
+                                        @T("Statut de l'agent")
+                                        <i class="ti ti-refresh @(_agentStatusLoading ? "glping-spin" : "")" role="button" title="@(T("Interroger l'agent"))" @onclick="RefreshAgentStatusAsync"></i>
                                     </div>
-                                    <div>@(_agentStatus ?? "Inconnu")</div>
+                                    <div>@(_agentStatus ?? T("Inconnu"))</div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="glping-fiche-inventory-label">
-                                        Demander un inventaire
-                                        <i class="ti ti-refresh @(_inventoryRequestLoading ? "glping-spin" : "")" role="button" title="Demander un inventaire immédiat" @onclick="RequestInventoryAsync"></i>
+                                        @T("Demander un inventaire")
+                                        <i class="ti ti-refresh @(_inventoryRequestLoading ? "glping-spin" : "")" role="button" title="@(T("Demander un inventaire immédiat"))" @onclick="RequestInventoryAsync"></i>
                                     </div>
-                                    <div>@(_inventoryRequestResult ?? "Inconnu")</div>
+                                    <div>@(_inventoryRequestResult ?? T("Inconnu"))</div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="glping-fiche-inventory-label">
-                                        Lancer les tâches de l'hôte
-                                        <i class="ti ti-refresh @(_hostTasksRequestLoading ? "glping-spin" : "")" role="button" title="Lancer les tâches de l'hôte" @onclick="RequestHostTasksAsync"></i>
+                                        @T("Lancer les tâches de l'hôte")
+                                        <i class="ti ti-refresh @(_hostTasksRequestLoading ? "glping-spin" : "")" role="button" title="@(T("Lancer les tâches de l'hôte"))" @onclick="RequestHostTasksAsync"></i>
                                     </div>
-                                    <div>@(_hostTasksRequestResult ?? "Inconnu")</div>
+                                    <div>@(_hostTasksRequestResult ?? T("Inconnu"))</div>
                                 </div>
                             </div>
                             <div class="glping-fiche-inventory-footer">
-                                <span>Créé le @Display.DateTime(_computer.CreatedAt)</span>
-                                <span>Dernière mise à jour le @LastInventoryLabel(_computer)</span>
+                                <span>@T("Créé le {0}", Display.DateTime(_computer.CreatedAt))</span>
+                                <span>@T("Dernière mise à jour le") @LastInventoryLabel(_computer)</span>
                             </div>
                         </div>
                     }
@@ -314,9 +314,9 @@ else
                     @if (_editMode)
                     {
                         <div class="d-flex justify-content-end gap-2 mb-3">
-                            <button type="button" class="btn btn-sm" disabled="@_editSaving" @onclick="CancelEdit">Annuler</button>
+                            <button type="button" class="btn btn-sm" disabled="@_editSaving" @onclick="CancelEdit">@T("Annuler")</button>
                             <button type="button" class="btn btn-sm btn-primary" disabled="@_editSaving" @onclick="SaveEditAsync">
-                                <i class="ti ti-device-floppy me-1 @(_editSaving ? "glping-spin" : "")"></i>Enregistrer
+                                <i class="ti ti-device-floppy me-1 @(_editSaving ? "glping-spin" : "")"></i>@T("Enregistrer")
                             </button>
                         </div>
                     }
@@ -324,7 +324,7 @@ else
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="glping-fiche-field">
-                                    <label>Système d'exploitation<FieldLockToggle Field="OperatingSystem" IsLocked='@IsFieldLocked("OperatingSystem")' OnToggle="ToggleFieldLockAsync" /></label>
+                                    <label>@T("Système d'exploitation")<FieldLockToggle Field="OperatingSystem" IsLocked='@IsFieldLocked("OperatingSystem")' OnToggle="ToggleFieldLockAsync" /></label>
                                     @if (_editMode)
                                     {
                                         <input class="form-control" list="operatingSystemOptions" @bind="_editOperatingSystem" @bind:event="oninput" />
@@ -341,7 +341,7 @@ else
                                     }
                                 </div>
                                 <div class="glping-fiche-field">
-                                    <label>Version<FieldLockToggle Field="OsVersion" IsLocked='@IsFieldLocked("OsVersion")' OnToggle="ToggleFieldLockAsync" /></label>
+                                    <label>@T("Version")<FieldLockToggle Field="OsVersion" IsLocked='@IsFieldLocked("OsVersion")' OnToggle="ToggleFieldLockAsync" /></label>
                                     @if (_editMode)
                                     {
                                         <input class="form-control" list="operatingSystemVersionOptions" @bind="_editOsVersion" @bind:event="oninput" />
@@ -358,17 +358,17 @@ else
                                     }
                                 </div>
                                 <div class="glping-fiche-field">
-                                    <label>Version du noyau<FieldLockToggle Field="OsKernelVersion" IsLocked='@IsFieldLocked("OsKernelVersion")' OnToggle="ToggleFieldLockAsync" /></label>
+                                    <label>@T("Version du noyau")<FieldLockToggle Field="OsKernelVersion" IsLocked='@IsFieldLocked("OsKernelVersion")' OnToggle="ToggleFieldLockAsync" /></label>
                                     <div class="glping-fiche-value-box">@(_computer.OsKernelVersion ?? "—")</div>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="glping-fiche-field">
-                                    <label>Mémoire totale<FieldLockToggle Field="TotalMemoryMb" IsLocked='@IsFieldLocked("TotalMemoryMb")' OnToggle="ToggleFieldLockAsync" /></label>
+                                    <label>@T("Mémoire totale")<FieldLockToggle Field="TotalMemoryMb" IsLocked='@IsFieldLocked("TotalMemoryMb")' OnToggle="ToggleFieldLockAsync" /></label>
                                     <div class="glping-fiche-value-box">@(_computer.TotalMemoryMb is { } mb ? $"{mb} Mo" : "—")</div>
                                 </div>
                                 <div class="glping-fiche-field">
-                                    <label>Dernière remontée</label>
+                                    <label>@T("Dernière remontée")</label>
                                     <div class="glping-fiche-value-box">@LastInventoryLabel(_computer)</div>
                                 </div>
                             </div>
@@ -381,7 +381,7 @@ else
                     {
                         <div class="glping-config-placeholder">
                             <i class="ti ti-cpu-off"></i>
-                            <p class="mb-0">Aucun composant remonté.</p>
+                            <p class="mb-0">@T("Aucun composant remonté.")</p>
                         </div>
                     }
                     else
@@ -396,9 +396,9 @@ else
                                     <table class="table table-vcenter card-table mb-0">
                                         <thead>
                                             <tr>
-                                                <th>Désignation</th>
+                                                <th>@T("Désignation")</th>
                                                 <th>@ComponentValueColumnLabel(group.Key)</th>
-                                                <th>Numéro de série</th>
+                                                <th>@T("Numéro de série")</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -423,25 +423,25 @@ else
                     {
                         <div class="glping-config-placeholder">
                             <i class="ti ti-battery-off"></i>
-                            <p class="mb-0">Aucune batterie remontée.</p>
+                            <p class="mb-0">@T("Aucune batterie remontée.")</p>
                         </div>
                     }
                     else
                     {
                         <div class="glping-fiche-block">
-                            <div class="glping-fiche-block-title"><i class="ti ti-battery"></i>Batteries (@_computer.Batteries.Count)</div>
+                            <div class="glping-fiche-block-title"><i class="ti ti-battery"></i>@T("Batteries ({0})", _computer.Batteries.Count)</div>
                             <div class="table-responsive">
                                 <table class="table table-vcenter card-table mb-0">
                                     <thead>
                                         <tr>
-                                            <th>Nom</th>
-                                            <th>Fabricant</th>
-                                            <th>Type</th>
-                                            <th>Tension</th>
-                                            <th>Capacité</th>
-                                            <th>Capacité réelle</th>
-                                            <th>Numéro de série</th>
-                                            <th>Date de fabrication</th>
+                                            <th>@T("Nom")</th>
+                                            <th>@T("Fabricant")</th>
+                                            <th>@T("Type")</th>
+                                            <th>@T("Tension")</th>
+                                            <th>@T("Capacité")</th>
+                                            <th>@T("Capacité réelle")</th>
+                                            <th>@T("Numéro de série")</th>
+                                            <th>@T("Date de fabrication")</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -482,27 +482,27 @@ else
                     {
                         <div class="glping-config-placeholder">
                             <i class="ti ti-apps-off"></i>
-                            <p class="mb-0">Aucun logiciel remonté.</p>
+                            <p class="mb-0">@T("Aucun logiciel remonté.")</p>
                         </div>
                     }
                     else
                     {
                         <div class="glping-fiche-block">
                             <div class="glping-fiche-block-title">
-                                <i class="ti ti-apps"></i>Logiciels installés (@_softwareFiltered.Count)
+                                <i class="ti ti-apps"></i>@T("Logiciels installés ({0})", _softwareFiltered.Count)
                                 <div class="glping-fiche-block-filter">
                                     <i class="ti ti-search"></i>
-                                    <input type="text" placeholder="Filtrer..." value="@_softwareFilter" @oninput="OnSoftwareFilterInput" />
+                                    <input type="text" placeholder="@(T("Filtrer..."))" value="@_softwareFilter" @oninput="OnSoftwareFilterInput" />
                                 </div>
                             </div>
                             <div class="table-responsive">
                                 <table class="table table-vcenter card-table mb-0">
                                     <thead>
                                         <tr>
-                                            <th>Nom</th>
-                                            <th>Version</th>
-                                            <th>Éditeur</th>
-                                            <th>Date d'installation</th>
+                                            <th>@T("Nom")</th>
+                                            <th>@T("Version")</th>
+                                            <th>@T("Éditeur")</th>
+                                            <th>@T("Date d'installation")</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -522,7 +522,7 @@ else
                             {
                                 <div class="card-footer d-flex align-items-center justify-content-between flex-wrap gap-2">
                                     <div class="d-flex align-items-center gap-2 text-secondary">
-                                        <span>Éléments par page</span>
+                                        <span>@T("Éléments par page")</span>
                                         <select class="form-select form-select-sm w-auto" value="@_softwarePageSize"
                                                 @onchange="@((ChangeEventArgs e) => SetSoftwarePageSize(int.Parse((string)e.Value!)))">
                                             @foreach (int size in SoftwarePageSizeOptions)
@@ -533,7 +533,7 @@ else
                                     </div>
                                     <div class="d-flex align-items-center gap-3">
                                         <span class="text-secondary">
-                                            @((_softwarePage - 1) * _softwarePageSize + 1)–@(Math.Min(_softwarePage * _softwarePageSize, _softwareFiltered.Count)) sur @_softwareFiltered.Count
+                                            @T("{0}–{1} sur {2}", (_softwarePage - 1) * _softwarePageSize + 1, Math.Min(_softwarePage * _softwarePageSize, _softwareFiltered.Count), _softwareFiltered.Count)
                                         </span>
                                         <ul class="pagination pagination-sm m-0">
                                             <li class="page-item @(_softwarePage <= 1 ? "disabled" : "")">
@@ -542,7 +542,7 @@ else
                                                 </button>
                                             </li>
                                             <li class="page-item disabled">
-                                                <span class="page-link">Page @_softwarePage / @SoftwareTotalPages</span>
+                                                <span class="page-link">@T("Page {0} / {1}", _softwarePage, SoftwareTotalPages)</span>
                                             </li>
                                             <li class="page-item @(_softwarePage >= SoftwareTotalPages ? "disabled" : "")">
                                                 <button type="button" class="page-link" @onclick="() => GoToSoftwarePage(_softwarePage + 1)" disabled="@(_softwarePage >= SoftwareTotalPages)">
@@ -562,26 +562,26 @@ else
                     {
                         <div class="glping-config-placeholder">
                             <i class="ti ti-server-off"></i>
-                            <p class="mb-0">Aucun volume remonté.</p>
+                            <p class="mb-0">@T("Aucun volume remonté.")</p>
                         </div>
                     }
                     else
                     {
                         <div class="glping-fiche-block">
-                            <div class="glping-fiche-block-title"><i class="ti ti-server-2"></i>Volumes (@_computer.Volumes.Count)</div>
+                            <div class="glping-fiche-block-title"><i class="ti ti-server-2"></i>@T("Volumes ({0})", _computer.Volumes.Count)</div>
                             <div class="table-responsive">
                                 <table class="table table-vcenter card-table mb-0">
                                     <thead>
                                         <tr>
-                                            <th>Nom</th>
-                                            <th>Inventaire automatique</th>
-                                            <th>Partition</th>
-                                            <th>Point de montage</th>
-                                            <th>Système de fichier</th>
-                                            <th>Taille totale</th>
-                                            <th>Espace disponible</th>
-                                            <th>Taux d'utilisation</th>
-                                            <th>Chiffrement</th>
+                                            <th>@T("Nom")</th>
+                                            <th>@T("Inventaire automatique")</th>
+                                            <th>@T("Partition")</th>
+                                            <th>@T("Point de montage")</th>
+                                            <th>@T("Système de fichier")</th>
+                                            <th>@T("Taille totale")</th>
+                                            <th>@T("Espace disponible")</th>
+                                            <th>@T("Taux d'utilisation")</th>
+                                            <th>@T("Chiffrement")</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -589,7 +589,7 @@ else
                                         {
                                             <tr>
                                                 <td>@volume.Name</td>
-                                                <td>Oui</td>
+                                                <td>@T("Oui")</td>
                                                 <td>@(volume.Partition ?? "—")</td>
                                                 <td>@(volume.MountPoint ?? "—")</td>
                                                 <td>@(volume.FileSystem ?? "—")</td>
@@ -623,7 +623,7 @@ else
                     {
                         <div class="glping-config-placeholder">
                             <i class="ti ti-device-tv-off"></i>
-                            <p class="mb-0">Aucun périphérique connecté remonté.</p>
+                            <p class="mb-0">@T("Aucun périphérique connecté remonté.")</p>
                         </div>
                     }
                     else
@@ -638,9 +638,9 @@ else
                                     <table class="table table-vcenter card-table mb-0">
                                         <thead>
                                             <tr>
-                                                <th>Désignation</th>
-                                                <th>Fabricant</th>
-                                                <th>Numéro de série</th>
+                                                <th>@T("Désignation")</th>
+                                                <th>@T("Fabricant")</th>
+                                                <th>@T("Numéro de série")</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -674,29 +674,29 @@ else
                     {
                         <div class="glping-config-placeholder">
                             <i class="ti ti-network-off"></i>
-                            <p class="mb-0">Aucun port réseau remonté.</p>
+                            <p class="mb-0">@T("Aucun port réseau remonté.")</p>
                         </div>
                     }
                     else
                     {
                         <div class="glping-fiche-block">
-                            <div class="glping-fiche-block-title"><i class="ti ti-network"></i>Ports réseau (@_computer.NetworkPorts.Count)</div>
+                            <div class="glping-fiche-block-title"><i class="ti ti-network"></i>@T("Ports réseau ({0})", _computer.NetworkPorts.Count)</div>
                             <div class="table-responsive">
                                 <table class="table table-vcenter card-table mb-0">
                                     <thead>
                                         <tr>
-                                            <th>Nom</th>
-                                            <th>Type</th>
-                                            <th>Adresse MAC</th>
-                                            <th>Adresse IP</th>
-                                            <th>Masque</th>
-                                            <th>Passerelle</th>
-                                            <th>Sous-réseau</th>
-                                            <th>DHCP</th>
-                                            <th>MTU</th>
-                                            <th>Vitesse</th>
-                                            <th>Statut</th>
-                                            <th>Virtuel</th>
+                                            <th>@T("Nom")</th>
+                                            <th>@T("Type")</th>
+                                            <th>@T("Adresse MAC")</th>
+                                            <th>@T("Adresse IP")</th>
+                                            <th>@T("Masque")</th>
+                                            <th>@T("Passerelle")</th>
+                                            <th>@T("Sous-réseau")</th>
+                                            <th>@T("DHCP")</th>
+                                            <th>@T("MTU")</th>
+                                            <th>@T("Vitesse")</th>
+                                            <th>@T("Statut")</th>
+                                            <th>@T("Virtuel")</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -714,7 +714,7 @@ else
                                                 <td>@(port.Mtu?.ToString() ?? "—")</td>
                                                 <td>@SpeedLabel(port.SpeedMbps)</td>
                                                 <td>@(port.Status ?? "—")</td>
-                                                <td>@(port.IsVirtual ? "Oui" : "Non")</td>
+                                                <td>@(port.IsVirtual ? T("Oui") : T("Non"))</td>
                                             </tr>
                                         }
                                     </tbody>
@@ -732,21 +732,21 @@ else
                     {
                         <div class="glping-config-placeholder">
                             <i class="ti ti-usb"></i>
-                            <p class="mb-0">Aucun connecteur remonté par l'inventaire.</p>
+                            <p class="mb-0">@T("Aucun connecteur remonté par l'inventaire.")</p>
                         </div>
                     }
                     else
                     {
                         <div class="glping-fiche-block">
-                            <div class="glping-fiche-block-title"><i class="ti ti-usb"></i>Connecteurs (@_computer.Connectors.Count)</div>
+                            <div class="glping-fiche-block-title"><i class="ti ti-usb"></i>@T("Connecteurs ({0})", _computer.Connectors.Count)</div>
                             <div class="table-responsive">
                                 <table class="table table-vcenter card-table mb-0">
                                     <thead>
                                         <tr>
-                                            <th>Désignation</th>
-                                            <th>Type</th>
-                                            <th>Libellé</th>
-                                            <th>Description</th>
+                                            <th>@T("Désignation")</th>
+                                            <th>@T("Type")</th>
+                                            <th>@T("Libellé")</th>
+                                            <th>@T("Description")</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -771,25 +771,25 @@ else
                     {
                         <div class="glping-config-placeholder">
                             <i class="ti ti-shield-off"></i>
-                            <p class="mb-0">Aucun antivirus remonté.</p>
+                            <p class="mb-0">@T("Aucun antivirus remonté.")</p>
                         </div>
                     }
                     else
                     {
                         <div class="glping-fiche-block">
-                            <div class="glping-fiche-block-title"><i class="ti ti-shield-check"></i>Antivirus (@_computer.Antiviruses.Count)</div>
+                            <div class="glping-fiche-block-title"><i class="ti ti-shield-check"></i>@T("Antivirus ({0})", _computer.Antiviruses.Count)</div>
                             <div class="table-responsive">
                                 <table class="table table-vcenter card-table mb-0">
                                     <thead>
                                         <tr>
-                                            <th>Nom</th>
-                                            <th>Éditeur</th>
-                                            <th>Version</th>
-                                            <th>Actif</th>
-                                            <th>À jour</th>
-                                            <th>Version de la base</th>
-                                            <th>Date de la base</th>
-                                            <th>Expiration</th>
+                                            <th>@T("Nom")</th>
+                                            <th>@T("Éditeur")</th>
+                                            <th>@T("Version")</th>
+                                            <th>@T("Actif")</th>
+                                            <th>@T("À jour")</th>
+                                            <th>@T("Version de la base")</th>
+                                            <th>@T("Date de la base")</th>
+                                            <th>@T("Expiration")</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -820,22 +820,20 @@ else
                        le catalogue et pas seulement les champs verrouillés, sinon il serait vide au
                        moment précis où l'on cherche quoi verrouiller. *@
                     <div class="glping-fiche-block">
-                        <div class="glping-fiche-block-title"><i class="ti ti-lock"></i>Verrous (@_locks.Count / @ComputerLockableFields.All.Count)</div>
+                        <div class="glping-fiche-block-title"><i class="ti ti-lock"></i>@T("Verrous ({0} / {1})", _locks.Count, ComputerLockableFields.All.Count)</div>
                         <p class="text-muted small px-3 pt-2 mb-0">
-                            Un champ verrouillé n'est plus mis à jour par les remontées d'agent : la valeur
-                            saisie à la main est conservée. Les champs non verrouillés sont réécrits au
-                            prochain inventaire.
+                            @T("Un champ verrouillé n'est plus mis à jour par les remontées d'agent : la valeur saisie à la main est conservée. Les champs non verrouillés sont réécrits au prochain inventaire.")
                         </p>
                         <div class="table-responsive">
                             <table class="table table-vcenter card-table mb-0">
                                 <thead>
                                     <tr>
                                         <th style="width: 1%"></th>
-                                        <th>Champ</th>
-                                        <th>Valeur actuelle</th>
-                                        <th>État</th>
-                                        <th>Verrouillé par</th>
-                                        <th>Depuis</th>
+                                        <th>@T("Champ")</th>
+                                        <th>@T("Valeur actuelle")</th>
+                                        <th>@T("État")</th>
+                                        <th>@T("Verrouillé par")</th>
+                                        <th>@T("Depuis")</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -846,16 +844,16 @@ else
                                             <td>
                                                 <FieldLockToggle Field="@key" IsLocked="@(lockRow is not null)" OnToggle="ToggleFieldLockAsync" />
                                             </td>
-                                            <td>@label</td>
+                                            <td>@T(label)</td>
                                             <td>@CurrentFieldValue(key)</td>
                                             <td>
                                                 @if (lockRow is not null)
                                                 {
-                                                    <span class="badge bg-warning-lt"><i class="ti ti-lock me-1"></i>Verrouillé</span>
+                                                    <span class="badge bg-warning-lt"><i class="ti ti-lock me-1"></i>@T("Verrouillé")</span>
                                                 }
                                                 else
                                                 {
-                                                    <span class="badge bg-secondary-lt"><i class="ti ti-lock-open me-1"></i>Mis à jour par l'inventaire</span>
+                                                    <span class="badge bg-secondary-lt"><i class="ti ti-lock-open me-1"></i>@T("Mis à jour par l'inventaire")</span>
                                                 }
                                             </td>
                                             <td>@(lockRow?.LockedBy ?? "—")</td>
@@ -880,7 +878,7 @@ else
                            collecte. Le dire, plutôt qu'un vide qui se lit comme une panne. *@
                         <div class="glping-config-placeholder">
                             <i class="ti ti-cloud-off"></i>
-                            <p class="mb-0">Le module Déploiement n'est pas activé : aucune collecte n'est définie.</p>
+                            <p class="mb-0">@T("Le module Déploiement n'est pas activé : aucune collecte n'est définie.")</p>
                         </div>
                     }
                     else
@@ -890,11 +888,11 @@ else
                             <div class="glping-fiche-block">
                                 <div class="glping-fiche-block-title">
                                     <i class="ti ti-cloud-upload"></i>@group.Name
-                                    <span class="badge bg-secondary-lt ms-2">@group.TypeLabel</span>
+                                    <span class="badge bg-secondary-lt ms-2">@T(group.TypeLabel)</span>
                                     @if (group.LastCollectedAt is { } collectedAt)
                                     {
                                         <span class="text-secondary ms-auto" style="font-weight: 400;">
-                                            Dernière remontée : @Display.DateTime(collectedAt)
+                                            @T("Dernière remontée : {0}", Display.DateTime(collectedAt))
                                         </span>
                                     }
                                 </div>
@@ -902,10 +900,10 @@ else
                                     <table class="table table-vcenter card-table mb-0">
                                         <thead>
                                             <tr>
-                                                <th>Entrée</th>
-                                                <th>Élément interrogé</th>
-                                                <th>Valeur</th>
-                                                <th class="w-1">Remontée le</th>
+                                                <th>@T("Entrée")</th>
+                                                <th>@T("Élément interrogé")</th>
+                                                <th>@T("Valeur")</th>
+                                                <th class="w-1">@T("Remontée le")</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -920,7 +918,7 @@ else
                                                     <td style="word-break: break-all;">
                                                         @if (string.IsNullOrEmpty(entry.Value))
                                                         {
-                                                            <span class="text-secondary">(vide)</span>
+                                                            <span class="text-secondary">@T("(vide)")</span>
                                                         }
                                                         else
                                                         {
@@ -944,8 +942,7 @@ else
                                absence de collecte : l'agent ne l'a simplement pas encore exécutée. *@
                             <div class="alert alert-info" role="alert">
                                 <i class="ti ti-clock me-1"></i>
-                                En attente de la prochaine exécution de l'agent :
-                                @string.Join(", ", _collectInfo.PendingCollects).
+                                @T("En attente de la prochaine exécution de l'agent : {0}.", string.Join(", ", _collectInfo.PendingCollects))
                             </div>
                         }
 
@@ -953,18 +950,17 @@ else
                         {
                             <div class="glping-config-placeholder">
                                 <i class="ti ti-cloud-off"></i>
-                                <p class="mb-1">Aucune information de collecte pour ce poste.</p>
+                                <p class="mb-1">@T("Aucune information de collecte pour ce poste.")</p>
                                 <p class="mb-0 text-secondary" style="max-width: 46rem;">
-                                    Les collectes se définissent dans
-                                    <a href="/tools/deployments/collects">Outils &gt; Déploiements &gt; Informations de collecte</a>
-                                    (clés de registre, requêtes WMI, recherches de fichiers). Les collectes actives
-                                    sont transmises à tous les agents, qui rapportent leurs résultats ici.
+                                    @T("Les collectes se définissent dans")
+                                    <a href="/tools/deployments/collects">@T("Outils > Déploiements > Informations de collecte")</a>
+                                    @T("(clés de registre, requêtes WMI, recherches de fichiers). Les collectes actives sont transmises à tous les agents, qui rapportent leurs résultats ici.")
                                 </p>
                                 <p class="mb-0 text-secondary" style="max-width: 46rem;">
-                                    Si rien ne remonte alors que des collectes sont actives, vérifiez que la tâche
+                                    @T("Si rien ne remonte alors que des collectes sont actives, vérifiez que la tâche")
                                     <code>collect</code> est bien activée sur l'agent : elle est souvent installée
-                                    sans l'être, et le serveur ne peut pas l'activer à distance. Son état figure
-                                    dans « Tâches activées » sur la fiche de l'agent.
+                                    @T("sans l'être, et le serveur ne peut pas l'activer à distance. Son état figure")
+                                    @T("dans « Tâches activées » sur la fiche de l'agent.")
                                 </p>
                             </div>
                         }
@@ -973,18 +969,17 @@ else
 
                 case "notes":
                     <p class="text-secondary">
-                        Notes libres attachées à ce poste. Elles ne viennent pas de l'inventaire et ne sont
-                        jamais écrasées par un agent : c'est le carnet de bord de ceux qui l'exploitent.
+                        @T("Notes libres attachées à ce poste. Elles ne viennent pas de l'inventaire et ne sont jamais écrasées par un agent : c'est le carnet de bord de ceux qui l'exploitent.")
                     </p>
 
                     <div class="mb-3">
-                        <label class="form-label" for="pc-new-note">Ajouter une note</label>
+                        <label class="form-label" for="pc-new-note">@T("Ajouter une note")</label>
                         <textarea id="pc-new-note" class="form-control" rows="3"
-                                  placeholder="Intervention, particularité, rappel…"
+                                  placeholder="@(T("Intervention, particularité, rappel…"))"
                                   @bind="_newNote" @bind:event="oninput"></textarea>
                         <button type="button" class="btn btn-primary mt-2"
                                 disabled="@string.IsNullOrWhiteSpace(_newNote)" @onclick="AddNoteAsync">
-                            <i class="ti ti-plus me-1"></i>Ajouter
+                            <i class="ti ti-plus me-1"></i>@T("Ajouter")
                         </button>
                     </div>
 
@@ -992,7 +987,7 @@ else
                     {
                         <div class="glping-config-placeholder">
                             <i class="ti ti-notes-off"></i>
-                            <p class="mb-0">Aucune note pour ce poste.</p>
+                            <p class="mb-0">@T("Aucune note pour ce poste.")</p>
                         </div>
                     }
                     else
@@ -1008,9 +1003,9 @@ else
                                         <div class="mt-2">
                                             <button type="button" class="btn btn-primary btn-sm"
                                                     disabled="@string.IsNullOrWhiteSpace(_editingNote)" @onclick="SaveNoteAsync">
-                                                Enregistrer
+                                                @T("Enregistrer")
                                             </button>
-                                            <button type="button" class="btn btn-sm" @onclick="CancelEditNote">Annuler</button>
+                                            <button type="button" class="btn btn-sm" @onclick="CancelEditNote">@T("Annuler")</button>
                                         </div>
                                     }
                                     else
@@ -1028,17 +1023,17 @@ else
                                                 @if (note.UpdatedAt is { } updated)
                                                 {
                                                     <span class="ms-2">
-                                                        <i class="ti ti-pencil me-1"></i>Modifiée le @Display.DateTime(updated)
+                                                        <i class="ti ti-pencil me-1"></i>@T("Modifiée le {0}", Display.DateTime(updated))
                                                         @if (note.LastEditorName is { Length: > 0 } editor)
                                                         {
-                                                            <text> par @editor</text>
+                                                            <text> @T("par {0}", editor)</text>
                                                         }
                                                     </span>
                                                 }
                                             </div>
 
                                             <div class="text-nowrap">
-                                                <button type="button" class="btn btn-icon btn-sm" title="Modifier"
+                                                <button type="button" class="btn btn-icon btn-sm" title="@(T("Modifier"))"
                                                         @onclick="() => StartEditNote(note)">
                                                     <i class="ti ti-pencil"></i>
                                                 </button>
@@ -1046,16 +1041,16 @@ else
                                                 {
                                                     <button type="button" class="btn btn-sm btn-danger"
                                                             @onclick="() => DeleteNoteAsync(note.Id)">
-                                                        Confirmer
+                                                        @T("Confirmer")
                                                     </button>
                                                     <button type="button" class="btn btn-sm"
                                                             @onclick="() => _confirmDeleteNoteId = null">
-                                                        Annuler
+                                                        @T("Annuler")
                                                     </button>
                                                 }
                                                 else
                                                 {
-                                                    <button type="button" class="btn btn-icon btn-sm btn-ghost-danger" title="Supprimer"
+                                                    <button type="button" class="btn btn-icon btn-sm btn-ghost-danger" title="@(T("Supprimer"))"
                                                             @onclick="() => _confirmDeleteNoteId = note.Id">
                                                         <i class="ti ti-trash"></i>
                                                     </button>
@@ -1074,18 +1069,18 @@ else
                     {
                         <div class="glping-config-placeholder">
                             <i class="ti ti-world-www"></i>
-                            <p class="mb-0">Aucun domaine remonté.</p>
+                            <p class="mb-0">@T("Aucun domaine remonté.")</p>
                         </div>
                     }
                     else
                     {
                         <div class="glping-fiche-block">
-                            <div class="glping-fiche-block-title"><i class="ti ti-world-www"></i>Domaines (1)</div>
+                            <div class="glping-fiche-block-title"><i class="ti ti-world-www"></i>@T("Domaines (1)")</div>
                             <div class="table-responsive">
                                 <table class="table table-vcenter card-table mb-0">
                                     <thead>
                                         <tr>
-                                            <th>Nom</th>
+                                            <th>@T("Nom")</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -1104,28 +1099,28 @@ else
                     {
                         <div class="glping-config-placeholder">
                             <i class="ti ti-file-import"></i>
-                            <p class="mb-0">Aucun import d'inventaire enregistré.</p>
+                            <p class="mb-0">@T("Aucun import d'inventaire enregistré.")</p>
                         </div>
                     }
                     else
                     {
                         <div class="glping-fiche-block">
                             <div class="glping-fiche-block-title">
-                                <i class="ti ti-history"></i>Historique des règles d'import (@_importHistoryFiltered.Count)
+                                <i class="ti ti-history"></i>@T("Historique des règles d'import ({0})", _importHistoryFiltered.Count)
                                 <div class="glping-fiche-block-filter">
                                     <i class="ti ti-search"></i>
-                                    <input type="text" placeholder="Filtrer..." value="@_importHistoryFilter" @oninput="OnImportHistoryFilterInput" />
+                                    <input type="text" placeholder="@(T("Filtrer..."))" value="@_importHistoryFilter" @oninput="OnImportHistoryFilterInput" />
                                 </div>
                             </div>
                             <div class="table-responsive">
                                 <table class="table table-vcenter card-table mb-0">
                                     <thead>
                                         <tr>
-                                            <th>Date</th>
-                                            <th>Nom de la règle</th>
-                                            <th>Agent</th>
-                                            <th>Module</th>
-                                            <th>Valeur d'entrée</th>
+                                            <th>@T("Date")</th>
+                                            <th>@T("Nom de la règle")</th>
+                                            <th>@T("Agent")</th>
+                                            <th>@T("Module")</th>
+                                            <th>@T("Valeur d'entrée")</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -1151,28 +1146,28 @@ else
                     {
                         <div class="glping-config-placeholder">
                             <i class="ti ti-history"></i>
-                            <p class="mb-0">Aucune modification enregistrée.</p>
+                            <p class="mb-0">@T("Aucune modification enregistrée.")</p>
                         </div>
                     }
                     else
                     {
                         <div class="glping-fiche-block">
                             <div class="glping-fiche-block-title">
-                                <i class="ti ti-history"></i>Historique (@_historyFiltered.Count)
+                                <i class="ti ti-history"></i>@T("Historique ({0})", _historyFiltered.Count)
                                 <div class="glping-fiche-block-filter">
                                     <i class="ti ti-search"></i>
-                                    <input type="text" placeholder="Filtrer..." value="@_historyFilter" @oninput="OnHistoryFilterInput" />
+                                    <input type="text" placeholder="@(T("Filtrer..."))" value="@_historyFilter" @oninput="OnHistoryFilterInput" />
                                 </div>
                             </div>
                             <div class="table-responsive">
                                 <table class="table table-vcenter card-table mb-0">
                                     <thead>
                                         <tr>
-                                            <th>ID</th>
-                                            <th>Date</th>
-                                            <th>Utilisateur</th>
-                                            <th>Champ</th>
-                                            <th>Mise à jour</th>
+                                            <th>@T("ID")</th>
+                                            <th>@T("Date")</th>
+                                            <th>@T("Utilisateur")</th>
+                                            <th>@T("Champ")</th>
+                                            <th>@T("Mise à jour")</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -1193,7 +1188,7 @@ else
                             {
                                 <div class="card-footer d-flex align-items-center justify-content-between flex-wrap gap-2">
                                     <div class="d-flex align-items-center gap-2 text-secondary">
-                                        <span>Éléments par page</span>
+                                        <span>@T("Éléments par page")</span>
                                         <select class="form-select form-select-sm w-auto" value="@_historyPageSize"
                                                 @onchange="@((ChangeEventArgs e) => SetHistoryPageSize(int.Parse((string)e.Value!)))">
                                             @foreach (int size in HistoryPageSizeOptions)
@@ -1204,7 +1199,7 @@ else
                                     </div>
                                     <div class="d-flex align-items-center gap-3">
                                         <span class="text-secondary">
-                                            @((_historyPage - 1) * _historyPageSize + 1)–@(Math.Min(_historyPage * _historyPageSize, _historyFiltered.Count)) sur @_historyFiltered.Count
+                                            @T("{0}–{1} sur {2}", (_historyPage - 1) * _historyPageSize + 1, Math.Min(_historyPage * _historyPageSize, _historyFiltered.Count), _historyFiltered.Count)
                                         </span>
                                         <ul class="pagination pagination-sm m-0">
                                             <li class="page-item @(_historyPage <= 1 ? "disabled" : "")">
@@ -1213,7 +1208,7 @@ else
                                                 </button>
                                             </li>
                                             <li class="page-item disabled">
-                                                <span class="page-link">Page @_historyPage / @HistoryTotalPages</span>
+                                                <span class="page-link">@T("Page {0} / {1}", _historyPage, HistoryTotalPages)</span>
                                             </li>
                                             <li class="page-item @(_historyPage >= HistoryTotalPages ? "disabled" : "")">
                                                 <button type="button" class="page-link" @onclick="() => GoToHistoryPage(_historyPage + 1)" disabled="@(_historyPage >= HistoryTotalPages)">
@@ -1233,14 +1228,14 @@ else
                     {
                         <div class="glping-config-placeholder">
                             <i class="ti ti-checklist"></i>
-                            <p class="mb-0">Module de déploiement non disponible.</p>
+                            <p class="mb-0">@T("Module de déploiement non disponible.")</p>
                         </div>
                     }
                     else if (_deploymentTasksInfo.Tasks.Count == 0 && _deploymentTasksInfo.Groups.Count == 0)
                     {
                         <div class="glping-config-placeholder">
                             <i class="ti ti-checklist"></i>
-                            <p class="mb-0">Aucune tâche de déploiement ni groupe pour ce poste.</p>
+                            <p class="mb-0">@T("Aucune tâche de déploiement ni groupe pour ce poste.")</p>
                         </div>
                     }
                     else
@@ -1248,16 +1243,16 @@ else
                         @if (_deploymentTasksInfo.Tasks.Count > 0)
                         {
                             <div class="glping-fiche-block">
-                                <div class="glping-fiche-block-title"><i class="ti ti-checklist"></i>Tâches (@_deploymentTasksInfo.Tasks.Count)</div>
+                                <div class="glping-fiche-block-title"><i class="ti ti-checklist"></i>@T("Tâches ({0})", _deploymentTasksInfo.Tasks.Count)</div>
                                 <div class="table-responsive">
                                     <table class="table table-vcenter card-table mb-0">
                                         <thead>
                                             <tr>
-                                                <th>Tâche</th>
-                                                <th>Activé</th>
-                                                <th>Méthode</th>
-                                                <th>Date</th>
-                                                <th>Statut</th>
+                                                <th>@T("Tâche")</th>
+                                                <th>@T("Activé")</th>
+                                                <th>@T("Méthode")</th>
+                                                <th>@T("Date")</th>
+                                                <th>@T("Statut")</th>
                                                 <th></th>
                                             </tr>
                                         </thead>
@@ -1285,7 +1280,7 @@ else
                                                             @if (!string.IsNullOrWhiteSpace(execution.Log))
                                                             {
                                                                 <button type="button" class="btn btn-sm" @onclick="() => ToggleTaskExecutionLog(execution.Key)">
-                                                                    <i class="ti ti-file-text me-1"></i>Journal
+                                                                    <i class="ti ti-file-text me-1"></i>@T("Journal")
                                                                 </button>
                                                             }
                                                         </td>
@@ -1308,13 +1303,13 @@ else
                         @if (_deploymentTasksInfo.Groups.Count > 0)
                         {
                             <div class="glping-fiche-block">
-                                <div class="glping-fiche-block-title"><i class="ti ti-users-group"></i>Groupes (@_deploymentTasksInfo.Groups.Count)</div>
+                                <div class="glping-fiche-block-title"><i class="ti ti-users-group"></i>@T("Groupes ({0})", _deploymentTasksInfo.Groups.Count)</div>
                                 <div class="table-responsive">
                                     <table class="table table-vcenter card-table mb-0">
                                         <thead>
                                             <tr>
-                                                <th>Groupe</th>
-                                                <th>Type</th>
+                                                <th>@T("Groupe")</th>
+                                                <th>@T("Type")</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -1322,7 +1317,7 @@ else
                                             {
                                                 <tr>
                                                     <td><a href="/tools/deployments/computer-groups/@group.GroupId">@group.Name</a></td>
-                                                    <td>@group.TypeLabel</td>
+                                                    <td>@T(group.TypeLabel)</td>
                                                 </tr>
                                             }
                                         </tbody>
@@ -1338,20 +1333,20 @@ else
                     {
                         <div class="glping-config-placeholder">
                             <i class="ti ti-package"></i>
-                            <p class="mb-0">Module de déploiement non disponible.</p>
+                            <p class="mb-0">@T("Module de déploiement non disponible.")</p>
                         </div>
                     }
                     else if (_computer.Agent is null)
                     {
                         <div class="glping-config-placeholder">
                             <i class="ti ti-package-off"></i>
-                            <p class="mb-0">Ce poste n'est associé à aucun agent GLPI-Agent : le déploiement de package n'est pas disponible.</p>
+                            <p class="mb-0">@T("Ce poste n'est associé à aucun agent GLPI-Agent : le déploiement de package n'est pas disponible.")</p>
                         </div>
                     }
                     else
                     {
                         <div class="glping-fiche-block">
-                            <div class="glping-fiche-block-title"><i class="ti ti-package"></i>Paquets assignés (@_deploymentAssignments.Count)</div>
+                            <div class="glping-fiche-block-title"><i class="ti ti-package"></i>@T("Paquets assignés ({0})", _deploymentAssignments.Count)</div>
 
                             <div class="glping-fiche-block-body">
                                 @if (_deploymentAssignments.Count > 0)
@@ -1360,11 +1355,11 @@ else
                                         <table class="table table-vcenter card-table mb-0">
                                             <thead>
                                                 <tr>
-                                                    <th>Paquet</th>
-                                                    <th>Statut</th>
-                                                    <th>Créé le</th>
-                                                    <th>Démarré le</th>
-                                                    <th>Terminé le</th>
+                                                    <th>@T("Paquet")</th>
+                                                    <th>@T("Statut")</th>
+                                                    <th>@T("Créé le")</th>
+                                                    <th>@T("Démarré le")</th>
+                                                    <th>@T("Terminé le")</th>
                                                     <th></th>
                                                 </tr>
                                             </thead>
@@ -1391,7 +1386,7 @@ else
                                                                 @if (!string.IsNullOrWhiteSpace(assignment.Log))
                                                                 {
                                                                     <button type="button" class="btn btn-sm" @onclick="() => ToggleAssignmentLog(assignment.JobId)"
-                                                                            title="@(IsInProgress(assignment) ? "Journal mis à jour automatiquement" : null)">
+                                                                            title="@(IsInProgress(assignment) ? T("Journal mis à jour automatiquement") : null)">
                                                                         @if (IsInProgress(assignment))
                                                                         {
                                                                             <i class="ti ti-refresh glping-spin me-1"></i>
@@ -1400,18 +1395,18 @@ else
                                                                         {
                                                                             <i class="ti ti-file-text me-1"></i>
                                                                         }
-                                                                        Journal
+                                                                        @T("Journal")
                                                                     </button>
                                                                 }
                                                                 @if (assignment.CanCancel)
                                                                 {
-                                                                    <button type="button" class="btn btn-sm btn-icon text-danger" title="Annuler cette assignation" @onclick="() => CancelAssignmentAsync(assignment.JobId)">
+                                                                    <button type="button" class="btn btn-sm btn-icon text-danger" title="@(T("Annuler cette assignation"))" @onclick="() => CancelAssignmentAsync(assignment.JobId)">
                                                                         <i class="ti ti-x"></i>
                                                                     </button>
                                                                 }
                                                                 @if (assignment.CanRetry)
                                                                 {
-                                                                    <button type="button" class="btn btn-sm px-3" title="Relancer cette assignation" disabled="@(_retryingJobId is not null)" @onclick="() => RetryAssignmentAsync(assignment.JobId)">
+                                                                    <button type="button" class="btn btn-sm px-3" title="@(T("Relancer cette assignation"))" disabled="@(_retryingJobId is not null)" @onclick="() => RetryAssignmentAsync(assignment.JobId)">
                                                                         <i class="ti ti-bolt @(_retryingJobId == assignment.JobId ? "glping-spin" : "")"></i>
                                                                     </button>
                                                                 }
@@ -1433,16 +1428,16 @@ else
                                 }
                                 else
                                 {
-                                    <p class="text-secondary small mb-3">Aucun paquet assigné à ce poste pour le moment.</p>
+                                    <p class="text-secondary small mb-3">@T("Aucun paquet assigné à ce poste pour le moment.")</p>
                                 }
 
                                 <div class="glping-fiche-add-row">
-                                    <label class="form-label">Sélectionner les paquets à installer</label>
+                                    <label class="form-label">@T("Sélectionner les paquets à installer")</label>
                                     <div class="glping-tag-select">
                                         @foreach (DeploymentPackageOption package in _selectedPackagesToAssign)
                                         {
                                             <span class="glping-tag">
-                                                <button type="button" class="glping-tag-remove" title="Retirer" @onclick="() => RemovePackageToAssign(package.Id)">
+                                                <button type="button" class="glping-tag-remove" title="@(T("Retirer"))" @onclick="() => RemovePackageToAssign(package.Id)">
                                                     <i class="ti ti-x"></i>
                                                 </button>
                                                 @package.Name
@@ -1452,7 +1447,7 @@ else
                                             var packagesLeftToAdd = _availablePackages.Where(p => !_selectedPackagesToAssign.Any(s => s.Id == p.Id)).ToList();
                                         }
                                         <select class="glping-tag-select-input" @key="_selectedPackagesToAssign.Count" disabled="@(packagesLeftToAdd.Count == 0)" @onchange="AddPackageToAssign">
-                                            <option value="">@(packagesLeftToAdd.Count == 0 ? "Aucun autre paquet disponible" : "+ Ajouter un paquet…")</option>
+                                            <option value="">@(packagesLeftToAdd.Count == 0 ? T("Aucun autre paquet disponible") : T("+ Ajouter un paquet…"))</option>
                                             @foreach (DeploymentPackageOption package in packagesLeftToAdd)
                                             {
                                                 <option value="@package.Id">@package.Name</option>
@@ -1463,31 +1458,31 @@ else
                                     <div class="d-flex gap-2 mt-3">
                                         <button type="button" class="btn" disabled="@(_prepareInstallLoading || _selectedPackagesToAssign.Count == 0)" @onclick="PrepareInstallationAsync">
                                             <i class="ti ti-player-play @(_prepareInstallLoading ? "glping-spin" : "")"></i>
-                                            Préparer l'installation
+                                            @T("Préparer l'installation")
                                         </button>
                                         <div class="dropdown">
                                             <button type="button" class="btn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
                                                 @(_wakeMode switch
                                                 {
-                                                    DeploymentWakeMode.Local => "Je suis sur cet ordinateur, faire un réveil local de l'agent",
-                                                    DeploymentWakeMode.Remote => "Je ne suis pas sur cet ordinateur, faire un réveil de l'agent à distance",
-                                                    _ => "Ne pas réveiller l'agent"
+                                                    DeploymentWakeMode.Local => T("Je suis sur cet ordinateur, faire un réveil local de l'agent"),
+                                                    DeploymentWakeMode.Remote => T("Je ne suis pas sur cet ordinateur, faire un réveil de l'agent à distance"),
+                                                    _ => T("Ne pas réveiller l'agent")
                                                 })
                                             </button>
                                             <ul class="dropdown-menu">
                                                 <li>
                                                     <button type="button" class="dropdown-item @(_wakeMode == DeploymentWakeMode.Local ? "active" : "")" @onclick="() => _wakeMode = DeploymentWakeMode.Local">
-                                                        Je suis sur cet ordinateur, faire un réveil local de l'agent
+                                                        @T("Je suis sur cet ordinateur, faire un réveil local de l'agent")
                                                     </button>
                                                 </li>
                                                 <li>
                                                     <button type="button" class="dropdown-item @(_wakeMode == DeploymentWakeMode.Remote ? "active" : "")" @onclick="() => _wakeMode = DeploymentWakeMode.Remote">
-                                                        Je ne suis pas sur cet ordinateur, faire un réveil de l'agent à distance
+                                                        @T("Je ne suis pas sur cet ordinateur, faire un réveil de l'agent à distance")
                                                     </button>
                                                 </li>
                                                 <li>
                                                     <button type="button" class="dropdown-item @(_wakeMode == DeploymentWakeMode.None ? "active" : "")" @onclick="() => _wakeMode = DeploymentWakeMode.None">
-                                                        Ne pas réveiller l'agent
+                                                        @T("Ne pas réveiller l'agent")
                                                     </button>
                                                 </li>
                                             </ul>
@@ -1504,9 +1499,7 @@ else
                                            le libre-service s'active paquet par paquet, pour un groupe d'ordinateurs
                                            donné. Le dire, plutôt que de laisser croire qu'il n'existe aucun paquet. *@
                                         <div class="text-secondary small mt-2">
-                                            Aucun paquet en déploiement à la demande pour ce poste : le libre-service s'active
-                                            sur la <a href="/tools/deployments/packages">fiche d'un paquet</a>, pour un groupe
-                                            d'ordinateurs dont ce poste doit être membre.
+                                            @T("Aucun paquet en déploiement à la demande pour ce poste : le libre-service s'active sur la") <a href="/tools/deployments/packages">@T("fiche d'un paquet")</a>@T(", pour un groupe d'ordinateurs dont ce poste doit être membre.")
                                         </div>
                                     }
                                 </div>
@@ -1519,7 +1512,7 @@ else
                     var current = _tabs.First(t => t.Key == _activeTabKey);
                     <div class="glping-config-placeholder">
                         <i class="ti @current.Icon"></i>
-                        <p class="mb-0">L'onglet « @current.Label » n'est pas encore disponible.</p>
+                        <p class="mb-0">@T("L'onglet « {0} » n'est pas encore disponible.", current.Label)</p>
                     </div>
                     break;
             }

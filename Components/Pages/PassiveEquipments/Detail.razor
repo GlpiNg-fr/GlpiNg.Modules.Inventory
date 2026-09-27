@@ -3,13 +3,13 @@
 @using GlpiNg.Modules.Inventory.Services
 @rendermode InteractiveServer
 
-<PageTitle>@(_item?.Name ?? "Équipement passif") — GlpiNg</PageTitle>
+<PageTitle>@(_item?.Name ?? T("Équipement passif")) — GlpiNg</PageTitle>
 
 @if (_item is null)
 {
     <div class="text-center text-secondary py-5">
         <i class="ti ti-plug-off fs-1"></i>
-        <p class="mt-2">Cet équipement passif est introuvable.</p>
+        <p class="mt-2">@T("Cet équipement passif est introuvable.")</p>
     </div>
 }
 else
@@ -17,7 +17,7 @@ else
     <div class="glping-fiche-topbar">
         <div class="glping-fiche-crumb">
             <i class="ti ti-plug-connected"></i>
-            <span>Équipement passif - @_item.Name - ID @_item.Id</span>
+            <span>@T("Équipement passif - {0} - ID {1}", _item.Name, _item.Id)</span>
         </div>
         <div class="glping-fiche-toolbar">
             @if (_total > 0)
@@ -37,16 +37,16 @@ else
         <aside class="glping-fiche-sidebar">
             <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "main" ? "active" : "")" @onclick='() => SetTab("main")'>
                 <i class="ti ti-plug-connected"></i>
-                <span>Équipement passif</span>
+                <span>@T("Équipement passif")</span>
             </button>
             <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "history" ? "active" : "")" @onclick='() => SetTab("history")'>
                 <i class="ti ti-history"></i>
-                <span>Historique</span>
+                <span>@T("Historique")</span>
                 <span class="glping-fiche-tab-count">@_item.HistoryEntries.Count</span>
             </button>
             <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "links" ? "active" : "")" @onclick='() => SetTab("links")'>
                 <i class="ti ti-external-link"></i>
-                <span>Liens externes</span>
+                <span>@T("Liens externes")</span>
             </button>
         </aside>
 
@@ -59,10 +59,10 @@ else
 
                         <div class="d-flex justify-content-end gap-2 mt-3">
                             <button type="button" class="btn btn-outline-danger" @onclick="DeleteAsync">
-                                <i class="ti ti-trash me-1"></i>Supprimer définitivement
+                                <i class="ti ti-trash me-1"></i>@T("Supprimer définitivement")
                             </button>
                             <button type="submit" class="btn btn-primary" disabled="@_isSaving">
-                                <i class="ti ti-device-floppy me-1"></i>@(_isSaving ? "Enregistrement…" : "Sauvegarder")
+                                <i class="ti ti-device-floppy me-1"></i>@(_isSaving ? T("Enregistrement…") : T("Sauvegarder"))
                             </button>
                         </div>
                     </EditForm>
@@ -70,12 +70,12 @@ else
 
                 case "history":
                     <div class="glping-fiche-block">
-                        <div class="glping-fiche-block-title"><i class="ti ti-history"></i>Historique (@_item.HistoryEntries.Count)</div>
+                        <div class="glping-fiche-block-title"><i class="ti ti-history"></i>@T("Historique ({0})", _item.HistoryEntries.Count)</div>
                         @if (_item.HistoryEntries.Count == 0)
                         {
                             <div class="glping-config-placeholder">
                                 <i class="ti ti-history"></i>
-                                <p class="mb-0">Aucune modification enregistrée.</p>
+                                <p class="mb-0">@T("Aucune modification enregistrée.")</p>
                             </div>
                         }
                         else
@@ -84,11 +84,11 @@ else
                                 <table class="table table-vcenter card-table mb-0">
                                     <thead>
                                         <tr>
-                                            <th>ID</th>
-                                            <th>Date</th>
-                                            <th>Utilisateur</th>
-                                            <th>Champ</th>
-                                            <th>Mise à jour</th>
+                                            <th>@T("ID")</th>
+                                            <th>@T("Date")</th>
+                                            <th>@T("Utilisateur")</th>
+                                            <th>@T("Champ")</th>
+                                            <th>@T("Mise à jour")</th>
                                         </tr>
                                     </thead>
                                     <tbody>

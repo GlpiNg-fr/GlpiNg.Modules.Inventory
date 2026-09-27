@@ -2,6 +2,7 @@ using GlpiNg.Modules.Inventory.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
+using GlpiNg.Modules.Abstractions.Localization;
 
 namespace GlpiNg.Modules.Inventory.Components.Pages.SimCards;
 
@@ -100,7 +101,7 @@ public partial class Detail : ComponentBase, IAsyncDisposable
     private static string FormatChange(string? oldValue, string? newValue) =>
         $"{(string.IsNullOrEmpty(oldValue) ? "vide" : oldValue)} → {(string.IsNullOrEmpty(newValue) ? "vide" : newValue)}";
 
-    private static string YesNo(bool value) => value ? "Oui" : "Non";
+    private static string YesNo(bool value) => value ? Tr.T("Oui") : Tr.T("Non");
 
     private IEnumerable<(string Field, string? Old, string? New)> DiffFields(Snapshot before, Snapshot after)
     {

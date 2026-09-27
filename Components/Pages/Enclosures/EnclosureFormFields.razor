@@ -3,11 +3,11 @@
 <div class="row">
     <div class="col-md-6">
         <div class="glping-fiche-field">
-            <label>Nom</label>
+            <label>@T("Nom")</label>
             <input class="form-control" @bind="Item.Name" @bind:event="oninput" @bind:after="NotifyChangedAsync" />
         </div>
         <div class="glping-fiche-field">
-            <label>Statut</label>
+            <label>@T("Statut")</label>
             <select class="form-select" value="@(Item.StatusId?.ToString() ?? "")"
                     @onchange="@((ChangeEventArgs e) => Item.StatusId = string.IsNullOrEmpty((string?)e.Value) ? null : int.Parse((string)e.Value!))">
                 <option value="">—</option>
@@ -18,7 +18,7 @@
             </select>
         </div>
         <div class="glping-fiche-field">
-            <label>Lieu</label>
+            <label>@T("Lieu")</label>
             <select class="form-select" value="@(Item.LocationId?.ToString() ?? "")"
                     @onchange="@((ChangeEventArgs e) => Item.LocationId = string.IsNullOrEmpty((string?)e.Value) ? null : int.Parse((string)e.Value!))">
                 <option value="">—</option>
@@ -29,42 +29,42 @@
             </select>
         </div>
         <div class="glping-fiche-field">
-            <label>Type</label>
+            <label>@T("Type")</label>
             <input class="form-control" @bind="Item.Type" />
         </div>
         <div class="glping-fiche-field">
-            <label>Technicien responsable</label>
+            <label>@T("Technicien responsable")</label>
             <input class="form-control" @bind="Item.TechnicianInCharge" />
         </div>
     </div>
     <div class="col-md-6">
         <div class="glping-fiche-field">
-            <label>Fabricant</label>
+            <label>@T("Fabricant")</label>
             <input class="form-control" @bind="Item.Manufacturer" />
         </div>
         <div class="glping-fiche-field">
-            <label>Modèle</label>
+            <label>@T("Modèle")</label>
             <input class="form-control" @bind="Item.Model" />
         </div>
         <div class="glping-fiche-field">
-            <label>Numéro de série</label>
+            <label>@T("Numéro de série")</label>
             <input class="form-control" @bind="Item.SerialNumber" />
         </div>
         <div class="glping-fiche-field">
-            <label>Numéro d'inventaire</label>
+            <label>@T("Numéro d'inventaire")</label>
             <input class="form-control" @bind="Item.InventoryNumber" />
         </div>
         <div class="glping-fiche-field">
-            <label>Utilisateur</label>
+            <label>@T("Utilisateur")</label>
             <input class="form-control" @bind="Item.AssignedUser" />
         </div>
         <div class="glping-fiche-field">
-            <label>Nombre d'emplacements</label>
+            <label>@T("Nombre d'emplacements")</label>
             <input type="number" class="form-control" value="@Item.SlotCount"
                    @onchange="@((ChangeEventArgs e) => Item.SlotCount = string.IsNullOrEmpty((string?)e.Value) ? null : int.Parse((string)e.Value!))" />
         </div>
         <div class="glping-fiche-field">
-            <label>Commentaires</label>
+            <label>@T("Commentaires")</label>
             <textarea class="form-control" rows="4" @bind="Item.Comment"></textarea>
         </div>
     </div>

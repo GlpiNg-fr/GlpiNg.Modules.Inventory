@@ -1,13 +1,13 @@
 ﻿@page "/admin/dictionaries/{TypeSlug}/{RuleId:int}"
 @rendermode InteractiveServer
 
-<PageTitle>@(_rule?.Name ?? "Règle de dictionnaire") — GlpiNg</PageTitle>
+<PageTitle>@(_rule?.Name ?? T("Règle de dictionnaire")) — GlpiNg</PageTitle>
 
 @if (!_typeResolved)
 {
     <div class="text-center text-secondary py-5">
         <i class="ti ti-book-off fs-1"></i>
-        <p class="mt-2">Ce dictionnaire est introuvable.</p>
+        <p class="mt-2">@T("Ce dictionnaire est introuvable.")</p>
     </div>
 }
 else
@@ -18,7 +18,7 @@ else
     {
         <div class="text-center text-secondary py-5">
             <i class="ti ti-book-off fs-1"></i>
-            <p class="mt-2">Cette règle est introuvable.</p>
+            <p class="mt-2">@T("Cette règle est introuvable.")</p>
         </div>
     }
     else
@@ -27,11 +27,11 @@ else
             <aside class="glping-fiche-sidebar">
                 <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "main" ? "active" : "")" @onclick='() => SetTab("main")'>
                     <i class="ti @(DictionaryRuleTypeCatalog.Icon(_type))"></i>
-                    <span>Règle</span>
+                    <span>@T("Règle")</span>
                 </button>
                 <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "criteria" ? "active" : "")" @onclick='() => SetTab("criteria")'>
                     <i class="ti ti-filter"></i>
-                    <span>Critères</span>
+                    <span>@T("Critères")</span>
                     <span class="glping-fiche-tab-count">@_rule.Criteria.Count</span>
                 </button>
             </aside>
@@ -43,45 +43,45 @@ else
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="glping-fiche-field">
-                                    <label>Nom</label>
+                                    <label>@T("Nom")</label>
                                     <input class="form-control" @bind="_rule.Name" @bind:event="oninput" />
                                 </div>
                                 <div class="glping-fiche-field">
-                                    <label>Opérateur logique</label>
+                                    <label>@T("Opérateur logique")</label>
                                     <select class="form-select" @bind="_rule.LogicalOperator">
-                                        <option value="@DictionaryRuleLogicalOperator.And">ET</option>
-                                        <option value="@DictionaryRuleLogicalOperator.Or">OU</option>
+                                        <option value="@DictionaryRuleLogicalOperator.And">@T("ET")</option>
+                                        <option value="@DictionaryRuleLogicalOperator.Or">@T("OU")</option>
                                     </select>
                                 </div>
                                 <div class="glping-fiche-field">
-                                    <label>Actif</label>
+                                    <label>@T("Actif")</label>
                                     @* Valeur et gestionnaire explicites plutot que @bind : sur un <select> lie a un booleen,
                                        Blazor ecrit dans l'attribut value le resultat de bool.ToString(), soit "True" ou
                                        "False". Aucune option en minuscules ne correspondait alors, la liste restait bloquee
                                        sur son premier choix et le modele n'etait jamais mis a jour. *@
                                     <select class="form-select" value="@(_rule.IsActive ? "true" : "false")"
                                             @onchange="@((ChangeEventArgs e) => _rule.IsActive = (string?)e.Value == "true")">
-                                        <option value="true">Oui</option>
-                                        <option value="false">Non</option>
+                                        <option value="true">@T("Oui")</option>
+                                        <option value="false">@T("Non")</option>
                                     </select>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="glping-fiche-field">
-                                    <label>Commentaires</label>
+                                    <label>@T("Commentaires")</label>
                                     <textarea class="form-control" rows="3" @bind="_rule.Comment"></textarea>
                                 </div>
                             </div>
                         </div>
 
                         <div class="glping-fiche-block">
-                            <div class="glping-fiche-block-title"><i class="ti ti-bolt"></i>Action</div>
+                            <div class="glping-fiche-block-title"><i class="ti ti-bolt"></i>@T("Action")</div>
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="glping-fiche-field">
-                                        <label>Type d'action</label>
+                                        <label>@T("Type d'action")</label>
                                         <select class="form-select" @bind="_rule.ActionType">
-                                            <option value="@DictionaryActionType.Assign">Remplacer par</option>
+                                            <option value="@DictionaryActionType.Assign">@T("Remplacer par")</option>
                                             <option value="@DictionaryActionType.Ignore">@IgnoreActionLabel(_type)</option>
                                         </select>
                                     </div>
@@ -90,7 +90,7 @@ else
                                 {
                                     <div class="col-md-6">
                                         <div class="glping-fiche-field">
-                                            <label>Valeur</label>
+                                            <label>@T("Valeur")</label>
                                             <input class="form-control" @bind="_rule.ActionValue" @bind:event="oninput" />
                                         </div>
                                     </div>
@@ -106,20 +106,20 @@ else
 
                         <div class="d-flex justify-content-end gap-2 mt-3">
                             <button type="button" class="btn btn-outline-danger" @onclick="DeleteAsync">
-                                <i class="ti ti-trash me-1"></i>Supprimer définitivement
+                                <i class="ti ti-trash me-1"></i>@T("Supprimer définitivement")
                             </button>
                             <button type="button" class="btn btn-primary" disabled="@_isSaving" @onclick="SaveAsync">
-                                <i class="ti ti-device-floppy me-1"></i>@(_isSaving ? "Enregistrement…" : "Sauvegarder")
+                                <i class="ti ti-device-floppy me-1"></i>@(_isSaving ? T("Enregistrement…") : T("Sauvegarder"))
                             </button>
                         </div>
                         break;
 
                     case "criteria":
                         <div class="glping-fiche-block">
-                            <div class="glping-fiche-block-title"><i class="ti ti-filter"></i>Critères (@_rule.Criteria.Count)</div>
+                            <div class="glping-fiche-block-title"><i class="ti ti-filter"></i>@T("Critères ({0})", _rule.Criteria.Count)</div>
                             <p class="text-secondary">
-                                Une règle s'applique si l'ensemble de ses critères, combinés par l'opérateur logique
-                                de l'onglet « Règle » (@(_rule.LogicalOperator == DictionaryRuleLogicalOperator.Or ? "OU" : "ET")), est vérifié.
+                                @T("Une règle s'applique si l'ensemble de ses critères, combinés par l'opérateur logique")
+                                de l'onglet « Règle » (@(_rule.LogicalOperator == DictionaryRuleLogicalOperator.Or ? T("OU") : T("ET"))), est vérifié.
                             </p>
 
                             @if (_rule.Criteria.Count > 0)
@@ -128,9 +128,9 @@ else
                                     <table class="table table-vcenter card-table mb-0">
                                         <thead>
                                             <tr>
-                                                <th>Champ</th>
-                                                <th>Opérateur</th>
-                                                <th>Valeur</th>
+                                                <th>@T("Champ")</th>
+                                                <th>@T("Opérateur")</th>
+                                                <th>@T("Valeur")</th>
                                                 <th></th>
                                             </tr>
                                         </thead>
@@ -158,7 +158,7 @@ else
                                    dépend de son type, mais un champ désactivé se lit comme une panne alors
                                    qu'il n'y a simplement rien d'autre à choisir. *@
                                 <div class="col-md-3">
-                                    <label class="form-label">Champ</label>
+                                    <label class="form-label">@T("Champ")</label>
                                     <select class="form-select" @bind="_newCriterion.Field">
                                         @foreach (DictionaryCriterionField field in DictionaryRuleTypeCatalog.CriterionFields(_type))
                                         {
@@ -167,7 +167,7 @@ else
                                     </select>
                                 </div>
                                 <div class="col-md-3">
-                                    <label class="form-label">Opérateur</label>
+                                    <label class="form-label">@T("Opérateur")</label>
                                     <select class="form-select" @bind="_newCriterion.Operator">
                                         @foreach (DictionaryCriterionOperator op in Enum.GetValues<DictionaryCriterionOperator>())
                                         {
@@ -176,7 +176,7 @@ else
                                     </select>
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="form-label">Valeur</label>
+                                    <label class="form-label">@T("Valeur")</label>
                                     @if (IsValuelessOperator(_newCriterion.Operator))
                                     {
                                         <input class="form-control" disabled placeholder="—" />
@@ -188,7 +188,7 @@ else
                                 </div>
                                 <div class="col-md-2">
                                     <button type="button" class="btn btn-primary w-100" @onclick="AddCriterionAsync">
-                                        <i class="ti ti-plus me-1"></i>Ajouter
+                                        <i class="ti ti-plus me-1"></i>@T("Ajouter")
                                     </button>
                                 </div>
                             </div>

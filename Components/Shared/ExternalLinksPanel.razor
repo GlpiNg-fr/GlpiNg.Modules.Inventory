@@ -7,32 +7,32 @@
 @if (_links is null)
 {
     <div class="text-secondary py-3">
-        <i class="ti ti-loader-2 glping-spin me-1"></i>Chargement…
+        <i class="ti ti-loader-2 glping-spin me-1"></i>@T("Chargement…")
     </div>
 }
 else if (_links.Count == 0)
 {
     <div class="glping-config-placeholder">
         <i class="ti ti-external-link"></i>
-        <p class="mb-1">Aucun lien externe pour ce type d'objet.</p>
+        <p class="mb-1">@T("Aucun lien externe pour ce type d'objet.")</p>
         <p class="mb-0 text-secondary" style="max-width: 46rem;">
-            Les liens se définissent dans
-            <a href="/config/external-links">Configuration &gt; Liens externes</a> : une URL portant
+            @T("Les liens se définissent dans")
+            <a href="/config/external-links">@T("Configuration > Liens externes")</a> : une URL portant
             des balises (<code>[NAME]</code>, <code>[IP]</code>, ...) remplacées par les valeurs de
-            la fiche, pour pointer un outil tiers sur le bon élément.
+            @T("la fiche, pour pointer un outil tiers sur le bon élément.")
         </p>
     </div>
 }
 else
 {
     <div class="glping-fiche-block">
-        <div class="glping-fiche-block-title"><i class="ti ti-external-link"></i>Liens externes (@_links.Count)</div>
+        <div class="glping-fiche-block-title"><i class="ti ti-external-link"></i>@T("Liens externes ({0})", _links.Count)</div>
         <div class="table-responsive">
             <table class="table table-vcenter card-table mb-0">
                 <thead>
                     <tr>
-                        <th style="width: 18rem;">Nom</th>
-                        <th>Adresse</th>
+                        <th style="width: 18rem;">@T("Nom")</th>
+                        <th>@T("Adresse")</th>
                     </tr>
                 </thead>
                 <tbody>

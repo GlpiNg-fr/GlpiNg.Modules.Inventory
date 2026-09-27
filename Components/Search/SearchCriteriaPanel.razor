@@ -8,7 +8,7 @@
 
 <div class="dropdown">
     <button type="button" class="btn dropdown-toggle" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
-        <i class="ti ti-search me-1"></i>Rechercher
+        <i class="ti ti-search me-1"></i>@T("Rechercher")
         @if (ActiveCriteriaCount > 0)
         {
             <span class="badge bg-blue-lt ms-1">@ActiveCriteriaCount</span>
@@ -24,14 +24,14 @@
                 <div class="col-auto" style="width: 5.5rem;">
                     @if (criterionIndex == 0)
                     {
-                        <span class="text-secondary">PAS</span>
+                        <span class="text-secondary">@T("PAS")</span>
                     }
                     else
                     {
                         <select class="form-select form-select-sm" value="@criterion.Link"
                                 @onchange="@((ChangeEventArgs e) => criterion.Link = (string)e.Value!)">
-                            <option value="AND">ET</option>
-                            <option value="OR">OU</option>
+                            <option value="AND">@T("ET")</option>
+                            <option value="OR">@T("OU")</option>
                         </select>
                     }
                 </div>
@@ -40,7 +40,7 @@
                             @onchange="@((ChangeEventArgs e) => OnFieldChanged(criterion, (string)e.Value!))">
                         @foreach (SearchField option in Fields)
                         {
-                            <option value="@option.Key">@option.Label</option>
+                            <option value="@option.Key">@T(option.Label)</option>
                         }
                     </select>
                 </div>
@@ -82,7 +82,7 @@
                     }
                 </div>
                 <div class="col-auto">
-                    <button type="button" class="btn btn-icon btn-sm" title="Supprimer ce critère"
+                    <button type="button" class="btn btn-icon btn-sm" title="@(T("Supprimer ce critère"))"
                             disabled="@(Criteria.Count <= 1)" @onclick="() => RemoveCriterion(criterion)">
                         <i class="ti ti-trash"></i>
                     </button>
@@ -92,19 +92,19 @@
 
         <div class="d-flex align-items-center justify-content-between mt-3">
             <button type="button" class="btn btn-sm" @onclick="AddCriterion">
-                <i class="ti ti-circle-plus me-1"></i>Ajouter un critère
+                <i class="ti ti-circle-plus me-1"></i>@T("Ajouter un critère")
             </button>
             <div class="d-flex gap-2">
                 @if (OnSaveRequested.HasDelegate)
                 {
-                    <button type="button" class="btn btn-icon btn-sm" title="Sauvegarder la recherche courante"
+                    <button type="button" class="btn btn-icon btn-sm" title="@(T("Sauvegarder la recherche courante"))"
                             @onclick="OnSaveRequested">
                         <i class="ti ti-bookmark-plus"></i>
                     </button>
                 }
-                <button type="button" class="btn btn-sm" @onclick="ResetAsync">Réinitialiser</button>
+                <button type="button" class="btn btn-sm" @onclick="ResetAsync">@T("Réinitialiser")</button>
                 <button type="button" class="btn btn-sm btn-primary" @onclick="OnApply">
-                    <i class="ti ti-search me-1"></i>Rechercher
+                    <i class="ti ti-search me-1"></i>@T("Rechercher")
                 </button>
             </div>
         </div>

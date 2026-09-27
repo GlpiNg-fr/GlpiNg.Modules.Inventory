@@ -3,13 +3,13 @@
 @using GlpiNg.Modules.Inventory.Services
 @rendermode InteractiveServer
 
-<PageTitle>@(_item?.Name ?? "Imprimante") — GlpiNg</PageTitle>
+<PageTitle>@(_item?.Name ?? T("Imprimante")) — GlpiNg</PageTitle>
 
 @if (_item is null)
 {
     <div class="text-center text-secondary py-5">
         <i class="ti ti-printer-off fs-1"></i>
-        <p class="mt-2">Cette imprimante est introuvable.</p>
+        <p class="mt-2">@T("Cette imprimante est introuvable.")</p>
     </div>
 }
 else
@@ -17,7 +17,7 @@ else
     <div class="glping-fiche-topbar">
         <div class="glping-fiche-crumb">
             <i class="ti ti-printer"></i>
-            <span>Imprimante - @_item.Name - ID @_item.Id</span>
+            <span>@T("Imprimante - {0} - ID {1}", _item.Name, _item.Id)</span>
         </div>
         <div class="glping-fiche-toolbar">
             @if (_total > 0)
@@ -37,21 +37,21 @@ else
         <aside class="glping-fiche-sidebar">
             <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "main" ? "active" : "")" @onclick='() => SetTab("main")'>
                 <i class="ti ti-printer"></i>
-                <span>Imprimante</span>
+                <span>@T("Imprimante")</span>
             </button>
             <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "cartridges" ? "active" : "")" @onclick='() => SetTab("cartridges")'>
                 <i class="ti ti-droplet"></i>
-                <span>Cartouches</span>
+                <span>@T("Cartouches")</span>
                 <span class="glping-fiche-tab-count">@InstalledCartridges.Count()</span>
             </button>
             <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "history" ? "active" : "")" @onclick='() => SetTab("history")'>
                 <i class="ti ti-history"></i>
-                <span>Historique</span>
+                <span>@T("Historique")</span>
                 <span class="glping-fiche-tab-count">@_item.HistoryEntries.Count</span>
             </button>
             <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "links" ? "active" : "")" @onclick='() => SetTab("links")'>
                 <i class="ti ti-external-link"></i>
-                <span>Liens externes</span>
+                <span>@T("Liens externes")</span>
             </button>
         </aside>
 
@@ -64,10 +64,10 @@ else
 
                         <div class="d-flex justify-content-end gap-2 mt-3">
                             <button type="button" class="btn btn-outline-danger" @onclick="DeleteAsync">
-                                <i class="ti ti-trash me-1"></i>Supprimer définitivement
+                                <i class="ti ti-trash me-1"></i>@T("Supprimer définitivement")
                             </button>
                             <button type="submit" class="btn btn-primary" disabled="@_isSaving">
-                                <i class="ti ti-device-floppy me-1"></i>@(_isSaving ? "Enregistrement…" : "Sauvegarder")
+                                <i class="ti ti-device-floppy me-1"></i>@(_isSaving ? T("Enregistrement…") : T("Sauvegarder"))
                             </button>
                         </div>
                     </EditForm>
@@ -91,7 +91,7 @@ else
                         {
                             <div class="glping-config-placeholder">
                                 <i class="ti ti-droplet-off"></i>
-                                <p class="mb-0">Aucune cartouche installée sur cette imprimante.</p>
+                                <p class="mb-0">@T("Aucune cartouche installée sur cette imprimante.")</p>
                             </div>
                         }
                         else
@@ -100,11 +100,11 @@ else
                                 <table class="table table-vcenter card-table mb-0">
                                     <thead>
                                         <tr>
-                                            <th>Référence</th>
-                                            <th>Type</th>
-                                            <th>Unité</th>
-                                            <th>Niveau</th>
-                                            <th>Installée le</th>
+                                            <th>@T("Référence")</th>
+                                            <th>@T("Type")</th>
+                                            <th>@T("Unité")</th>
+                                            <th>@T("Niveau")</th>
+                                            <th>@T("Installée le")</th>
                                             <th></th>
                                         </tr>
                                     </thead>
@@ -123,7 +123,7 @@ else
                                                         @* La date du relevé accompagne toujours le niveau : un niveau
                                                            d'il y a trois mois ne se lit pas comme celui de ce matin. *@
                                                         <span class="badge @(level <= 10 ? "bg-red-lt" : level <= 25 ? "bg-orange-lt" : "bg-green-lt")"
-                                                              title="@(cartridge.LevelReadAt is { } read ? $"Relevé le {Display.DateTime(read)}" : null)">
+                                                              title="@(cartridge.LevelReadAt is { } read ? T("Relevé le {0}", Display.DateTime(read)) : null)">
                                                             @level&nbsp;%
                                                         </span>
                                                     }
@@ -135,7 +135,7 @@ else
                                                 <td>@(cartridge.DateUse is { } used ? Display.Date(used) : "—")</td>
                                                 <td class="text-end">
                                                     <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => RemoveCartridgeAsync(cartridge)">
-                                                        Retirer
+                                                        @T("Retirer")
                                                     </button>
                                                 </td>
                                             </tr>
@@ -149,29 +149,27 @@ else
                             <div class="d-flex gap-2 align-items-center flex-wrap">
                                 <select class="form-select" style="max-width: 360px;" value="@_itemToInstall"
                                         @onchange="@((ChangeEventArgs e) => _itemToInstall = int.Parse((string)e.Value!))">
-                                    <option value="0">-- Référence à installer --</option>
+                                    <option value="0">@T("-- Référence à installer --")</option>
                                     @foreach (CartridgeItem item in _installableItems)
                                     {
-                                        <option value="@item.Id">@item.Name (@AvailableStock(item) en stock)</option>
+                                        <option value="@item.Id">@item.Name @T("({0} en stock)", AvailableStock(item))</option>
                                     }
                                 </select>
                                 <button type="button" class="btn btn-primary" disabled="@(_itemToInstall == 0)" @onclick="InstallCartridgeAsync">
-                                    <i class="ti ti-plus me-1"></i>Installer
+                                    <i class="ti ti-plus me-1"></i>@T("Installer")
                                 </button>
                             </div>
                             @if (_installableItems.Count == 0)
                             {
                                 <p class="hint mt-2 mb-0">
-                                    Aucune référence n'a d'unité en stock. Réceptionnez-en une depuis
-                                    <a href="/parc/cartridge-items">Cartouches</a> avant de pouvoir l'installer.
+                                    @T("Aucune référence n'a d'unité en stock. Réceptionnez-en une depuis")
+                                    <a href="/parc/cartridge-items">@T("Cartouches")</a> @T("avant de pouvoir l'installer.")
                                 </p>
                             }
                             else
                             {
                                 <p class="hint mt-2 mb-0">
-                                    L'unité la plus anciennement reçue est installée en premier : un consommable
-                                    se périme, et le fond de stock ne doit pas vieillir pendant qu'on entame les
-                                    arrivages.
+                                    @T("L'unité la plus anciennement reçue est installée en premier : un consommable se périme, et le fond de stock ne doit pas vieillir pendant qu'on entame les arrivages.")
                                 </p>
                             }
                         </div>
@@ -185,11 +183,11 @@ else
                                 <table class="table table-vcenter card-table mb-0">
                                     <thead>
                                         <tr>
-                                            <th>Référence</th>
-                                            <th>Unité</th>
-                                            <th>Installée le</th>
-                                            <th>Retirée le</th>
-                                            <th>Durée</th>
+                                            <th>@T("Référence")</th>
+                                            <th>@T("Unité")</th>
+                                            <th>@T("Installée le")</th>
+                                            <th>@T("Retirée le")</th>
+                                            <th>@T("Durée")</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -204,7 +202,7 @@ else
                                                 <td>@(cartridge.DateOut is { } to ? Display.Date(to) : "—")</td>
                                                 <td>
                                                     @(cartridge is { DateUse: { } start, DateOut: { } end }
-                                                        ? $"{(int)(end - start).TotalDays} jour(s)"
+                                                        ? T("{0} jour(s)", (int)(end - start).TotalDays)
                                                         : "—")
                                                 </td>
                                             </tr>
@@ -218,12 +216,12 @@ else
 
                 case "history":
                     <div class="glping-fiche-block">
-                        <div class="glping-fiche-block-title"><i class="ti ti-history"></i>Historique (@_item.HistoryEntries.Count)</div>
+                        <div class="glping-fiche-block-title"><i class="ti ti-history"></i>@T("Historique ({0})", _item.HistoryEntries.Count)</div>
                         @if (_item.HistoryEntries.Count == 0)
                         {
                             <div class="glping-config-placeholder">
                                 <i class="ti ti-history"></i>
-                                <p class="mb-0">Aucune modification enregistrée.</p>
+                                <p class="mb-0">@T("Aucune modification enregistrée.")</p>
                             </div>
                         }
                         else
@@ -232,11 +230,11 @@ else
                                 <table class="table table-vcenter card-table mb-0">
                                     <thead>
                                         <tr>
-                                            <th>ID</th>
-                                            <th>Date</th>
-                                            <th>Utilisateur</th>
-                                            <th>Champ</th>
-                                            <th>Mise à jour</th>
+                                            <th>@T("ID")</th>
+                                            <th>@T("Date")</th>
+                                            <th>@T("Utilisateur")</th>
+                                            <th>@T("Champ")</th>
+                                            <th>@T("Mise à jour")</th>
                                         </tr>
                                     </thead>
                                     <tbody>

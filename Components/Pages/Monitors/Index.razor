@@ -1,7 +1,7 @@
 ﻿@page "/parc/monitors"
 @rendermode InteractiveServer
 
-<PageTitle>Moniteurs — GlpiNg</PageTitle>
+<PageTitle>@T("Moniteurs — GlpiNg")</PageTitle>
 
 <div class="glping-list-page">
 <div class="d-flex gap-3 glping-computers-layout">
@@ -10,20 +10,20 @@
         <div class="glping-saved-searches-panel @(_savedSearchesPinned ? "pinned" : "")">
             <div class="glping-saved-searches-heading d-flex align-items-center justify-content-between">
                 <span class="d-flex align-items-center gap-2">
-                    <i class="ti ti-bookmarks"></i>Recherches sauvegardées
+                    <i class="ti ti-bookmarks"></i>@T("Recherches sauvegardées")
                 </span>
                 <div class="d-flex align-items-center gap-1">
-                    <a class="btn btn-icon btn-sm btn-ghost-secondary" href="/tools/saved-searches" title="Gérer toutes les recherches sauvegardées">
+                    <a class="btn btn-icon btn-sm btn-ghost-secondary" href="/tools/saved-searches" title="@(T("Gérer toutes les recherches sauvegardées"))">
                         <i class="ti ti-settings"></i>
                     </a>
                     <button type="button" class="btn btn-icon btn-sm btn-ghost-secondary @(_savedSearchesPinned ? "active" : "")"
-                            title="@(_savedSearchesPinned ? "Détacher ce panneau" : "Épingler ce panneau pour cette page")"
+                            title="@(_savedSearchesPinned ? T("Détacher ce panneau") : T("Épingler ce panneau pour cette page"))"
                             @onclick="() => _savedSearchesPinned = !_savedSearchesPinned">
                         <i class="ti ti-pinned"></i>
                     </button>
                     @if (!_savedSearchesPinned)
                     {
-                        <button type="button" class="btn btn-icon btn-sm btn-ghost-secondary" title="Fermer le panneau"
+                        <button type="button" class="btn btn-icon btn-sm btn-ghost-secondary" title="@(T("Fermer le panneau"))"
                                 @onclick="() => _savedSearchesOpen = false">
                             <i class="ti ti-x"></i>
                         </button>
@@ -34,13 +34,13 @@
                 <li class="nav-item">
                     <button type="button" class="nav-link @(_savedSearchesTab == SavedSearchesTab.Monitor ? "active" : "")"
                             @onclick="() => _savedSearchesTab = SavedSearchesTab.Monitor">
-                        Moniteur
+                        @T("Moniteur")
                     </button>
                 </li>
                 <li class="nav-item">
                     <button type="button" class="nav-link @(_savedSearchesTab == SavedSearchesTab.Other ? "active" : "")"
                             @onclick="() => _savedSearchesTab = SavedSearchesTab.Other">
-                        Autres
+                        @T("Autres")
                     </button>
                 </li>
             </ul>
@@ -49,7 +49,7 @@
                 {
                     @if (FilteredOtherSavedSearches.Count == 0)
                     {
-                        <p class="px-3 py-2 text-secondary mb-0">Aucune recherche enregistrée sur les autres types d'éléments.</p>
+                        <p class="px-3 py-2 text-secondary mb-0">@T("Aucune recherche enregistrée sur les autres types d'éléments.")</p>
                     }
                     else
                     {
@@ -57,7 +57,7 @@
                         {
                             <a class="list-group-item d-flex align-items-center gap-2 text-reset"
                                href="@SavedSearchItemTypes.RouteFor(saved.ItemType)"
-                               title="Aller à la liste « @SavedSearchItemTypes.LabelFor(saved.ItemType) »">
+                               title="@(T("Aller à la liste « {0} »", SavedSearchItemTypes.LabelFor(saved.ItemType)))">
                                 <i class="ti @SavedSearchItemTypes.IconFor(saved.ItemType) text-secondary"></i>
                                 <span class="text-truncate flex-grow-1">@saved.Name</span>
                                 <span class="badge bg-secondary-lt ms-auto">@saved.ResultCount</span>
@@ -68,7 +68,7 @@
                 else if (FilteredSavedSearches.Count == 0)
                 {
                     <p class="px-3 py-2 text-secondary mb-0">
-                        @(_savedSearches.Count == 0 ? "Aucune recherche enregistrée." : "Aucun résultat pour ce filtre.")
+                        @(_savedSearches.Count == 0 ? T("Aucune recherche enregistrée.") : T("Aucun résultat pour ce filtre."))
                     </p>
                 }
                 else
@@ -80,14 +80,14 @@
                              @ondragstart="() => OnSavedSearchDragStart(saved)"
                              @ondragover:preventDefault="true"
                              @ondrop="() => OnSavedSearchDropAsync(saved)" @ondrop:preventDefault="true">
-                            <i class="ti ti-grip-vertical glping-drag-handle" title="Glisser pour réordonner"></i>
+                            <i class="ti ti-grip-vertical glping-drag-handle" title="@(T("Glisser pour réordonner"))"></i>
                             <button type="button" class="btn btn-link text-reset text-truncate flex-grow-1 justify-content-start p-0"
-                                    title="Appliquer cette recherche" @onclick="() => ApplySavedSearch(saved)">
+                                    title="@(T("Appliquer cette recherche"))" @onclick="() => ApplySavedSearch(saved)">
                                 <span class="text-truncate">@saved.Name</span>
                             </button>
                             @if (saved.OwnerUserId == _currentUserId)
                             {
-                                <button type="button" class="btn btn-icon btn-sm btn-ghost-secondary" title="Définir par défaut"
+                                <button type="button" class="btn btn-icon btn-sm btn-ghost-secondary" title="@(T("Définir par défaut"))"
                                         @onclick="() => SetDefaultSavedSearchAsync(saved)">
                                     <i class="ti @(saved.IsDefault ? "ti-star-filled text-warning" : "ti-star")"></i>
                                 </button>
@@ -99,11 +99,11 @@
             </div>
             <div class="glping-saved-searches-filter">
                 <div class="input-icon">
-                    <input type="text" class="form-control form-control-sm" placeholder="Filtrer la liste" value="@_savedSearchFilter"
+                    <input type="text" class="form-control form-control-sm" placeholder="@(T("Filtrer la liste"))" value="@_savedSearchFilter"
                            @oninput="@((ChangeEventArgs e) => _savedSearchFilter = (string)(e.Value ?? string.Empty))" />
                     @if (_savedSearchFilter.Length > 0)
                     {
-                        <span class="input-icon-addon" role="button" title="Effacer le filtre" @onclick="() => _savedSearchFilter = string.Empty">
+                        <span class="input-icon-addon" role="button" title="@(T("Effacer le filtre"))" @onclick="() => _savedSearchFilter = string.Empty">
                             <i class="ti ti-x"></i>
                         </span>
                     }
@@ -115,7 +115,7 @@
     <div class="card flex-fill" style="min-width: 0;">
     <div class="card-header d-flex align-items-center justify-content-between glping-list-toolbar">
         <div class="btn-list">
-            <button type="button" class="btn btn-icon @(_savedSearchesOpen ? "active" : "")" title="Afficher les recherches sauvegardées"
+            <button type="button" class="btn btn-icon @(_savedSearchesOpen ? "active" : "")" title="@(T("Afficher les recherches sauvegardées"))"
                     @onclick="() => _savedSearchesOpen = !_savedSearchesOpen">
                 <i class="ti ti-bookmarks"></i>
             </button>
@@ -126,11 +126,11 @@
         </div>
 
         <div class="btn-list align-items-center">
-            <button type="button" class="btn btn-icon" @onclick="() => _showColumnsModal = true" title="Sélectionner les colonnes à afficher">
+            <button type="button" class="btn btn-icon" @onclick="() => _showColumnsModal = true" title="@(T("Sélectionner les colonnes à afficher"))">
                 <i class="ti ti-columns-3"></i>
             </button>
 
-            <button type="button" class="btn btn-icon" @onclick="OnRefreshAsync" disabled="@_isRefreshing" title="Rafraîchir">
+            <button type="button" class="btn btn-icon" @onclick="OnRefreshAsync" disabled="@_isRefreshing" title="@(T("Rafraîchir"))">
                 <i class="ti ti-refresh @(_isRefreshing ? "glping-spin" : "")"></i>
             </button>
         </div>
@@ -140,10 +140,10 @@
         <table class="table table-vcenter card-table">
             <thead>
                 <tr>
-                    <th class="glping-sortable-th" title="Ctrl+clic pour ajouter un tri secondaire"
+                    <th class="glping-sortable-th" title="@(T("Ctrl+clic pour ajouter un tri secondaire"))"
                         @onclick="@((MouseEventArgs e) => SetSort("designation", e.CtrlKey))">
                         <span class="d-flex align-items-center gap-1">
-                            Désignation
+                            @T("Désignation")
                             @if (GetSortCriterion("designation") is { } designationActive)
                             {
                                 <span class="glping-sort-indicator">
@@ -160,10 +160,10 @@
                     {
                         SearchField<MonitorRow>? columnField = FindField(columnKey);
                         SortCriterion? active = GetSortCriterion(columnKey);
-                        <th class="glping-sortable-th" title="Ctrl+clic pour ajouter un tri secondaire"
+                        <th class="glping-sortable-th" title="@(T("Ctrl+clic pour ajouter un tri secondaire"))"
                             @onclick="@((MouseEventArgs e) => SetSort(columnKey, e.CtrlKey))">
                             <span class="d-flex align-items-center gap-1">
-                                @(columnField?.Label ?? columnKey)
+                                @(T(columnField?.Label ?? columnKey))
                                 @if (active is not null)
                                 {
                                     <span class="glping-sort-indicator">
@@ -183,7 +183,7 @@
                 @if (_filteredMonitors.Count == 0)
                 {
                     <tr>
-                        <td colspan="@(1 + _columns.Count)" class="text-center text-secondary py-4">Aucun moniteur trouvé.</td>
+                        <td colspan="@(1 + _columns.Count)" class="text-center text-secondary py-4">@T("Aucun moniteur trouvé.")</td>
                     </tr>
                 }
                 else
@@ -220,7 +220,7 @@
 
     <div class="card-footer d-flex align-items-center justify-content-between flex-wrap gap-2">
         <div class="d-flex align-items-center gap-2 text-secondary">
-            <span>Éléments par page</span>
+            <span>@T("Éléments par page")</span>
             <select class="form-select form-select-sm w-auto" value="@_pageSize"
                     @onchange="@((ChangeEventArgs e) => SetPageSize(int.Parse((string)e.Value!)))">
                 @foreach (int size in PageSizeOptions)
@@ -234,7 +234,7 @@
         {
             <div class="d-flex align-items-center gap-3">
                 <span class="text-secondary">
-                    @(((_currentPage - 1) * _pageSize) + 1)–@(Math.Min(_currentPage * _pageSize, _filteredMonitors.Count)) sur @_filteredMonitors.Count
+                    @T("{0}–{1} sur {2}", ((_currentPage - 1) * _pageSize) + 1, Math.Min(_currentPage * _pageSize, _filteredMonitors.Count), _filteredMonitors.Count)
                 </span>
                 <ul class="pagination pagination-sm m-0">
                     <li class="page-item @(_currentPage <= 1 ? "disabled" : "")">
@@ -243,7 +243,7 @@
                         </button>
                     </li>
                     <li class="page-item disabled">
-                        <span class="page-link">Page @_currentPage / @TotalPages</span>
+                        <span class="page-link">@T("Page {0} / {1}", _currentPage, TotalPages)</span>
                     </li>
                     <li class="page-item @(_currentPage >= TotalPages ? "disabled" : "")">
                         <button type="button" class="page-link" @onclick="() => GoToPage(_currentPage + 1)" disabled="@(_currentPage >= TotalPages)">
@@ -264,27 +264,27 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="ti ti-bookmark me-2"></i>Sauvegarder la recherche courante</h5>
-                    <button type="button" class="btn-close" aria-label="Fermer" @onclick="() => _showSaveSearchModal = false"></button>
+                    <h5 class="modal-title"><i class="ti ti-bookmark me-2"></i>@T("Sauvegarder la recherche courante")</h5>
+                    <button type="button" class="btn-close" aria-label="@(T("Fermer"))" @onclick="() => _showSaveSearchModal = false"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Nom</label>
-                        <input type="text" class="form-control" placeholder="Nom de la recherche" value="@_newSavedSearchName"
+                        <label class="form-label">@T("Nom")</label>
+                        <input type="text" class="form-control" placeholder="@(T("Nom de la recherche"))" value="@_newSavedSearchName"
                                @onchange="@((ChangeEventArgs e) => _newSavedSearchName = (string)(e.Value ?? string.Empty))" />
                     </div>
                     <div>
-                        <label class="form-label">Visibilité</label>
+                        <label class="form-label">@T("Visibilité")</label>
                         <select class="form-select" value="@(_newSavedSearchIsPublic ? "public" : "private")"
                                 @onchange="@((ChangeEventArgs e) => _newSavedSearchIsPublic = (string)e.Value! == "public")">
-                            <option value="private">Privé</option>
-                            <option value="public">Public</option>
+                            <option value="private">@T("Privé")</option>
+                            <option value="public">@T("Public")</option>
                         </select>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-primary" disabled="@(_newSavedSearchName.Trim().Length == 0)" @onclick="SaveCurrentSearchAsync">
-                        <i class="ti ti-plus me-1"></i>Ajouter
+                        <i class="ti ti-plus me-1"></i>@T("Ajouter")
                     </button>
                 </div>
             </div>
@@ -299,8 +299,8 @@
         <div class="modal-lg modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="ti ti-columns-3 me-2"></i>Sélectionner les colonnes à afficher — Moniteur</h5>
-                    <button type="button" class="btn-close" aria-label="Fermer" @onclick="() => _showColumnsModal = false"></button>
+                    <h5 class="modal-title"><i class="ti ti-columns-3 me-2"></i>@T("Sélectionner les colonnes à afficher — Moniteur")</h5>
+                    <button type="button" class="btn-close" aria-label="@(T("Fermer"))" @onclick="() => _showColumnsModal = false"></button>
                 </div>
                 <div class="modal-body">
                     <div class="d-flex gap-2 mb-3">
@@ -308,15 +308,15 @@
                             <option value="">—</option>
                             @foreach (SearchField<MonitorRow> field in AvailableColumnsToAdd)
                             {
-                                <option value="@field.Key">@field.Label</option>
+                                <option value="@field.Key">@T(field.Label)</option>
                             }
                         </select>
                         <button type="button" class="btn btn-primary text-nowrap" disabled="@string.IsNullOrEmpty(_columnToAdd)" @onclick="AddColumnAsync">
-                            <i class="ti ti-plus me-1"></i>Ajouter
+                            <i class="ti ti-plus me-1"></i>@T("Ajouter")
                         </button>
                     </div>
                     <div class="list-group list-group-flush glping-columns-list">
-                        <div class="list-group-item text-secondary">Désignation</div>
+                        <div class="list-group-item text-secondary">@T("Désignation")</div>
                         @foreach (string columnKey in _columns)
                         {
                             SearchField<MonitorRow>? field = FindField(columnKey);
@@ -326,8 +326,8 @@
                                  @ondragover:preventDefault="true"
                                  @ondrop="() => OnColumnDropAsync(columnKey)" @ondrop:preventDefault="true">
                                 <i class="ti ti-grip-vertical glping-drag-handle"></i>
-                                <span class="flex-grow-1">@(field?.Label ?? columnKey)</span>
-                                <button type="button" class="btn btn-icon btn-sm text-danger" title="Retirer cette colonne"
+                                <span class="flex-grow-1">@(T(field?.Label ?? columnKey))</span>
+                                <button type="button" class="btn btn-icon btn-sm text-danger" title="@(T("Retirer cette colonne"))"
                                         @onclick="() => RemoveColumnAsync(columnKey)">
                                     <i class="ti ti-x"></i>
                                 </button>

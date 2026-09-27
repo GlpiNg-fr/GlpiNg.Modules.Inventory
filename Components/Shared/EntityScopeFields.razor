@@ -11,7 +11,7 @@
 <div class="row">
     <div class="col-md-6">
         <div class="glping-fiche-field">
-            <label>Entité</label>
+            <label>@T("Entité")</label>
             @if (_options.Count == 0)
             {
                 <input class="form-control" value="Aucune entité disponible" disabled />
@@ -30,18 +30,18 @@
             @if (Item.EntityId is { } current && _options.All(option => option.Id != current))
             {
                 <div class="form-hint text-warning">
-                    Rattaché à une entité hors de votre périmètre : la changer ici vous en ferait perdre la visibilité.
+                    @T("Rattaché à une entité hors de votre périmètre : la changer ici vous en ferait perdre la visibilité.")
                 </div>
             }
         </div>
     </div>
     <div class="col-md-6">
         <div class="glping-fiche-field">
-            <label>Visibilité</label>
+            <label>@T("Visibilité")</label>
             <label class="form-check">
                 <input class="form-check-input" type="checkbox" checked="@Item.IsRecursive"
                        @onchange="@((ChangeEventArgs e) => Item.IsRecursive = (bool)(e.Value ?? false))" />
-                <span class="form-check-label">Visible depuis les sous-entités</span>
+                <span class="form-check-label">@T("Visible depuis les sous-entités")</span>
             </label>
         </div>
     </div>

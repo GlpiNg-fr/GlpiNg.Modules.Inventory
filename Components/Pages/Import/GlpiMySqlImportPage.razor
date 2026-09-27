@@ -1,46 +1,45 @@
 ﻿@page "/admin/import/glpi"
 @rendermode InteractiveServer
 
-<PageTitle>Import GLPI — GlpiNg</PageTitle>
+<PageTitle>@T("Import GLPI — GlpiNg")</PageTitle>
 
 <div class="page-header d-flex align-items-center justify-content-between mb-3">
-    <h2 class="page-title mb-0">Import depuis une base GLPI MySQL</h2>
+    <h2 class="page-title mb-0">@T("Import depuis une base GLPI MySQL")</h2>
 </div>
 
 <div class="card mb-3">
     <div class="card-header">
-        <h3 class="card-title"><i class="ti ti-plug-connected me-1"></i>Connexion à la base GLPI source</h3>
+        <h3 class="card-title"><i class="ti ti-plug-connected me-1"></i>@T("Connexion à la base GLPI source")</h3>
     </div>
     <div class="glping-config">
         <div class="glping-config-body">
             <EditForm Model="State" OnValidSubmit="AnalyzeAsync" class="glping-config-form glping-config-form-wide">
                 <div class="glping-config-field">
-                    <label for="glping-import-server">Adresse du serveur</label>
-                    <input id="glping-import-server" type="text" placeholder="ex. glping-mysql.exemple.local"
+                    <label for="glping-import-server">@T("Adresse du serveur")</label>
+                    <input id="glping-import-server" type="text" placeholder="@(T("ex. glping-mysql.exemple.local"))"
                            @bind="State.Server" disabled="@(State.IsRunning || State.IsAnalyzing)" />
                 </div>
 
                 <div class="glping-config-field">
-                    <label for="glping-import-database">Base de données</label>
-                    <input id="glping-import-database" type="text" placeholder="glpi"
+                    <label for="glping-import-database">@T("Base de données")</label>
+                    <input id="glping-import-database" type="text" placeholder="@(T("glpi"))"
                            @bind="State.Database" disabled="@(State.IsRunning || State.IsAnalyzing)" />
                 </div>
 
                 <div class="glping-config-field">
-                    <label for="glping-import-username">Utilisateur</label>
+                    <label for="glping-import-username">@T("Utilisateur")</label>
                     <input id="glping-import-username" type="text" autocomplete="off"
                            @bind="State.Username" disabled="@(State.IsRunning || State.IsAnalyzing)" />
                 </div>
 
                 <div class="glping-config-field">
-                    <label for="glping-import-password">Mot de passe</label>
+                    <label for="glping-import-password">@T("Mot de passe")</label>
                     <input id="glping-import-password" type="password" autocomplete="off"
                            @bind="State.Password" disabled="@(State.IsRunning || State.IsAnalyzing)" />
                 </div>
 
                 <p class="hint">
-                    Un compte MySQL en lecture seule est recommandé : ni l'analyse ni l'import ne font
-                    d'écriture sur la base GLPI source.
+                    @T("Un compte MySQL en lecture seule est recommandé : ni l'analyse ni l'import ne font d'écriture sur la base GLPI source.")
                 </p>
 
                 @* Saisi avec la connexion, et non dans chaque section : c'est une propriété de
@@ -48,53 +47,50 @@
                    chercher sur disque en descend — les documents directement, les fichiers de
                    paquets sous _plugins/. *@
                 <div class="glping-config-divider">
-                    <span><i class="ti ti-folder"></i> Fichiers de l'installation GLPI</span>
+                    <span><i class="ti ti-folder"></i> @T("Fichiers de l'installation GLPI")</span>
                 </div>
 
                 <p class="hint" style="margin-left:0;">
-                    GLPI ne range pas ses fichiers en base : seuls leurs chemins y figurent. Sans ce dossier,
-                    documents et fichiers de paquets sont repris en fiches, mais sans contenu téléchargeable.
+                    @T("GLPI ne range pas ses fichiers en base : seuls leurs chemins y figurent. Sans ce dossier, documents et fichiers de paquets sont repris en fiches, mais sans contenu téléchargeable.")
                 </p>
 
                 <div class="glping-config-field">
                     <label for="glping-import-files-root">Dossier <code>files/</code> de GLPI</label>
                     <input id="glping-import-files-root" type="text" class="glping-config-input"
-                           placeholder="/var/www/glpi/files"
+                           placeholder="@(T("/var/www/glpi/files"))"
                            @bind="State.GlpiFilesPath" disabled="@State.IsRunning" />
                 </div>
-                <p class="hint">Chemin local ou partage réseau (UNC), vu depuis la machine GlpiNg.</p>
+                <p class="hint">@T("Chemin local ou partage réseau (UNC), vu depuis la machine GlpiNg.")</p>
 
                 @* Optionnels : un partage déjà accessible au compte sous lequel tourne GlpiNg n'en
                    a pas besoin. Ils ne servent qu'aux chemins UNC — sur un chemin local ils sont
                    simplement ignorés. *@
                 <div class="glping-config-field">
-                    <label for="glping-import-files-user">Identifiant du partage <span class="text-secondary">(optionnel)</span></label>
+                    <label for="glping-import-files-user">@T("Identifiant du partage") <span class="text-secondary">@T("(optionnel)")</span></label>
                     <input id="glping-import-files-user" type="text" class="glping-config-input"
-                           placeholder="DOMAINE\utilisateur"
+                           placeholder="@(T("DOMAINE\\utilisateur"))"
                            @bind="State.GlpiFilesUserName" disabled="@State.IsRunning" />
                 </div>
 
                 <div class="glping-config-field">
-                    <label for="glping-import-files-password">Mot de passe du partage</label>
+                    <label for="glping-import-files-password">@T("Mot de passe du partage")</label>
                     <input id="glping-import-files-password" type="password" class="glping-config-input"
                            autocomplete="new-password"
                            @bind="State.GlpiFilesPassword" disabled="@State.IsRunning" />
                 </div>
                 <p class="hint">
-                    À renseigner seulement si le compte sous lequel tourne GlpiNg n'a pas accès au partage.
-                    Utilisés le temps de l'import et jamais enregistrés. L'authentification d'un partage
-                    réseau n'est possible que sous Windows ; ailleurs, montez-le avant de lancer l'import.
+                    @T("À renseigner seulement si le compte sous lequel tourne GlpiNg n'a pas accès au partage. Utilisés le temps de l'import et jamais enregistrés. L'authentification d'un partage réseau n'est possible que sous Windows ; ailleurs, montez-le avant de lancer l'import.")
                 </p>
 
                 <button type="submit" class="glping-config-save" disabled="@(!State.CanAnalyze)">
                     @if (State.IsAnalyzing)
                     {
                         <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-                        <span>Analyse en cours…</span>
+                        <span>@T("Analyse en cours…")</span>
                     }
                     else
                     {
-                        <span>Analyser</span>
+                        <span>@T("Analyser")</span>
                     }
                 </button>
             </EditForm>
@@ -113,7 +109,7 @@
 {
     <div class="card mb-3">
         <div class="card-header">
-            <h3 class="card-title"><i class="ti ti-list-check me-1"></i>Éléments trouvés — que faut-il importer ?</h3>
+            <h3 class="card-title"><i class="ti ti-list-check me-1"></i>@T("Éléments trouvés — que faut-il importer ?")</h3>
         </div>
         <div class="card-body">
             @{
@@ -136,9 +132,9 @@
                 <li class="nav-item">
                     <span class="nav-link @(_tab == ImportTab.Parc ? "active" : "")" role="button" @onclick="() => _tab = ImportTab.Parc">
                         <i class="ti ti-device-desktop"></i>
-                        <span>Parc</span>
+                        <span>@T("Parc")</span>
                         <span class="badge bg-secondary-lt">@parcTally.Selected / @parcTally.Available</span>
-                        <label class="glping-switch" title="Tout activer ou désactiver dans cet onglet"
+                        <label class="glping-switch" title="@(T("Tout activer ou désactiver dans cet onglet"))"
                                @onclick="() => { }" @onclick:stopPropagation="true">
                             <input type="checkbox" checked="@(parcTally.Available > 0 && parcTally.Selected == parcTally.Available)"
                                    disabled="@(State.IsRunning || parcTally.Available == 0)"
@@ -150,9 +146,9 @@
                 <li class="nav-item">
                     <span class="nav-link @(_tab == ImportTab.Administration ? "active" : "")" role="button" @onclick="() => _tab = ImportTab.Administration">
                         <i class="ti ti-users-group"></i>
-                        <span>Administration</span>
+                        <span>@T("Administration")</span>
                         <span class="badge bg-secondary-lt">@adminTally.Selected / @adminTally.Available</span>
-                        <label class="glping-switch" title="Tout activer ou désactiver dans cet onglet"
+                        <label class="glping-switch" title="@(T("Tout activer ou désactiver dans cet onglet"))"
                                @onclick="() => { }" @onclick:stopPropagation="true">
                             <input type="checkbox" checked="@(adminTally.Available > 0 && adminTally.Selected == adminTally.Available)"
                                    disabled="@(State.IsRunning || adminTally.Available == 0)"
@@ -164,11 +160,11 @@
                 <li class="nav-item">
                     <span class="nav-link @(_tab == ImportTab.KnowledgeBase ? "active" : "")" role="button" @onclick="() => _tab = ImportTab.KnowledgeBase">
                         <i class="ti ti-book"></i>
-                        <span>Base de connaissances</span>
+                        <span>@T("Base de connaissances")</span>
                         @if (State.KnowledgeBaseAnalysis is { IsPresent: true } kbTab)
                         {
                             <span class="badge bg-secondary-lt">@knowledgeBaseTally.Selected / @knowledgeBaseTally.Available</span>
-                            <label class="glping-switch" title="Tout activer ou désactiver dans cet onglet"
+                            <label class="glping-switch" title="@(T("Tout activer ou désactiver dans cet onglet"))"
                                    @onclick="() => { }" @onclick:stopPropagation="true">
                                 <input type="checkbox" checked="@(knowledgeBaseTally.Available > 0 && knowledgeBaseTally.Selected == knowledgeBaseTally.Available)"
                                        disabled="@(State.IsRunning || knowledgeBaseTally.Available == 0)"
@@ -178,18 +174,18 @@
                         }
                         else
                         {
-                            <span class="badge bg-secondary-lt">absente</span>
+                            <span class="badge bg-secondary-lt">@T("absente")</span>
                         }
                     </span>
                 </li>
                 <li class="nav-item">
                     <span class="nav-link @(_tab == ImportTab.Plugin ? "active" : "")" role="button" @onclick="() => _tab = ImportTab.Plugin">
                         <i class="ti ti-plug"></i>
-                        <span>Plugin d'inventaire</span>
+                        <span>@T("Plugin d'inventaire")</span>
                         @if (plugin.IsPresent)
                         {
                             <span class="badge bg-secondary-lt">@pluginTally.Selected / @pluginTally.Available</span>
-                            <label class="glping-switch" title="Tout activer ou désactiver dans cet onglet"
+                            <label class="glping-switch" title="@(T("Tout activer ou désactiver dans cet onglet"))"
                                    @onclick="() => { }" @onclick:stopPropagation="true">
                                 <input type="checkbox" checked="@(pluginTally.Available > 0 && pluginTally.Selected == pluginTally.Available)"
                                        disabled="@(State.IsRunning || pluginTally.Available == 0)"
@@ -199,7 +195,7 @@
                         }
                         else
                         {
-                            <span class="badge bg-secondary-lt">absent</span>
+                            <span class="badge bg-secondary-lt">@T("absent")</span>
                         }
                     </span>
                 </li>
@@ -209,7 +205,7 @@
             {
                 <div class="glping-config-field-grid">
                     <div class="glping-config-field checkbox">
-                        <label for="glping-import-sel-computers"><i class="ti ti-device-desktop me-2"></i>Ordinateurs (@analysis.ComputersCount)</label>
+                        <label for="glping-import-sel-computers"><i class="ti ti-device-desktop me-2"></i>@T("Ordinateurs ({0})", analysis.ComputersCount)</label>
                         <label class="glping-switch">
                             <input id="glping-import-sel-computers" type="checkbox" @bind="State.Selection.ImportComputers"
                                    disabled="@(State.IsRunning || analysis.ComputersCount == 0)" />
@@ -218,7 +214,7 @@
                     </div>
 
                     <div class="glping-config-field checkbox">
-                        <label for="glping-import-sel-monitors"><i class="ti ti-device-tv me-2"></i>Moniteurs (@analysis.MonitorsCount)</label>
+                        <label for="glping-import-sel-monitors"><i class="ti ti-device-tv me-2"></i>@T("Moniteurs ({0})", analysis.MonitorsCount)</label>
                         <label class="glping-switch">
                             <input id="glping-import-sel-monitors" type="checkbox" @bind="State.Selection.ImportMonitors"
                                    disabled="@(State.IsRunning || analysis.MonitorsCount == 0)" />
@@ -227,7 +223,7 @@
                     </div>
 
                     <div class="glping-config-field checkbox">
-                        <label for="glping-import-sel-agents"><i class="ti ti-robot me-2"></i>Agents (@analysis.AgentsCount)</label>
+                        <label for="glping-import-sel-agents"><i class="ti ti-robot me-2"></i>@T("Agents ({0})", analysis.AgentsCount)</label>
                         <label class="glping-switch">
                             <input id="glping-import-sel-agents" type="checkbox" @bind="State.Selection.ImportAgents"
                                    disabled="@(State.IsRunning || analysis.AgentsCount == 0)" />
@@ -236,7 +232,7 @@
                     </div>
 
                     <div class="glping-config-field checkbox">
-                        <label for="glping-import-sel-components"><i class="ti ti-cpu me-2"></i>Composants matériels (@analysis.ComponentsCount)</label>
+                        <label for="glping-import-sel-components"><i class="ti ti-cpu me-2"></i>@T("Composants matériels ({0})", analysis.ComponentsCount)</label>
                         <label class="glping-switch">
                             <input id="glping-import-sel-components" type="checkbox" @bind="State.Selection.ImportComponents"
                                    disabled="@(State.IsRunning || analysis.ComponentsCount == 0)" />
@@ -245,7 +241,7 @@
                     </div>
 
                     <div class="glping-config-field checkbox">
-                        <label for="glping-import-sel-softwares"><i class="ti ti-apps me-2"></i>Logiciels (@analysis.SoftwaresCount)</label>
+                        <label for="glping-import-sel-softwares"><i class="ti ti-apps me-2"></i>@T("Logiciels ({0})", analysis.SoftwaresCount)</label>
                         <label class="glping-switch">
                             <input id="glping-import-sel-softwares" type="checkbox" @bind="State.Selection.ImportSoftwares"
                                    disabled="@(State.IsRunning || analysis.SoftwaresCount == 0)" />
@@ -254,7 +250,7 @@
                     </div>
 
                     <div class="glping-config-field checkbox">
-                        <label for="glping-import-sel-printers"><i class="ti ti-printer me-2"></i>Imprimantes (@analysis.PrintersCount)</label>
+                        <label for="glping-import-sel-printers"><i class="ti ti-printer me-2"></i>@T("Imprimantes ({0})", analysis.PrintersCount)</label>
                         <label class="glping-switch">
                             <input id="glping-import-sel-printers" type="checkbox" @bind="State.Selection.ImportPrinters"
                                    disabled="@(State.IsRunning || analysis.PrintersCount == 0)" />
@@ -263,7 +259,7 @@
                     </div>
 
                     <div class="glping-config-field checkbox">
-                        <label for="glping-import-sel-peripherals"><i class="ti ti-mouse me-2"></i>Périphériques (@analysis.PeripheralsCount)</label>
+                        <label for="glping-import-sel-peripherals"><i class="ti ti-mouse me-2"></i>@T("Périphériques ({0})", analysis.PeripheralsCount)</label>
                         <label class="glping-switch">
                             <input id="glping-import-sel-peripherals" type="checkbox" @bind="State.Selection.ImportPeripherals"
                                    disabled="@(State.IsRunning || analysis.PeripheralsCount == 0)" />
@@ -272,7 +268,7 @@
                     </div>
 
                     <div class="glping-config-field checkbox">
-                        <label for="glping-import-sel-volumes"><i class="ti ti-server-2 me-2"></i>Volumes (@analysis.VolumesCount)</label>
+                        <label for="glping-import-sel-volumes"><i class="ti ti-server-2 me-2"></i>@T("Volumes ({0})", analysis.VolumesCount)</label>
                         <label class="glping-switch">
                             <input id="glping-import-sel-volumes" type="checkbox" @bind="State.Selection.ImportVolumes"
                                    disabled="@(State.IsRunning || analysis.VolumesCount == 0)" />
@@ -281,7 +277,7 @@
                     </div>
 
                     <div class="glping-config-field checkbox">
-                        <label for="glping-import-sel-batteries"><i class="ti ti-battery me-2"></i>Batteries (@analysis.BatteriesCount)</label>
+                        <label for="glping-import-sel-batteries"><i class="ti ti-battery me-2"></i>@T("Batteries ({0})", analysis.BatteriesCount)</label>
                         <label class="glping-switch">
                             <input id="glping-import-sel-batteries" type="checkbox" @bind="State.Selection.ImportBatteries"
                                    disabled="@(State.IsRunning || analysis.BatteriesCount == 0)" />
@@ -291,8 +287,7 @@
                 </div>
 
                 <p class="hint mt-2">
-                    CPU : @analysis.CpuCount · RAM : @analysis.RamCount · Disques : @analysis.DiskCount ·
-                    Cartes réseau : @analysis.NetworkCardCount
+                    @T("CPU : {0} · RAM : {1} · Disques : {2} · Cartes réseau : {3}", analysis.CpuCount, analysis.RamCount, analysis.DiskCount, analysis.NetworkCardCount)
                 </p>
             }
 
@@ -300,7 +295,7 @@
             {
                 <div class="glping-config-field-grid">
                     <div class="glping-config-field checkbox">
-                        <label for="glping-import-sel-entities"><i class="ti ti-building me-2"></i>Entités (@adminAnalysis.EntitiesCount)</label>
+                        <label for="glping-import-sel-entities"><i class="ti ti-building me-2"></i>@T("Entités ({0})", adminAnalysis.EntitiesCount)</label>
                         <label class="glping-switch">
                             <input id="glping-import-sel-entities" type="checkbox" @bind="State.AdminSelection.ImportEntities"
                                    disabled="@(State.IsRunning || adminAnalysis.EntitiesCount == 0)" />
@@ -309,7 +304,7 @@
                     </div>
 
                     <div class="glping-config-field checkbox">
-                        <label for="glping-import-sel-groups"><i class="ti ti-users me-2"></i>Groupes (@adminAnalysis.GroupsCount)</label>
+                        <label for="glping-import-sel-groups"><i class="ti ti-users me-2"></i>@T("Groupes ({0})", adminAnalysis.GroupsCount)</label>
                         <label class="glping-switch">
                             <input id="glping-import-sel-groups" type="checkbox" @bind="State.AdminSelection.ImportGroups"
                                    disabled="@(State.IsRunning || adminAnalysis.GroupsCount == 0)" />
@@ -318,7 +313,7 @@
                     </div>
 
                     <div class="glping-config-field checkbox">
-                        <label for="glping-import-sel-profiles"><i class="ti ti-shield-lock me-2"></i>Profils (@adminAnalysis.ProfilesCount)</label>
+                        <label for="glping-import-sel-profiles"><i class="ti ti-shield-lock me-2"></i>@T("Profils ({0})", adminAnalysis.ProfilesCount)</label>
                         <label class="glping-switch">
                             <input id="glping-import-sel-profiles" type="checkbox" @bind="State.AdminSelection.ImportProfiles"
                                    disabled="@(State.IsRunning || adminAnalysis.ProfilesCount == 0)" />
@@ -327,7 +322,7 @@
                     </div>
 
                     <div class="glping-config-field checkbox">
-                        <label for="glping-import-sel-users"><i class="ti ti-user me-2"></i>Utilisateurs (@adminAnalysis.UsersCount)</label>
+                        <label for="glping-import-sel-users"><i class="ti ti-user me-2"></i>@T("Utilisateurs ({0})", adminAnalysis.UsersCount)</label>
                         <label class="glping-switch">
                             <input id="glping-import-sel-users" type="checkbox" @bind="State.AdminSelection.ImportUsers"
                                    disabled="@(State.IsRunning || adminAnalysis.UsersCount == 0)" />
@@ -336,7 +331,7 @@
                     </div>
 
                     <div class="glping-config-field checkbox">
-                        <label for="glping-import-sel-config"><i class="ti ti-settings me-2"></i>Configuration générale</label>
+                        <label for="glping-import-sel-config"><i class="ti ti-settings me-2"></i>@T("Configuration générale")</label>
                         <label class="glping-switch">
                             <input id="glping-import-sel-config" type="checkbox" @bind="State.AdminSelection.ImportGeneralConfig"
                                    disabled="@(State.IsRunning || !adminAnalysis.GeneralConfigAvailable)" />
@@ -346,9 +341,7 @@
                 </div>
 
                 <p class="hint mt-2">
-                    Profils : seuls le nom, le commentaire et le statut par défaut sont importés (les droits fins par
-                    module ne le sont pas — à configurer manuellement). Configuration générale : uniquement les
-                    réglages ayant un équivalent direct dans "Configuration générale" &gt; "Général".
+                    @T("Profils : seuls le nom, le commentaire et le statut par défaut sont importés (les droits fins par module ne le sont pas — à configurer manuellement). Configuration générale : uniquement les réglages ayant un équivalent direct dans \"Configuration générale\" > \"Général\".")
                 </p>
             }
 
@@ -365,7 +358,7 @@
                 {
                     <div class="glping-config-field-grid">
                         <div class="glping-config-field checkbox">
-                            <label for="glping-import-sel-kbcategories"><i class="ti ti-category me-2"></i>Catégories (@kb.CategoriesCount)</label>
+                            <label for="glping-import-sel-kbcategories"><i class="ti ti-category me-2"></i>@T("Catégories ({0})", kb.CategoriesCount)</label>
                             <label class="glping-switch">
                                 <input id="glping-import-sel-kbcategories" type="checkbox" @bind="State.KnowledgeBaseSelection.ImportCategories"
                                        disabled="@(State.IsRunning || kb.CategoriesCount == 0)" />
@@ -374,7 +367,7 @@
                         </div>
 
                         <div class="glping-config-field checkbox">
-                            <label for="glping-import-sel-kbarticles"><i class="ti ti-book me-2"></i>Articles (@kb.ArticlesCount)</label>
+                            <label for="glping-import-sel-kbarticles"><i class="ti ti-book me-2"></i>@T("Articles ({0})", kb.ArticlesCount)</label>
                             <label class="glping-switch">
                                 <input id="glping-import-sel-kbarticles" type="checkbox" @bind="State.KnowledgeBaseSelection.ImportArticles"
                                        disabled="@(State.IsRunning || kb.ArticlesCount == 0)" />
@@ -383,7 +376,7 @@
                         </div>
 
                         <div class="glping-config-field checkbox">
-                            <label for="glping-import-sel-kbtargets"><i class="ti ti-lock me-2"></i>Cibles de visibilité (@kb.TargetsCount)</label>
+                            <label for="glping-import-sel-kbtargets"><i class="ti ti-lock me-2"></i>@T("Cibles de visibilité ({0})", kb.TargetsCount)</label>
                             <label class="glping-switch">
                                 <input id="glping-import-sel-kbtargets" type="checkbox" @bind="State.KnowledgeBaseSelection.ImportTargets"
                                        disabled="@(State.IsRunning || kb.TargetsCount == 0)" />
@@ -392,7 +385,7 @@
                         </div>
 
                         <div class="glping-config-field checkbox">
-                            <label for="glping-import-sel-kbrevisions"><i class="ti ti-history me-2"></i>Révisions (@kb.RevisionsCount)</label>
+                            <label for="glping-import-sel-kbrevisions"><i class="ti ti-history me-2"></i>@T("Révisions ({0})", kb.RevisionsCount)</label>
                             <label class="glping-switch">
                                 <input id="glping-import-sel-kbrevisions" type="checkbox" @bind="State.KnowledgeBaseSelection.ImportRevisions"
                                        disabled="@(State.IsRunning || kb.RevisionsCount == 0)" />
@@ -401,7 +394,7 @@
                         </div>
 
                         <div class="glping-config-field checkbox">
-                            <label for="glping-import-sel-kbdocuments"><i class="ti ti-paperclip me-2"></i>Documents (@kb.DocumentsCount)</label>
+                            <label for="glping-import-sel-kbdocuments"><i class="ti ti-paperclip me-2"></i>@T("Documents ({0})", kb.DocumentsCount)</label>
                             <label class="glping-switch">
                                 <input id="glping-import-sel-kbdocuments" type="checkbox" @bind="State.KnowledgeBaseSelection.ImportDocuments"
                                        disabled="@(State.IsRunning || kb.DocumentsCount == 0)" />
@@ -410,7 +403,7 @@
                         </div>
 
                         <div class="glping-config-field checkbox">
-                            <label for="glping-import-sel-kbnotes"><i class="ti ti-notes me-2"></i>Notes (@kb.NotesCount)</label>
+                            <label for="glping-import-sel-kbnotes"><i class="ti ti-notes me-2"></i>@T("Notes ({0})", kb.NotesCount)</label>
                             <label class="glping-switch">
                                 <input id="glping-import-sel-kbnotes" type="checkbox" @bind="State.KnowledgeBaseSelection.ImportNotes"
                                        disabled="@(State.IsRunning || kb.NotesCount == 0)" />
@@ -423,24 +416,20 @@
                     {
                         <p class="hint">
                             Le contenu des fichiers est lu dans le dossier <code>files/</code> saisi avec la
-                            connexion, plus haut.
+                            @T("connexion, plus haut.")
                             @if (string.IsNullOrWhiteSpace(State.GlpiFilesPath))
                             {
                                 <text>
-                                    <strong>Il n'est pas renseigné</strong> : les documents seront repris en fiches et
-                                    rattachements, mais sans contenu téléchargeable — le compte rendu le signalera, et
-                                    téléverser le fichier depuis l'article complétera la fiche existante.
+                                    <strong>@T("Il n'est pas renseigné")</strong> : les documents seront repris en fiches et
+                                    @T("rattachements, mais sans contenu téléchargeable — le compte rendu le signalera, et")
+                                    @T("téléverser le fichier depuis l'article complétera la fiche existante.")
                                 </text>
                             }
                         </p>
                     }
 
                     <p class="hint mt-2">
-                        Le contenu des articles est converti du HTML de GLPI vers le Markdown de GlpiNg (voir la fiche
-                        d'un article) : une mise en forme complexe peut être simplifiée au passage. Les cibles de
-                        visibilité et l'auteur d'un article ne se retrouvent que si l'onglet « Administration » a été
-                        importé — sinon, l'article arrive visible de tous. L'import est idempotent : le relancer met à
-                        jour les articles déjà repris au lieu de les dupliquer.
+                        @T("Le contenu des articles est converti du HTML de GLPI vers le Markdown de GlpiNg (voir la fiche d'un article) : une mise en forme complexe peut être simplifiée au passage. Les cibles de visibilité et l'auteur d'un article ne se retrouvent que si l'onglet « Administration » a été importé — sinon, l'article arrive visible de tous. L'import est idempotent : le relancer met à jour les articles déjà repris au lieu de les dupliquer.")
                     </p>
                 }
             }
@@ -455,7 +444,7 @@
                 {
                     <div class="glping-config-placeholder">
                         <i class="ti ti-plug-off"></i>
-                        <p class="mb-0">Aucun plugin d'inventaire (GLPI Inventory ou FusionInventory) sur cette base.</p>
+                        <p class="mb-0">@T("Aucun plugin d'inventaire (GLPI Inventory ou FusionInventory) sur cette base.")</p>
                     </div>
                 }
                 else
@@ -471,7 +460,7 @@
                                 }
                                 @if (plugin.State is not null && !plugin.IsActive)
                                 {
-                                    <span class="badge bg-orange-lt" title="Installé mais désactivé côté GLPI : ses données restent en base.">désactivé</span>
+                                    <span class="badge bg-orange-lt" title="@(T("Installé mais désactivé côté GLPI : ses données restent en base."))">@T("désactivé")</span>
                                 }
                             </div>
                             <div class="text-secondary small">
@@ -484,14 +473,13 @@
                     {
                         <p class="text-secondary">
                             Déclaré dans <code>glpi_plugins</code> mais aucune de ses tables n'est présente :
-                            plugin désinstallé, ou export partiel de la base. Rien à reprendre.
+                            @T("plugin désinstallé, ou export partiel de la base. Rien à reprendre.")
                         </p>
                     }
                     else
                     {
                         <p class="hint" style="margin-left:0;">
-                            GlpiNg gère ce domaine en propre (Outils &gt; Déploiements). Rien n'est repris sans
-                            choix explicite, contrairement au parc et à l'administration.
+                            @T("GlpiNg gère ce domaine en propre (Outils > Déploiements). Rien n'est repris sans choix explicite, contrairement au parc et à l'administration.")
                         </p>
 
                         @* Les quatre catégories d'un bloc, sans rien qui les sépare : la liste doit se
@@ -499,7 +487,7 @@
                            après, dans sa propre section. *@
                         <div class="glping-config-field-grid">
                             <div class="glping-config-field checkbox">
-                                <label for="glping-import-sel-ipranges"><i class="ti ti-network me-2"></i>Plages IP (@plugin.IpRangesCount)</label>
+                                <label for="glping-import-sel-ipranges"><i class="ti ti-network me-2"></i>@T("Plages IP ({0})", plugin.IpRangesCount)</label>
                                 <label class="glping-switch">
                                     <input id="glping-import-sel-ipranges" type="checkbox" @bind="State.PluginSelection.ImportIpRanges"
                                            disabled="@(State.IsRunning || plugin.IpRangesCount == 0)" />
@@ -508,7 +496,7 @@
                             </div>
 
                             <div class="glping-config-field checkbox">
-                                <label for="glping-import-sel-snmp"><i class="ti ti-key me-2"></i>Identifiants SNMP (@plugin.SnmpCredentialsCount)</label>
+                                <label for="glping-import-sel-snmp"><i class="ti ti-key me-2"></i>@T("Identifiants SNMP ({0})", plugin.SnmpCredentialsCount)</label>
                                 <label class="glping-switch">
                                     <input id="glping-import-sel-snmp" type="checkbox" @bind="State.PluginSelection.ImportSnmpCredentials"
                                            disabled="@(State.IsRunning || plugin.SnmpCredentialsCount == 0)" />
@@ -517,7 +505,7 @@
                             </div>
 
                             <div class="glping-config-field checkbox">
-                                <label for="glping-import-sel-packages"><i class="ti ti-package me-2"></i>Paquets de déploiement (@plugin.DeployPackagesCount)</label>
+                                <label for="glping-import-sel-packages"><i class="ti ti-package me-2"></i>@T("Paquets de déploiement ({0})", plugin.DeployPackagesCount)</label>
                                 <label class="glping-switch">
                                     <input id="glping-import-sel-packages" type="checkbox" @bind="State.PluginSelection.ImportDeployPackages"
                                            disabled="@(State.IsRunning || plugin.DeployPackagesCount == 0)" />
@@ -526,7 +514,7 @@
                             </div>
 
                             <div class="glping-config-field checkbox">
-                                <label for="glping-import-sel-unmanaged"><i class="ti ti-help me-2"></i>Actifs non gérés (@plugin.UnmanagedDevicesCount)</label>
+                                <label for="glping-import-sel-unmanaged"><i class="ti ti-help me-2"></i>@T("Actifs non gérés ({0})", plugin.UnmanagedDevicesCount)</label>
                                 <label class="glping-switch">
                                     <input id="glping-import-sel-unmanaged" type="checkbox" @bind="State.PluginSelection.ImportUnmanagedDevices"
                                            disabled="@(State.IsRunning || plugin.UnmanagedDevicesCount == 0)" />
@@ -542,34 +530,31 @@
                                réglage d'une seule d'entre elles, et les mêler couperait la liste
                                en deux. *@
                             <div class="glping-config-divider">
-                                <span><i class="ti ti-file-download"></i> Contenu des fichiers de paquets</span>
+                                <span><i class="ti ti-file-download"></i> @T("Contenu des fichiers de paquets")</span>
                             </div>
 
                             <p class="hint" style="margin-left:0;">
-                                Les octets d'un fichier de paquet ne sont pas dans la base GLPI : ils vivent sur le
-                                disque de son serveur. Sans l'une de ces deux sources, les fichiers sont seulement
-                                déclarés, et le paquet reste non déployable tant qu'ils n'ont pas été téléversés
-                                depuis sa fiche.
+                                @T("Les octets d'un fichier de paquet ne sont pas dans la base GLPI : ils vivent sur le disque de son serveur. Sans l'une de ces deux sources, les fichiers sont seulement déclarés, et le paquet reste non déployable tant qu'ils n'ont pas été téléversés depuis sa fiche.")
                             </p>
 
                             <div class="glping-config-field">
                                 <label for="glping-import-files-path">
-                                    Répertoire des fichiers du plugin <span class="text-secondary">(optionnel)</span>
+                                    @T("Répertoire des fichiers du plugin") <span class="text-secondary">@T("(optionnel)")</span>
                                 </label>
                                 <input id="glping-import-files-path" type="text" class="glping-config-input"
-                                       placeholder="Déduit du dossier files/ et du plugin détecté"
+                                       placeholder="@(T("Déduit du dossier files/ et du plugin détecté"))"
                                        @bind="State.DeployFilesPathOverride" disabled="@State.IsRunning" />
                             </div>
                             <p class="hint">
                                 Laissez vide dans le cas courant : le chemin est déduit du dossier <code>files/</code>
-                                saisi avec la connexion, et du plugin détecté à l'analyse
+                                @T("saisi avec la connexion, et du plugin détecté à l'analyse")
                                 (<code>&lt;files&gt;/_plugins/&lt;plugin&gt;/files</code>). À renseigner seulement si
-                                cette installation range ses fichiers de paquets ailleurs. Les identifiants du partage
-                                sont ceux de la connexion — c'est le même partage.
+                                @T("cette installation range ses fichiers de paquets ailleurs. Les identifiants du partage")
+                                @T("sont ceux de la connexion — c'est le même partage.")
                             </p>
 
                             <div class="glping-config-field">
-                                <label for="glping-import-base-url">URL de GLPI</label>
+                                <label for="glping-import-base-url">@T("URL de GLPI")</label>
                                 <input id="glping-import-base-url" type="text" class="glping-config-input"
                                        placeholder="https://glpi.exemple.local"
                                        @bind="State.GlpiBaseUrl" disabled="@State.IsRunning" />
@@ -581,53 +566,51 @@
                                        douter de ce qu'il contient. *@
                                     <text>Pré-remplie depuis la base source (<code>glpi_configs.url_base</code>), modifiable. </text>
                                 }
-                                Essayée en repli, fichier par fichier, quand le répertoire ne rend rien.
+                                @T("Essayée en repli, fichier par fichier, quand le répertoire ne rend rien.")
                             </p>
 
                             @* Le point d'accès qui rend un fichier entier (front/deployfile_download.php)
                                vérifie un droit GLPI : sans compte, la route HTTP ne peut rien récupérer
                                d'autre que ce qu'un miroir statique expose. *@
                             <div class="glping-config-field">
-                                <label for="glping-import-web-user">Compte GLPI <span class="text-secondary">(optionnel)</span></label>
+                                <label for="glping-import-web-user">@T("Compte GLPI") <span class="text-secondary">@T("(optionnel)")</span></label>
                                 <input id="glping-import-web-user" type="text" class="glping-config-input"
-                                       placeholder="compte ayant le droit de lecture sur les paquets"
+                                       placeholder="@(T("compte ayant le droit de lecture sur les paquets"))"
                                        @bind="State.GlpiUserName" disabled="@State.IsRunning" />
                             </div>
 
                             <div class="glping-config-field">
-                                <label for="glping-import-web-password">Mot de passe GLPI</label>
+                                <label for="glping-import-web-password">@T("Mot de passe GLPI")</label>
                                 <input id="glping-import-web-password" type="password" class="glping-config-input"
                                        autocomplete="new-password"
                                        @bind="State.GlpiPassword" disabled="@State.IsRunning" />
                             </div>
                             <p class="hint">
-                                Ouvre une session web le temps de l'import. Sans lui, l'URL ci-dessus ne sert qu'aux
-                                miroirs. Utilisés le temps de l'import et jamais enregistrés.
+                                @T("Ouvre une session web le temps de l'import. Sans lui, l'URL ci-dessus ne sert qu'aux miroirs. Utilisés le temps de l'import et jamais enregistrés.")
                             </p>
 
                             @if (plugin.MirrorUrls.Count > 0)
                             {
                                 <p class="hint">
                                     <i class="ti ti-server me-1"></i>
-                                    @plugin.MirrorUrls.Count serveur(s) de miroir déclaré(s) dans le plugin, essayé(s)
+                                    @T("{0} serveur(s) de miroir déclaré(s) dans le plugin, essayé(s)", plugin.MirrorUrls.Count)
                                     avant la session GLPI : @string.Join(", ", plugin.MirrorUrls.Take(3))@(plugin.MirrorUrls.Count > 3 ? ", …" : "").
                                 </p>
                             }
 
                             <p class="hint">
-                                Chaque contenu récupéré, par quelque route que ce soit, est vérifié par son empreinte
-                                avant d'être enregistré.
+                                @T("Chaque contenu récupéré, par quelque route que ce soit, est vérifié par son empreinte avant d'être enregistré.")
                             </p>
                         }
 
                         <div class="glping-config-divider">
-                            <span><i class="ti ti-ban"></i> Non repris</span>
+                            <span><i class="ti ti-ban"></i> @T("Non repris")</span>
                         </div>
 
                         <p class="hint" style="margin-left:0;">
-                            Tâches du plugin (@plugin.TasksCount) : sans équivalent direct, à recréer dans
-                            Outils &gt; Déploiements. Agents (@plugin.AgentsCount) : déjà couverts par la catégorie
-                            « Agents » de l'onglet Parc (<code>glpi_agents</code>, table du cœur de GLPI).
+                            @T("Tâches du plugin ({0}) : sans équivalent direct, à recréer dans", plugin.TasksCount)
+                            @T("Outils > Déploiements. Agents ({0}) : déjà couverts par la catégorie", plugin.AgentsCount)
+                            @T("« Agents » de l'onglet Parc (")<code>glpi_agents</code>@T(", table du cœur de GLPI).")
                         </p>
                     }
                 }
@@ -637,12 +620,12 @@
                 @if (State.IsRunning)
                 {
                     <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-                    <span>Import en cours…</span>
+                    <span>@T("Import en cours…")</span>
                 }
                 else
                 {
                     <i class="ti ti-database-import me-1"></i>
-                    <span>Lancer l'import</span>
+                    <span>@T("Lancer l'import")</span>
                 }
             </button>
         </div>
@@ -652,21 +635,20 @@
 <div class="card">
     <div class="card-body">
         <p class="text-secondary">
-            L'import est en lecture seule et idempotent : un poste déjà importé (identifié par son
-            <code>glpi_computers.id</code> d'origine) est mis à jour plutôt que dupliqué.
+            @T("L'import est en lecture seule et idempotent : un poste déjà importé (identifié par son")
+            <code>glpi_computers.id</code> @T("d'origine) est mis à jour plutôt que dupliqué.")
         </p>
 
         @if (State.IsRunning)
         {
             <div class="alert alert-info">
                 <i class="ti ti-info-circle me-1"></i>
-                Un import est en cours (peut-être déclenché par un autre administrateur) — cette page se
-                mettra à jour automatiquement pour tous les admins connectés dès qu'il sera terminé.
+                @T("Un import est en cours (peut-être déclenché par un autre administrateur) — cette page se mettra à jour automatiquement pour tous les admins connectés dès qu'il sera terminé.")
             </div>
 
             <div class="d-flex justify-content-between align-items-baseline mb-1">
                 <span class="fw-medium text-truncate">
-                    <i class="ti ti-loader-2 glping-spin me-1"></i>@(State.CurrentPhase ?? "Préparation…")
+                    <i class="ti ti-loader-2 glping-spin me-1"></i>@(State.CurrentPhase ?? T("Préparation…"))
                     @if (State.CurrentDetail is { Length: > 0 } detail)
                     {
                         @* Ce qui se passe quand le compteur, lui, ne bouge pas — le téléchargement
@@ -677,7 +659,7 @@
                 @if (State.ProgressTotal > 0)
                 {
                     <span class="text-secondary small">
-                        @State.ProgressCompleted.ToString("N0") / @State.ProgressTotal.ToString("N0") élément(s) — @State.ProgressPercent&nbsp;%
+                        @T("{0} / {1} élément(s) — {2} %", State.ProgressCompleted.ToString("N0"), State.ProgressTotal.ToString("N0"), State.ProgressPercent)
                     </span>
                 }
             </div>
@@ -708,7 +690,7 @@
         {
             <div class="alert alert-success">
                 <i class="ti ti-check me-1"></i>
-                Dernier import terminé en @result.Duration.TotalSeconds.ToString("0.0") s
+                @T("Dernier import terminé en {0} s", result.Duration.TotalSeconds.ToString("0.0"))
                 @if (State.LastRunAt is { } lastRunAt)
                 {
                     <span>(le @Display.DateTime(lastRunAt))</span>
@@ -720,7 +702,7 @@
                     <div class="card card-sm">
                         <div class="card-body text-center">
                             <div class="fs-2 fw-bold">@result.ComputersCreated</div>
-                            <div class="text-secondary">Postes créés</div>
+                            <div class="text-secondary">@T("Postes créés")</div>
                         </div>
                     </div>
                 </div>
@@ -728,7 +710,7 @@
                     <div class="card card-sm">
                         <div class="card-body text-center">
                             <div class="fs-2 fw-bold">@result.ComputersUpdated</div>
-                            <div class="text-secondary">Postes mis à jour</div>
+                            <div class="text-secondary">@T("Postes mis à jour")</div>
                         </div>
                     </div>
                 </div>
@@ -736,7 +718,7 @@
                     <div class="card card-sm">
                         <div class="card-body text-center">
                             <div class="fs-2 fw-bold">@result.MonitorsImported</div>
-                            <div class="text-secondary">Moniteurs importés</div>
+                            <div class="text-secondary">@T("Moniteurs importés")</div>
                         </div>
                     </div>
                 </div>
@@ -744,7 +726,7 @@
                     <div class="card card-sm">
                         <div class="card-body text-center">
                             <div class="fs-2 fw-bold">@(result.AgentsCreated + result.AgentsUpdated)</div>
-                            <div class="text-secondary">Agents (@result.AgentsCreated créés)</div>
+                            <div class="text-secondary">@T("Agents ({0} créés)", result.AgentsCreated)</div>
                         </div>
                     </div>
                 </div>
@@ -752,7 +734,7 @@
                     <div class="card card-sm">
                         <div class="card-body text-center">
                             <div class="fs-2 fw-bold">@result.ComponentsImported</div>
-                            <div class="text-secondary">Composants importés</div>
+                            <div class="text-secondary">@T("Composants importés")</div>
                         </div>
                     </div>
                 </div>
@@ -760,7 +742,7 @@
                     <div class="card card-sm">
                         <div class="card-body text-center">
                             <div class="fs-2 fw-bold">@result.SoftwaresImported</div>
-                            <div class="text-secondary">Logiciels importés</div>
+                            <div class="text-secondary">@T("Logiciels importés")</div>
                         </div>
                     </div>
                 </div>
@@ -768,7 +750,7 @@
                     <div class="card card-sm">
                         <div class="card-body text-center">
                             <div class="fs-2 fw-bold">@result.PrintersImported</div>
-                            <div class="text-secondary">Imprimantes importées</div>
+                            <div class="text-secondary">@T("Imprimantes importées")</div>
                         </div>
                     </div>
                 </div>
@@ -776,7 +758,7 @@
                     <div class="card card-sm">
                         <div class="card-body text-center">
                             <div class="fs-2 fw-bold">@result.PeripheralsImported</div>
-                            <div class="text-secondary">Périphériques importés</div>
+                            <div class="text-secondary">@T("Périphériques importés")</div>
                         </div>
                     </div>
                 </div>
@@ -784,7 +766,7 @@
                     <div class="card card-sm">
                         <div class="card-body text-center">
                             <div class="fs-2 fw-bold">@result.VolumesImported</div>
-                            <div class="text-secondary">Volumes importés</div>
+                            <div class="text-secondary">@T("Volumes importés")</div>
                         </div>
                     </div>
                 </div>
@@ -792,7 +774,7 @@
                     <div class="card card-sm">
                         <div class="card-body text-center">
                             <div class="fs-2 fw-bold">@result.BatteriesImported</div>
-                            <div class="text-secondary">Batteries importées</div>
+                            <div class="text-secondary">@T("Batteries importées")</div>
                         </div>
                     </div>
                 </div>
@@ -800,7 +782,7 @@
 
             @if (result.Warnings.Count > 0)
             {
-                <div class="glping-fiche-block-title"><i class="ti ti-alert-triangle"></i>Avertissements</div>
+                <div class="glping-fiche-block-title"><i class="ti ti-alert-triangle"></i>@T("Avertissements")</div>
                 <ul>
                     @foreach (string warning in result.Warnings)
                     {
@@ -824,7 +806,7 @@
                     <div class="card card-sm">
                         <div class="card-body text-center">
                             <div class="fs-2 fw-bold">@(adminResult.EntitiesCreated + adminResult.EntitiesUpdated)</div>
-                            <div class="text-secondary">Entités (@adminResult.EntitiesCreated créées)</div>
+                            <div class="text-secondary">@T("Entités ({0} créées)", adminResult.EntitiesCreated)</div>
                         </div>
                     </div>
                 </div>
@@ -832,7 +814,7 @@
                     <div class="card card-sm">
                         <div class="card-body text-center">
                             <div class="fs-2 fw-bold">@(adminResult.GroupsCreated + adminResult.GroupsUpdated)</div>
-                            <div class="text-secondary">Groupes (@adminResult.GroupsCreated créés)</div>
+                            <div class="text-secondary">@T("Groupes ({0} créés)", adminResult.GroupsCreated)</div>
                         </div>
                     </div>
                 </div>
@@ -840,7 +822,7 @@
                     <div class="card card-sm">
                         <div class="card-body text-center">
                             <div class="fs-2 fw-bold">@(adminResult.ProfilesCreated + adminResult.ProfilesUpdated)</div>
-                            <div class="text-secondary">Profils (@adminResult.ProfilesCreated créés)</div>
+                            <div class="text-secondary">@T("Profils ({0} créés)", adminResult.ProfilesCreated)</div>
                         </div>
                     </div>
                 </div>
@@ -848,7 +830,7 @@
                     <div class="card card-sm">
                         <div class="card-body text-center">
                             <div class="fs-2 fw-bold">@(adminResult.UsersCreated + adminResult.UsersUpdated)</div>
-                            <div class="text-secondary">Utilisateurs (@adminResult.UsersCreated créés)</div>
+                            <div class="text-secondary">@T("Utilisateurs ({0} créés)", adminResult.UsersCreated)</div>
                         </div>
                     </div>
                 </div>
@@ -856,7 +838,7 @@
                     <div class="card card-sm">
                         <div class="card-body text-center">
                             <div class="fs-2 fw-bold">@adminResult.GeneralConfigKeysImported</div>
-                            <div class="text-secondary">Réglages généraux importés</div>
+                            <div class="text-secondary">@T("Réglages généraux importés")</div>
                         </div>
                     </div>
                 </div>
@@ -864,7 +846,7 @@
 
             @if (adminResult.Warnings.Count > 0)
             {
-                <div class="glping-fiche-block-title"><i class="ti ti-alert-triangle"></i>Avertissements (Administration)</div>
+                <div class="glping-fiche-block-title"><i class="ti ti-alert-triangle"></i>@T("Avertissements (Administration)")</div>
                 <ul>
                     @foreach (string warning in adminResult.Warnings)
                     {
@@ -888,7 +870,7 @@
                     <div class="card card-sm">
                         <div class="card-body text-center">
                             <div class="fs-2 fw-bold">@(kbResult.CategoriesCreated + kbResult.CategoriesUpdated)</div>
-                            <div class="text-secondary">Catégories (@kbResult.CategoriesCreated créées)</div>
+                            <div class="text-secondary">@T("Catégories ({0} créées)", kbResult.CategoriesCreated)</div>
                         </div>
                     </div>
                 </div>
@@ -896,7 +878,7 @@
                     <div class="card card-sm">
                         <div class="card-body text-center">
                             <div class="fs-2 fw-bold">@(kbResult.ArticlesCreated + kbResult.ArticlesUpdated)</div>
-                            <div class="text-secondary">Articles (@kbResult.ArticlesCreated créés)</div>
+                            <div class="text-secondary">@T("Articles ({0} créés)", kbResult.ArticlesCreated)</div>
                         </div>
                     </div>
                 </div>
@@ -905,10 +887,10 @@
                         <div class="card-body text-center">
                             <div class="fs-2 fw-bold">@kbResult.TargetsImported</div>
                             <div class="text-secondary">
-                                Cibles reprises
+                                @T("Cibles reprises")
                                 @if (kbResult.TargetsSkipped > 0)
                                 {
-                                    <text>(@kbResult.TargetsSkipped ignorées)</text>
+                                    <text>@T("({0} ignorées)", kbResult.TargetsSkipped)</text>
                                 }
                             </div>
                         </div>
@@ -918,7 +900,7 @@
                     <div class="card card-sm">
                         <div class="card-body text-center">
                             <div class="fs-2 fw-bold">@kbResult.RevisionsImported</div>
-                            <div class="text-secondary">Révisions reprises</div>
+                            <div class="text-secondary">@T("Révisions reprises")</div>
                         </div>
                     </div>
                 </div>
@@ -930,10 +912,10 @@
                         <div class="card-body text-center">
                             <div class="fs-2 fw-bold">@kbResult.DocumentsImported</div>
                             <div class="text-secondary">
-                                Documents repris
+                                @T("Documents repris")
                                 @if (kbResult.DocumentsWithoutContent > 0)
                                 {
-                                    <text>(@kbResult.DocumentsWithoutContent sans fichier)</text>
+                                    <text>@T("({0} sans fichier)", kbResult.DocumentsWithoutContent)</text>
                                 }
                             </div>
                         </div>
@@ -943,7 +925,7 @@
                     <div class="card card-sm">
                         <div class="card-body text-center">
                             <div class="fs-2 fw-bold">@kbResult.DocumentLinksImported</div>
-                            <div class="text-secondary">Rattachements aux articles</div>
+                            <div class="text-secondary">@T("Rattachements aux articles")</div>
                         </div>
                     </div>
                 </div>
@@ -952,10 +934,10 @@
                         <div class="card-body text-center">
                             <div class="fs-2 fw-bold">@kbResult.NotesImported</div>
                             <div class="text-secondary">
-                                Notes reprises
+                                @T("Notes reprises")
                                 @if (kbResult.NotesSkipped > 0)
                                 {
-                                    <text>(@kbResult.NotesSkipped ignorées)</text>
+                                    <text>@T("({0} ignorées)", kbResult.NotesSkipped)</text>
                                 }
                             </div>
                         </div>
@@ -965,7 +947,7 @@
 
             @if (kbResult.Warnings.Count > 0)
             {
-                <div class="glping-fiche-block-title"><i class="ti ti-alert-triangle"></i>Avertissements (Base de connaissances)</div>
+                <div class="glping-fiche-block-title"><i class="ti ti-alert-triangle"></i>@T("Avertissements (Base de connaissances)")</div>
                 <ul>
                     @foreach (string warning in kbResult.Warnings)
                     {
@@ -989,7 +971,7 @@
                     <div class="card card-sm">
                         <div class="card-body text-center">
                             <div class="fs-2 fw-bold">@(pluginResult.IpRangesCreated + pluginResult.IpRangesUpdated)</div>
-                            <div class="text-secondary">Plages IP (@pluginResult.IpRangesCreated créées)</div>
+                            <div class="text-secondary">@T("Plages IP ({0} créées)", pluginResult.IpRangesCreated)</div>
                         </div>
                     </div>
                 </div>
@@ -997,7 +979,7 @@
                     <div class="card card-sm">
                         <div class="card-body text-center">
                             <div class="fs-2 fw-bold">@(pluginResult.SnmpCredentialsCreated + pluginResult.SnmpCredentialsUpdated)</div>
-                            <div class="text-secondary">Identifiants SNMP (@pluginResult.SnmpCredentialsCreated créés)</div>
+                            <div class="text-secondary">@T("Identifiants SNMP ({0} créés)", pluginResult.SnmpCredentialsCreated)</div>
                         </div>
                     </div>
                 </div>
@@ -1005,28 +987,28 @@
                     <div class="card card-sm">
                         <div class="card-body text-center">
                             <div class="fs-2 fw-bold">@(pluginResult.DeployPackagesCreated + pluginResult.DeployPackagesUpdated)</div>
-                            <div class="text-secondary">Paquets (@pluginResult.DeployPackagesCreated créés)</div>
+                            <div class="text-secondary">@T("Paquets ({0} créés)", pluginResult.DeployPackagesCreated)</div>
                             @* Le contenu repris compte autant que le nombre de paquets : c'est lui
                                qu'on ne veut pas ressaisir. *@
                             <div class="text-secondary small mt-1">
-                                @pluginResult.DeployPackageChecksImported vérification(s), @pluginResult.DeployPackageActionsImported action(s)
+                                @T("{0} vérification(s), {1} action(s)", pluginResult.DeployPackageChecksImported, pluginResult.DeployPackageActionsImported)
                             </div>
                             @if (pluginResult.DeployPackageFilesCreated + pluginResult.DeployPackageFilesUpdated > 0)
                             {
                                 <div class="text-secondary small">
-                                    @(pluginResult.DeployPackageFilesCreated + pluginResult.DeployPackageFilesUpdated) fichier(s)
+                                    @T("{0} fichier(s)", pluginResult.DeployPackageFilesCreated + pluginResult.DeployPackageFilesUpdated)
                                 </div>
                             }
                             @if (pluginResult.DeployPackageFilesDownloaded > 0)
                             {
                                 <div class="text-success small">
-                                    <i class="ti ti-download me-1"></i>@pluginResult.DeployPackageFilesDownloaded contenu(s) récupéré(s)
+                                    <i class="ti ti-download me-1"></i>@T("{0} contenu(s) récupéré(s)", pluginResult.DeployPackageFilesDownloaded)
                                 </div>
                             }
                             @if (pluginResult.DeployPackageFilesPending > 0)
                             {
                                 <div class="text-warning small">
-                                    <i class="ti ti-upload me-1"></i>@pluginResult.DeployPackageFilesPending sans contenu
+                                    <i class="ti ti-upload me-1"></i>@T("{0} sans contenu", pluginResult.DeployPackageFilesPending)
                                 </div>
                             }
                         </div>
@@ -1036,7 +1018,7 @@
                     <div class="card card-sm">
                         <div class="card-body text-center">
                             <div class="fs-2 fw-bold">@(pluginResult.UnmanagedDevicesCreated + pluginResult.UnmanagedDevicesUpdated)</div>
-                            <div class="text-secondary">Actifs non gérés (@pluginResult.UnmanagedDevicesCreated créés)</div>
+                            <div class="text-secondary">@T("Actifs non gérés ({0} créés)", pluginResult.UnmanagedDevicesCreated)</div>
                         </div>
                     </div>
                 </div>
@@ -1044,7 +1026,7 @@
 
             @if (pluginResult.Warnings.Count > 0)
             {
-                <div class="glping-fiche-block-title"><i class="ti ti-alert-triangle"></i>Avertissements (plugin d'inventaire)</div>
+                <div class="glping-fiche-block-title"><i class="ti ti-alert-triangle"></i>@T("Avertissements (plugin d'inventaire)")</div>
                 <ul>
                     @foreach (string warning in pluginResult.Warnings)
                     {

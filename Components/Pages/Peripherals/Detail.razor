@@ -3,13 +3,13 @@
 @using GlpiNg.Modules.Inventory.Services
 @rendermode InteractiveServer
 
-<PageTitle>@(_peripheral?.Name ?? "Périphérique") — GlpiNg</PageTitle>
+<PageTitle>@(_peripheral?.Name ?? T("Périphérique")) — GlpiNg</PageTitle>
 
 @if (_peripheral is null)
 {
     <div class="text-center text-secondary py-5">
         <i class="ti ti-mouse-off fs-1"></i>
-        <p class="mt-2">Ce périphérique est introuvable.</p>
+        <p class="mt-2">@T("Ce périphérique est introuvable.")</p>
     </div>
 }
 else
@@ -17,8 +17,8 @@ else
     <div class="glping-fiche-topbar">
         <div class="glping-fiche-crumb">
             <i class="ti ti-mouse"></i>
-            <span>Périphérique - @_peripheral.Name - ID @_peripheral.Id</span>
-            <button type="button" class="glping-fiche-favorite" title="Ajouter aux favoris">
+            <span>@T("Périphérique - {0} - ID {1}", _peripheral.Name, _peripheral.Id)</span>
+            <button type="button" class="glping-fiche-favorite" title="@(T("Ajouter aux favoris"))">
                 <i class="ti ti-star"></i>
             </button>
         </div>
@@ -42,7 +42,7 @@ else
             {
                 <button type="button" class="glping-fiche-tab-item @(_activeTabKey == tab.Key ? "active" : "")" @onclick="() => SetTab(tab.Key)">
                     <i class="ti @tab.Icon"></i>
-                    <span>@tab.Label</span>
+                    <span>@T(tab.Label)</span>
                     @if (tab.Count is { } count)
                     {
                         <span class="glping-fiche-tab-count">@count</span>
@@ -51,7 +51,7 @@ else
             }
             <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "links" ? "active" : "")" @onclick='() => SetTab("links")'>
                 <i class="ti ti-external-link"></i>
-                <span>Liens externes</span>
+                <span>@T("Liens externes")</span>
             </button>
         </aside>
 
@@ -64,10 +64,10 @@ else
 
                         <div class="d-flex justify-content-end gap-2 mt-3">
                             <button type="button" class="btn btn-outline-danger" @onclick="DeleteAsync">
-                                <i class="ti ti-trash me-1"></i>Supprimer définitivement
+                                <i class="ti ti-trash me-1"></i>@T("Supprimer définitivement")
                             </button>
                             <button type="submit" class="btn btn-primary" disabled="@_isSaving">
-                                <i class="ti ti-device-floppy me-1"></i>@(_isSaving ? "Enregistrement…" : "Sauvegarder")
+                                <i class="ti ti-device-floppy me-1"></i>@(_isSaving ? T("Enregistrement…") : T("Sauvegarder"))
                             </button>
                         </div>
                     </EditForm>
@@ -75,7 +75,7 @@ else
 
                 case "connections":
                     <div class="glping-fiche-block">
-                        <div class="glping-fiche-block-title"><i class="ti ti-plug-connected"></i>Connexion à un ordinateur</div>
+                        <div class="glping-fiche-block-title"><i class="ti ti-plug-connected"></i>@T("Connexion à un ordinateur")</div>
                         @if (_peripheral.Computer is { } linkedComputer)
                         {
                             <div class="d-flex align-items-center justify-content-between mb-3">
@@ -83,7 +83,7 @@ else
                                     <i class="ti ti-device-desktop me-1 text-secondary"></i>@linkedComputer.Name
                                 </a>
                                 <button type="button" class="btn btn-sm btn-outline-danger" @onclick="UnlinkComputerAsync">
-                                    <i class="ti ti-plug-connected-x me-1"></i>Déconnecter
+                                    <i class="ti ti-plug-connected-x me-1"></i>@T("Déconnecter")
                                 </button>
                             </div>
                         }
@@ -91,19 +91,19 @@ else
                         {
                             <div class="glping-config-placeholder">
                                 <i class="ti ti-plug-connected-x"></i>
-                                <p class="mb-0">Ce périphérique n'est connecté à aucun ordinateur.</p>
+                                <p class="mb-0">@T("Ce périphérique n'est connecté à aucun ordinateur.")</p>
                             </div>
                         }
                         <div class="d-flex gap-2 mt-3">
                             <select class="form-select" style="max-width: 320px;" @bind="_computerIdToLink">
-                                <option value="0">-- Choisir un ordinateur --</option>
+                                <option value="0">@T("-- Choisir un ordinateur --")</option>
                                 @foreach (Computer computer in _allComputers)
                                 {
                                     <option value="@computer.Id">@computer.Name</option>
                                 }
                             </select>
                             <button type="button" class="btn btn-primary" disabled="@(_computerIdToLink == 0)" @onclick="LinkComputerAsync">
-                                <i class="ti ti-plug-connected me-1"></i>Connecter
+                                <i class="ti ti-plug-connected me-1"></i>@T("Connecter")
                             </button>
                         </div>
                     </div>
@@ -111,12 +111,12 @@ else
 
                 case "history":
                     <div class="glping-fiche-block">
-                        <div class="glping-fiche-block-title"><i class="ti ti-history"></i>Historique (@_peripheral.HistoryEntries.Count)</div>
+                        <div class="glping-fiche-block-title"><i class="ti ti-history"></i>@T("Historique ({0})", _peripheral.HistoryEntries.Count)</div>
                         @if (_peripheral.HistoryEntries.Count == 0)
                         {
                             <div class="glping-config-placeholder">
                                 <i class="ti ti-history"></i>
-                                <p class="mb-0">Aucune modification enregistrée.</p>
+                                <p class="mb-0">@T("Aucune modification enregistrée.")</p>
                             </div>
                         }
                         else
@@ -125,11 +125,11 @@ else
                                 <table class="table table-vcenter card-table mb-0">
                                     <thead>
                                         <tr>
-                                            <th>ID</th>
-                                            <th>Date</th>
-                                            <th>Utilisateur</th>
-                                            <th>Champ</th>
-                                            <th>Mise à jour</th>
+                                            <th>@T("ID")</th>
+                                            <th>@T("Date")</th>
+                                            <th>@T("Utilisateur")</th>
+                                            <th>@T("Champ")</th>
+                                            <th>@T("Mise à jour")</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -152,21 +152,21 @@ else
 
                 case "all":
                     <div class="glping-fiche-block">
-                        <div class="glping-fiche-block-title"><i class="ti ti-mouse"></i>Périphérique</div>
-                        <p class="mb-1"><strong>Nom :</strong> @_peripheral.Name</p>
-                        <p class="mb-1"><strong>Statut :</strong> @(_peripheral.StatusItem?.Name ?? "—")</p>
-                        <p class="mb-1"><strong>Type :</strong> @(_peripheral.Type ?? "—")</p>
-                        <p class="mb-1"><strong>Fabricant :</strong> @(_peripheral.Manufacturer ?? "—")</p>
-                        <p class="mb-1"><strong>Modèle :</strong> @(_peripheral.Model ?? "—")</p>
-                        <p class="mb-1"><strong>Numéro de série :</strong> @(_peripheral.SerialNumber ?? "—")</p>
-                        <p class="mb-0"><strong>Commentaires :</strong> @(_peripheral.Comment ?? "—")</p>
+                        <div class="glping-fiche-block-title"><i class="ti ti-mouse"></i>@T("Périphérique")</div>
+                        <p class="mb-1"><strong>@T("Nom :")</strong> @_peripheral.Name</p>
+                        <p class="mb-1"><strong>@T("Statut :")</strong> @(_peripheral.StatusItem?.Name ?? "—")</p>
+                        <p class="mb-1"><strong>@T("Type :")</strong> @(_peripheral.Type ?? "—")</p>
+                        <p class="mb-1"><strong>@T("Fabricant :")</strong> @(_peripheral.Manufacturer ?? "—")</p>
+                        <p class="mb-1"><strong>@T("Modèle :")</strong> @(_peripheral.Model ?? "—")</p>
+                        <p class="mb-1"><strong>@T("Numéro de série :")</strong> @(_peripheral.SerialNumber ?? "—")</p>
+                        <p class="mb-0"><strong>@T("Commentaires :")</strong> @(_peripheral.Comment ?? "—")</p>
                     </div>
                     <div class="glping-fiche-block">
-                        <div class="glping-fiche-block-title"><i class="ti ti-plug-connected"></i>Connexions</div>
-                        <p class="mb-0">@(_peripheral.Computer?.Name ?? "Aucune connexion")</p>
+                        <div class="glping-fiche-block-title"><i class="ti ti-plug-connected"></i>@T("Connexions")</div>
+                        <p class="mb-0">@(_peripheral.Computer?.Name ?? T("Aucune connexion"))</p>
                     </div>
                     <div class="glping-fiche-block">
-                        <div class="glping-fiche-block-title"><i class="ti ti-history"></i>Historique (@_peripheral.HistoryEntries.Count)</div>
+                        <div class="glping-fiche-block-title"><i class="ti ti-history"></i>@T("Historique ({0})", _peripheral.HistoryEntries.Count)</div>
                         @foreach (PeripheralHistoryEntry entry in Display.Chronological(_peripheral.HistoryEntries, e => e.OccurredAt))
                         {
                             <p class="mb-1">@Display.DateTime(entry.OccurredAt) — @entry.User — @entry.Field : @entry.Description</p>
@@ -178,7 +178,7 @@ else
                     var current = _tabs.First(t => t.Key == _activeTabKey);
                     <div class="glping-config-placeholder">
                         <i class="ti @current.Icon"></i>
-                        <p class="mb-0">L'onglet « @current.Label » n'est pas encore disponible.</p>
+                        <p class="mb-0">@T("L'onglet « {0} » n'est pas encore disponible.", current.Label)</p>
                     </div>
                     break;
 
