@@ -178,6 +178,13 @@ else
                     </div>
                     break;
 
+                case "reservations":
+                    <ItemReservationsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Monitor"
+                                         ItemId="@_monitor.Id"
+                                         ItemName="@(_monitor.Designation)"
+                                         ItemUrl="@($"/parc/monitors/{_monitor.Id}")" />
+                    break;
+
                 default:
                     var current = _tabs.First(t => t.Key == _activeTabKey);
                     <div class="glping-config-placeholder">

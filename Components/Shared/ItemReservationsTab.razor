@@ -1,0 +1,247 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@using GlpiNg.Modules.Abstractions.Reservations
+@inject IServiceProvider Services
+
+@* Onglet « Réservations » d'une fiche de parc, partagé par les types réservables du module.
+
+   Le service est résolu en facultatif (IItemReservations?) et non injecté : le module
+   Réservations peut être absent de l'installation, et une fiche d'ordinateur ne doit pas cesser
+   de s'ouvrir pour autant. C'est aussi ce qui évite à Inventory de dépendre d'un autre module —
+   seul le contrat partagé est connu ici. *@
+
+@if (_reservations is null)
+{
+    <div class="glping-config-placeholder">
+        <i class="ti ti-calendar-off"></i>
+        <p class="mb-0">@T("Le module Réservations n'est pas actif sur cette installation.")</p>
+    </div>
+}
+else if (!_reservable)
+{
+    <div class="glping-config-placeholder">
+        <i class="ti ti-calendar-off"></i>
+        <p class="mb-0">@T("Cet élément n'est pas réservable.")</p>
+        <button type="button" class="btn btn-primary mt-2" @onclick="EnableAsync">
+            <i class="ti ti-calendar-plus me-1"></i>@T("Autoriser la réservation")
+        </button>
+    </div>
+}
+else
+{
+    <div class="d-flex align-items-start justify-content-between mb-3">
+        <p class="text-secondary mb-0">
+            @T("Créneaux posés sur cet élément. Un chevauchement est refusé : le planning complet est sur /tools/reservations.")
+        </p>
+        <div class="dropdown text-nowrap">
+            <button type="button" class="btn btn-sm text-danger" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="ti ti-calendar-minus me-1"></i>@T("Retirer l'autorisation")
+            </button>
+            <div class="dropdown-menu dropdown-menu-end p-3" style="min-width: 280px;">
+                <p class="mb-2">
+                    @T("Retirer l'autorisation supprime aussi ses {0} réservation(s). Cette action est définitive.",
+                        _reservations.Count)
+                </p>
+                <div class="d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-sm">@T("Annuler")</button>
+                    <button type="button" class="btn btn-sm btn-danger" @onclick="DisableAsync">@T("Retirer")</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (_error is { Length: > 0 })
+    {
+        <div class="alert alert-danger">@_error</div>
+    }
+
+    <div class="row align-items-end mb-3">
+        <div class="col-md-4 glping-fiche-field">
+            <label>@T("Début")</label>
+            <input type="datetime-local" class="form-control" @bind="_begin" />
+        </div>
+        <div class="col-md-4 glping-fiche-field">
+            <label>@T("Fin")</label>
+            <input type="datetime-local" class="form-control" @bind="_end" />
+        </div>
+        <div class="col-md-4 glping-fiche-field">
+            <label>@T("Commentaire")</label>
+            <input class="form-control" @bind="_comment" />
+        </div>
+    </div>
+
+    <button type="button" class="btn btn-primary mb-3" @onclick="ReserveAsync">
+        <i class="ti ti-plus me-1"></i>@T("Réserver")
+    </button>
+
+    @if (_reservations.Count == 0)
+    {
+        <div class="glping-config-placeholder">
+            <i class="ti ti-calendar-off"></i>
+            <p class="mb-0">@T("Aucune réservation sur cet élément.")</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-vcenter card-table">
+                <thead>
+                    <tr>
+                        <th>@T("Du")</th>
+                        <th>@T("Au")</th>
+                        <th>@T("Par")</th>
+                        <th>@T("Commentaire")</th>
+                        <th style="width: 3rem;"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (ItemReservation reservation in _reservations)
+                    {
+                        <tr>
+                            @* Heures murales : LocalDateTime, jamais DateTime — voir ItemReservation. *@
+                            <td>@Display.LocalDateTime(reservation.Begin)</td>
+                            <td>@Display.LocalDateTime(reservation.End)</td>
+                            <td class="text-secondary">@reservation.UserName</td>
+                            <td class="text-secondary">@reservation.Comment</td>
+                            <td>
+                                <button type="button" class="btn btn-icon btn-sm text-danger"
+                                        title="@(T("Annuler cette réservation"))"
+                                        @onclick="() => CancelAsync(reservation.Id)">
+                                    <i class="ti ti-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public required string ItemType { get; set; }
+
+    [Parameter, EditorRequired]
+    public int ItemId { get; set; }
+
+    /// <summary>Nom de l'objet, conservé par le module Réservations — voir IItemReservations.EnableAsync.</summary>
+    [Parameter, EditorRequired]
+    public required string ItemName { get; set; }
+
+    /// <summary>Lien vers cette fiche, pour que le planning renvoie dessus.</summary>
+    [Parameter]
+    public string? ItemUrl { get; set; }
+
+    /// <summary>Prévient la fiche pour qu'elle rafraîchisse le compteur de l'onglet.</summary>
+    [Parameter]
+    public EventCallback<int> CountChanged { get; set; }
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    private IItemReservations? Service => Services.GetService(typeof(IItemReservations)) as IItemReservations;
+
+    private List<ItemReservation>? _reservations;
+    private bool _reservable;
+    private DateTime _begin = DateTime.Today.AddHours(9);
+    private DateTime _end = DateTime.Today.AddHours(10);
+    private string? _comment;
+    private string? _error;
+
+    protected override async Task OnParametersSetAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        if (Service is not { } service)
+        {
+            _reservations = null;
+            return;
+        }
+
+        _reservable = await service.IsReservableAsync(ItemType, ItemId);
+        _reservations = [.. await service.GetForItemAsync(ItemType, ItemId)];
+
+        await CountChanged.InvokeAsync(_reservations.Count);
+    }
+
+    private async Task EnableAsync()
+    {
+        if (Service is not { } service)
+        {
+            return;
+        }
+
+        await service.EnableAsync(ItemType, ItemId, ItemName, ItemUrl, null);
+        await LoadAsync();
+    }
+
+    private async Task DisableAsync()
+    {
+        if (Service is not { } service)
+        {
+            return;
+        }
+
+        await service.DisableAsync(ItemType, ItemId);
+        await LoadAsync();
+    }
+
+    private async Task ReserveAsync()
+    {
+        _error = null;
+
+        if (Service is not { } service)
+        {
+            return;
+        }
+
+        ReservationOutcome outcome = await service.ReserveAsync(
+            ItemType, ItemId, await CurrentUserIdAsync(), await CurrentUserNameAsync(), _begin, _end, _comment);
+
+        if (!outcome.Ok)
+        {
+            _error = outcome.Error;
+            return;
+        }
+
+        _comment = null;
+        await LoadAsync();
+    }
+
+    private async Task CancelAsync(int reservationId)
+    {
+        if (Service is not { } service)
+        {
+            return;
+        }
+
+        await service.CancelAsync(reservationId, false);
+        await LoadAsync();
+    }
+
+    private async Task<string> CurrentUserNameAsync()
+    {
+        if (AuthStateTask is null)
+        {
+            return "Système";
+        }
+
+        AuthenticationState authState = await AuthStateTask;
+        return authState.User.Identity?.Name is { Length: > 0 } name ? name : "Système";
+    }
+
+    private async Task<int?> CurrentUserIdAsync()
+    {
+        if (AuthStateTask is null)
+        {
+            return null;
+        }
+
+        AuthenticationState authState = await AuthStateTask;
+
+        return int.TryParse(
+            authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out int id)
+            ? id
+            : null;
+    }
+}

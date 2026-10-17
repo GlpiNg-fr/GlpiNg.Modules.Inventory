@@ -1179,6 +1179,7 @@ public partial class Detail : ComponentBase, IDisposable
             deploymentTasksInfo is null ? null : deploymentTasksInfo.Tasks.Count + deploymentTasksInfo.Groups.Count),
         new("collectinfo", "ti-cloud-upload", "Informations de collecte", collectEntriesCount),
         new("notes", "ti-notes", "Notes", notesCount > 0 ? notesCount : null),
+        new("reservations", "ti-calendar-event", "Réservations", null),
         new("links", "ti-external-link", "Liens externes", null),
         new("deploy", "ti-package", "Déploiement de package", deploymentAssignmentsCount == 0 ? null : deploymentAssignmentsCount),
         new("all", "ti-list", "Tous", null),

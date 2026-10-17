@@ -967,6 +967,13 @@ else
                     }
                     break;
 
+                case "reservations":
+                    <ItemReservationsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Computer"
+                                         ItemId="@_computer.Id"
+                                         ItemName="@(_computer.Name)"
+                                         ItemUrl="@($"/parc/computer/{_computer.Id}")" />
+                    break;
+
                 case "notes":
                     <p class="text-secondary">
                         @T("Notes libres attachées à ce poste. Elles ne viennent pas de l'inventaire et ne sont jamais écrasées par un agent : c'est le carnet de bord de ceux qui l'exploitent.")
