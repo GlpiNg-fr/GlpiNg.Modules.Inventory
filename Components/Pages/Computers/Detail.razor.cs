@@ -1188,6 +1188,8 @@ public partial class Detail : ComponentBase, IDisposable
         new("changes", "ti-replace", "Changements", null),
         new("knowbase", "ti-book", "Base de connaissances", null),
         new("impact", "ti-affiliate", "Analyse d'impact", null),
+        new("lines", "ti-phone", "Lignes téléphoniques", null),
+        new("databases", "ti-database", "Instances de base de données", null),
         new("contracts", "ti-file-text", "Contrats", null),
         new("documents", "ti-file", "Documents", null),
         new("notes", "ti-notes", "Notes", notesCount > 0 ? notesCount : null),

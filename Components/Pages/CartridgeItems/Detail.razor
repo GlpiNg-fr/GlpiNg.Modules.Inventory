@@ -37,6 +37,10 @@ else
                 <span>@T("Historique")</span>
                 <span class="glping-fiche-tab-count">@_item.HistoryEntries.Count</span>
             </button>
+            <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "printers" ? "active" : "")" @onclick='() => SetTab("printers")'>
+                <i class="ti ti-printer"></i>
+                <span>@T("Imprimantes compatibles")</span>
+            </button>
             <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "management" ? "active" : "")" @onclick='() => SetTab("management")'>
                 <i class="ti ti-wallet"></i>
                 <span>@T("Gestion")</span>
@@ -215,6 +219,10 @@ else
                             </div>
                         }
                     </div>
+                    break;
+
+                case "printers":
+                    <ItemRelationsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.CartridgeItem" ItemId="ItemId" Relation="@GlpiNg.Modules.Abstractions.Items.ItemRelationKinds.Printer" />
                     break;
 
                 case "management":

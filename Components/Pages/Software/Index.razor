@@ -208,7 +208,9 @@
                                 <i class="ti @(isExpanded ? "ti-chevron-down" : "ti-chevron-right") text-secondary"></i>
                             </td>
                             <td class="fw-semibold">
-                                <i class="ti ti-apps me-1 text-secondary"></i>@group.Name
+                                <a href="@($"/parc/software/detail?name={Uri.EscapeDataString(group.Name)}&publisher={Uri.EscapeDataString(group.Publisher ?? string.Empty)}")" class="text-reset" @onclick:stopPropagation="true">
+                                    <i class="ti ti-apps me-1 text-secondary"></i>@group.Name
+                                </a>
                             </td>
                             <td>@(group.Publisher ?? "—")</td>
                             <td>@group.VersionCount</td>

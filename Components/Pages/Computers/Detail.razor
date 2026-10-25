@@ -1015,6 +1015,14 @@ else
                     <ItemRelationsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Computer" ItemId="@_computer.Id" Relation="@GlpiNg.Modules.Abstractions.Items.ItemRelationKinds.Impact" />
                     break;
 
+                case "lines":
+                    <ItemRelationsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Computer" ItemId="@_computer.Id" Relation="@GlpiNg.Modules.Abstractions.Items.ItemRelationKinds.Line" />
+                    break;
+
+                case "databases":
+                    <ItemRelationsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Computer" ItemId="@_computer.Id" Relation="@GlpiNg.Modules.Abstractions.Items.ItemRelationKinds.Database" />
+                    break;
+
                 case "contracts":
                     <ItemContractsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Computer" ItemId="@_computer.Id" />
                     break;

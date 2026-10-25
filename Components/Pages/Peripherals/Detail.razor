@@ -214,6 +214,10 @@ else
                     <ItemRelationsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Peripheral" ItemId="@_peripheral.Id" Relation="@GlpiNg.Modules.Abstractions.Items.ItemRelationKinds.Impact" />
                     break;
 
+                case "phonelines":
+                    <ItemRelationsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Peripheral" ItemId="@_peripheral.Id" Relation="@GlpiNg.Modules.Abstractions.Items.ItemRelationKinds.Line" />
+                    break;
+
                 case "contracts":
                     <ItemContractsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Peripheral" ItemId="@_peripheral.Id" />
                     break;

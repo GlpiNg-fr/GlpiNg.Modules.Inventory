@@ -1,0 +1,121 @@
+@page "/parc/software/detail"
+@rendermode InteractiveServer
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<DbContext> DbFactory
+
+<PageTitle>@(string.IsNullOrEmpty(Name) ? T("Logiciel") : Name) — GlpiNg</PageTitle>
+
+@* Fiche d'un logiciel. GlpiNg ne tient pas de catalogue : un « logiciel » est ce que les agents remontent sous un même
+   nom et un même éditeur, d'où une fiche identifiée par ce couple plutôt que par un numéro. *@
+
+@if (_installs is null)
+{
+    <div class="card"><div class="card-body text-center text-secondary py-5">@T("Chargement…")</div></div>
+}
+else if (_installs.Count == 0)
+{
+    <div class="card"><div class="card-body text-center text-secondary py-5">@T("Logiciel introuvable.")</div></div>
+}
+else
+{
+    <div class="glping-fiche">
+        <div class="glping-fiche-header d-flex align-items-center justify-content-between">
+            <h2 class="mb-0"><i class="ti ti-apps me-2"></i>@Name</h2>
+            <a class="btn" href="/parc/software"><i class="ti ti-arrow-left me-1"></i>@T("Retour à la liste")</a>
+        </div>
+
+        <div class="glping-fiche-layout">
+            <aside class="glping-fiche-sidebar">
+                <button type="button" class="glping-fiche-tab-item @(_tab == "main" ? "active" : "")" @onclick='() => _tab = "main"'>
+                    <i class="ti ti-apps"></i><span>@T("Logiciel")</span>
+                </button>
+                <button type="button" class="glping-fiche-tab-item @(_tab == "versions" ? "active" : "")" @onclick='() => _tab = "versions"'>
+                    <i class="ti ti-versions"></i><span>@T("Versions")</span><span class="glping-fiche-tab-count">@_versions.Count</span>
+                </button>
+                <button type="button" class="glping-fiche-tab-item @(_tab == "installs" ? "active" : "")" @onclick='() => _tab = "installs"'>
+                    <i class="ti ti-device-desktop"></i><span>@T("Installations")</span><span class="glping-fiche-tab-count">@_installs.Count</span>
+                </button>
+            </aside>
+
+            <div class="glping-fiche-panel">
+                @switch (_tab)
+                {
+                    case "main":
+                        <div class="glping-fiche-field"><label>@T("Nom")</label><div class="glping-fiche-value-box">@Name</div></div>
+                        <div class="glping-fiche-field"><label>@T("Éditeur")</label><div class="glping-fiche-value-box">@(string.IsNullOrEmpty(Publisher) ? "—" : Publisher)</div></div>
+                        <div class="glping-fiche-field"><label>@T("Versions")</label><div class="glping-fiche-value-box">@_versions.Count</div></div>
+                        <div class="glping-fiche-field"><label>@T("Installations")</label><div class="glping-fiche-value-box">@_installs.Count</div></div>
+                        break;
+
+                    case "versions":
+                        <div class="table-responsive">
+                            <table class="table table-vcenter card-table">
+                                <thead><tr><th>@T("Version")</th><th>@T("Installations")</th></tr></thead>
+                                <tbody>
+                                    @foreach ((string version, int count) in _versions)
+                                    {
+                                        <tr><td class="fw-semibold">@(string.IsNullOrEmpty(version) ? "—" : version)</td><td>@count</td></tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        break;
+
+                    case "installs":
+                        <div class="table-responsive">
+                            <table class="table table-vcenter card-table">
+                                <thead><tr><th>@T("Poste")</th><th>@T("Version")</th><th>@T("Date d'installation")</th></tr></thead>
+                                <tbody>
+                                    @foreach (Install install in _installs)
+                                    {
+                                        <tr>
+                                            <td><a href="@($"/parc/computer/{install.ComputerId}")" class="text-reset fw-semibold"><i class="ti ti-device-desktop me-1 text-secondary"></i>@install.ComputerName</a></td>
+                                            <td class="text-secondary">@install.Version</td>
+                                            <td class="text-secondary">@install.InstallDate</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        break;
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private sealed record Install(int ComputerId, string ComputerName, string? Version, string? InstallDate);
+
+    [SupplyParameterFromQuery(Name = "name")]
+    public string? Name { get; set; }
+
+    [SupplyParameterFromQuery(Name = "publisher")]
+    public string? Publisher { get; set; }
+
+    private List<Install>? _installs;
+    private List<(string Version, int Count)> _versions = [];
+    private string _tab = "main";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (string.IsNullOrEmpty(Name))
+        {
+            _installs = [];
+            return;
+        }
+
+        await using DbContext db = await DbFactory.CreateDbContextAsync();
+        string? publisher = string.IsNullOrEmpty(Publisher) ? null : Publisher;
+
+        _installs = (await db.Set<ComputerSoftware>().AsNoTracking()
+            .Where(s => s.Name == Name && s.Publisher == publisher)
+            .Join(db.Set<Computer>(), s => s.ComputerId, c => c.Id, (s, c) => new { c.Id, c.Name, s.Version, s.InstallDate })
+            .OrderBy(x => x.Name)
+            .ToListAsync())
+            .Select(x => new Install(x.Id, x.Name, x.Version, x.InstallDate))
+            .ToList();
+
+        _versions = [.. _installs.GroupBy(i => i.Version ?? string.Empty).Select(g => (g.Key, g.Count())).OrderByDescending(v => v.Item2)];
+    }
+}

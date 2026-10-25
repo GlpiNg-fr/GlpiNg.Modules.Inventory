@@ -84,6 +84,10 @@ else
                 <i class="ti ti-affiliate"></i>
                 <span>@T("Analyse d'impact")</span>
             </button>
+            <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "elements" ? "active" : "")" @onclick='() => SetTab("elements")'>
+                <i class="ti ti-device-desktop"></i>
+                <span>@T("Éléments")</span>
+            </button>
             <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "contracts" ? "active" : "")" @onclick='() => SetTab("contracts")'>
                 <i class="ti ti-file-text"></i>
                 <span>@T("Contrats")</span>
@@ -199,6 +203,10 @@ else
 
                 case "impact":
                     <ItemRelationsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Enclosure" ItemId="ItemId" Relation="@GlpiNg.Modules.Abstractions.Items.ItemRelationKinds.Impact" />
+                    break;
+
+                case "elements":
+                    <ItemAssetsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Enclosure" ItemId="ItemId" Relation="@GlpiNg.Modules.Abstractions.Items.ItemRelationKinds.Enclosure" />
                     break;
 
                 case "contracts":
