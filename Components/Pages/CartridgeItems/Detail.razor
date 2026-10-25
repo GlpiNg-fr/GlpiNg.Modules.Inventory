@@ -37,6 +37,18 @@ else
                 <span>@T("Historique")</span>
                 <span class="glping-fiche-tab-count">@_item.HistoryEntries.Count</span>
             </button>
+            <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "management" ? "active" : "")" @onclick='() => SetTab("management")'>
+                <i class="ti ti-wallet"></i>
+                <span>@T("Gestion")</span>
+            </button>
+            <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "documents" ? "active" : "")" @onclick='() => SetTab("documents")'>
+                <i class="ti ti-file"></i>
+                <span>@T("Documents")</span>
+            </button>
+            <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "notes" ? "active" : "")" @onclick='() => SetTab("notes")'>
+                <i class="ti ti-notes"></i>
+                <span>@T("Notes")</span>
+            </button>
             <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "links" ? "active" : "")" @onclick='() => SetTab("links")'>
                 <i class="ti ti-external-link"></i>
                 <span>@T("Liens externes")</span>
@@ -203,6 +215,18 @@ else
                             </div>
                         }
                     </div>
+                    break;
+
+                case "management":
+                    <ItemManagementTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.CartridgeItem" ItemId="ItemId" />
+                    break;
+
+                case "documents":
+                    <ItemDocumentsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.CartridgeItem" ItemId="ItemId" />
+                    break;
+
+                case "notes":
+                    <ItemNotesTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.CartridgeItem" ItemId="ItemId" />
                     break;
 
                 case "links":

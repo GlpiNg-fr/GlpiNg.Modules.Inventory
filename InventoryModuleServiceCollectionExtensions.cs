@@ -60,6 +60,9 @@ public static class InventoryModuleServiceCollectionExtensions
 
         services.AddScoped<ComputerListStateService>();
 
+        // Onglets « Éléments utilisés / gérés » de la fiche utilisateur (hôte), qui ne voit pas les modèles du parc.
+        services.AddScoped<GlpiNg.Modules.Abstractions.Items.IUserItemSource, UserItemsService>();
+
         // Réveil immédiat depuis la fiche ordinateur (bouton « Actions »). Sans état, donc
         // singleton. À ne pas confondre avec les tâches Wake-on-LAN du module Déploiement, qui
         // font relayer le réveil par un agent — voir la doc de WakeOnLanSender.
@@ -69,6 +72,9 @@ public static class InventoryModuleServiceCollectionExtensions
         // distincte de celle du projet hôte).
         services.AddControllers()
             .AddApplicationPart(typeof(GlpiImportController).Assembly);
+
+        // Objets du parc, cibles de l'analyse d'impact.
+        services.AddScoped<GlpiNg.Modules.Abstractions.Items.IRelationTargetSource, GlpiNg.Modules.Inventory.Services.RelationTargetSource>();
 
         return services;
     }

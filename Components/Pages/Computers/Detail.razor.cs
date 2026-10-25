@@ -743,7 +743,7 @@ public partial class Detail : ComponentBase, IDisposable
         // poll (voir glping.followLog) ; un journal terminé s'ouvre, lui, en haut comme avant.
         // Le journal peut être marqué ouvert (AutoExpandRunningAssignmentLog) alors qu'un autre
         // onglet est affiché : la référence ne désigne alors aucun élément, d'où le test d'onglet.
-        if (_activeTabKey == "deploy"
+        if (_activeTabKey is "deploy" or "all"
             && _expandedAssignmentJobId is { } jobId
             && _deploymentAssignments.Find(a => a.JobId == jobId) is { } expanded
             && IsInProgress(expanded)
@@ -1178,6 +1178,18 @@ public partial class Detail : ComponentBase, IDisposable
         new("tasks", "ti-checklist", "Tâches / groupes",
             deploymentTasksInfo is null ? null : deploymentTasksInfo.Tasks.Count + deploymentTasksInfo.Groups.Count),
         new("collectinfo", "ti-cloud-upload", "Informations de collecte", collectEntriesCount),
+        new("management", "ti-wallet", "Gestion", null),
+        new("certificates", "ti-certificate", "Certificats", null),
+        new("domainitems", "ti-world-www", "Noms de domaine", null),
+        new("applications", "ti-apps", "Applicatifs", null),
+        new("projects", "ti-clipboard-list", "Projets", null),
+        new("tickets", "ti-ticket", "Tickets", null),
+        new("problems", "ti-alert-triangle", "Problèmes", null),
+        new("changes", "ti-replace", "Changements", null),
+        new("knowbase", "ti-book", "Base de connaissances", null),
+        new("impact", "ti-affiliate", "Analyse d'impact", null),
+        new("contracts", "ti-file-text", "Contrats", null),
+        new("documents", "ti-file", "Documents", null),
         new("notes", "ti-notes", "Notes", notesCount > 0 ? notesCount : null),
         new("reservations", "ti-calendar-event", "Réservations", null),
         new("links", "ti-external-link", "Liens externes", null),

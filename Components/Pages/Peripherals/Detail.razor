@@ -174,6 +174,58 @@ else
                     </div>
                     break;
 
+                case "management":
+                    <ItemManagementTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Peripheral" ItemId="@_peripheral.Id" />
+                    break;
+
+                case "certificates":
+                    <ItemRelationsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Peripheral" ItemId="@_peripheral.Id" Relation="@GlpiNg.Modules.Abstractions.Items.ItemRelationKinds.Certificate" />
+                    break;
+
+                case "domains":
+                    <ItemRelationsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Peripheral" ItemId="@_peripheral.Id" Relation="@GlpiNg.Modules.Abstractions.Items.ItemRelationKinds.Domain" />
+                    break;
+
+                case "applications":
+                    <ItemRelationsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Peripheral" ItemId="@_peripheral.Id" Relation="@GlpiNg.Modules.Abstractions.Items.ItemRelationKinds.Appliance" />
+                    break;
+
+                case "projects":
+                    <ItemRelationsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Peripheral" ItemId="@_peripheral.Id" Relation="@GlpiNg.Modules.Abstractions.Items.ItemRelationKinds.Project" />
+                    break;
+
+                case "tickets":
+                    <ItemRelationsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Peripheral" ItemId="@_peripheral.Id" Relation="@GlpiNg.Modules.Abstractions.Items.ItemRelationKinds.Ticket" />
+                    break;
+
+                case "problems":
+                    <ItemRelationsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Peripheral" ItemId="@_peripheral.Id" Relation="@GlpiNg.Modules.Abstractions.Items.ItemRelationKinds.Problem" />
+                    break;
+
+                case "changes":
+                    <ItemRelationsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Peripheral" ItemId="@_peripheral.Id" Relation="@GlpiNg.Modules.Abstractions.Items.ItemRelationKinds.Change" />
+                    break;
+
+                case "knowbase":
+                    <ItemRelationsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Peripheral" ItemId="@_peripheral.Id" Relation="@GlpiNg.Modules.Abstractions.Items.ItemRelationKinds.Knowledge" />
+                    break;
+
+                case "impact":
+                    <ItemRelationsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Peripheral" ItemId="@_peripheral.Id" Relation="@GlpiNg.Modules.Abstractions.Items.ItemRelationKinds.Impact" />
+                    break;
+
+                case "contracts":
+                    <ItemContractsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Peripheral" ItemId="@_peripheral.Id" />
+                    break;
+
+                case "documents":
+                    <ItemDocumentsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Peripheral" ItemId="@_peripheral.Id" />
+                    break;
+
+                case "notes":
+                    <ItemNotesTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Peripheral" ItemId="@_peripheral.Id" />
+                    break;
+
                 case "reservations":
                     <ItemReservationsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Peripheral"
                                          ItemId="@_peripheral.Id"

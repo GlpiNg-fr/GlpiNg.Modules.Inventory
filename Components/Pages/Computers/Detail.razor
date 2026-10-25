@@ -96,7 +96,15 @@ else
         </aside>
 
         <div class="glping-fiche-panel @(FillPanelTabKeys.Contains(_activeTabKey) ? "glping-fiche-panel-fill" : "")">
-            @switch (_activeTabKey)
+            @* « Tous » empile le contenu de chaque onglet (sauf ceux sans contenu propre) : le switch
+               ci-dessous est donc rejoué par clé, au lieu de ne lire que l'onglet actif. *@
+            @foreach (var tabKey in _activeTabKey == "all" ? _tabs.Select(t => t.Key).Where(k => k is not ("all" or "remotecontrol")) : [_activeTabKey])
+            {
+            @if (_activeTabKey == "all")
+            {
+                <h4 class="glping-fiche-block-title mt-4"><i class="ti @_tabs.First(t => t.Key == tabKey).Icon"></i>@T(_tabs.First(t => t.Key == tabKey).Label)</h4>
+            }
+            @switch (tabKey)
             {
                 case "computer":
                     @if (_editMode)
@@ -967,6 +975,54 @@ else
                     }
                     break;
 
+                case "management":
+                    <ItemManagementTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Computer" ItemId="@_computer.Id" />
+                    break;
+
+                case "certificates":
+                    <ItemRelationsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Computer" ItemId="@_computer.Id" Relation="@GlpiNg.Modules.Abstractions.Items.ItemRelationKinds.Certificate" />
+                    break;
+
+                case "domainitems":
+                    <ItemRelationsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Computer" ItemId="@_computer.Id" Relation="@GlpiNg.Modules.Abstractions.Items.ItemRelationKinds.Domain" />
+                    break;
+
+                case "applications":
+                    <ItemRelationsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Computer" ItemId="@_computer.Id" Relation="@GlpiNg.Modules.Abstractions.Items.ItemRelationKinds.Appliance" />
+                    break;
+
+                case "projects":
+                    <ItemRelationsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Computer" ItemId="@_computer.Id" Relation="@GlpiNg.Modules.Abstractions.Items.ItemRelationKinds.Project" />
+                    break;
+
+                case "tickets":
+                    <ItemRelationsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Computer" ItemId="@_computer.Id" Relation="@GlpiNg.Modules.Abstractions.Items.ItemRelationKinds.Ticket" />
+                    break;
+
+                case "problems":
+                    <ItemRelationsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Computer" ItemId="@_computer.Id" Relation="@GlpiNg.Modules.Abstractions.Items.ItemRelationKinds.Problem" />
+                    break;
+
+                case "changes":
+                    <ItemRelationsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Computer" ItemId="@_computer.Id" Relation="@GlpiNg.Modules.Abstractions.Items.ItemRelationKinds.Change" />
+                    break;
+
+                case "knowbase":
+                    <ItemRelationsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Computer" ItemId="@_computer.Id" Relation="@GlpiNg.Modules.Abstractions.Items.ItemRelationKinds.Knowledge" />
+                    break;
+
+                case "impact":
+                    <ItemRelationsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Computer" ItemId="@_computer.Id" Relation="@GlpiNg.Modules.Abstractions.Items.ItemRelationKinds.Impact" />
+                    break;
+
+                case "contracts":
+                    <ItemContractsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Computer" ItemId="@_computer.Id" />
+                    break;
+
+                case "documents":
+                    <ItemDocumentsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Computer" ItemId="@_computer.Id" />
+                    break;
+
                 case "reservations":
                     <ItemReservationsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Computer"
                                          ItemId="@_computer.Id"
@@ -1516,12 +1572,13 @@ else
                     break;
 
                 default:
-                    var current = _tabs.First(t => t.Key == _activeTabKey);
+                    var current = _tabs.First(t => t.Key == tabKey);
                     <div class="glping-config-placeholder">
                         <i class="ti @current.Icon"></i>
                         <p class="mb-0">@T("L'onglet « {0} » n'est pas encore disponible.", current.Label)</p>
                     </div>
                     break;
+            }
             }
         </div>
     </div>

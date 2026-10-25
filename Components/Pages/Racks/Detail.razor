@@ -44,6 +44,58 @@ else
                 <span>@T("Historique")</span>
                 <span class="glping-fiche-tab-count">@_item.HistoryEntries.Count</span>
             </button>
+            <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "management" ? "active" : "")" @onclick='() => SetTab("management")'>
+                <i class="ti ti-wallet"></i>
+                <span>@T("Gestion")</span>
+            </button>
+            <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "certificates" ? "active" : "")" @onclick='() => SetTab("certificates")'>
+                <i class="ti ti-certificate"></i>
+                <span>@T("Certificats")</span>
+            </button>
+            <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "domains" ? "active" : "")" @onclick='() => SetTab("domains")'>
+                <i class="ti ti-world-www"></i>
+                <span>@T("Domaines")</span>
+            </button>
+            <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "applications" ? "active" : "")" @onclick='() => SetTab("applications")'>
+                <i class="ti ti-apps"></i>
+                <span>@T("Applicatifs")</span>
+            </button>
+            <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "projects" ? "active" : "")" @onclick='() => SetTab("projects")'>
+                <i class="ti ti-clipboard-list"></i>
+                <span>@T("Projets")</span>
+            </button>
+            <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "tickets" ? "active" : "")" @onclick='() => SetTab("tickets")'>
+                <i class="ti ti-ticket"></i>
+                <span>@T("Tickets")</span>
+            </button>
+            <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "problems" ? "active" : "")" @onclick='() => SetTab("problems")'>
+                <i class="ti ti-alert-triangle"></i>
+                <span>@T("Problèmes")</span>
+            </button>
+            <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "changes" ? "active" : "")" @onclick='() => SetTab("changes")'>
+                <i class="ti ti-replace"></i>
+                <span>@T("Changements")</span>
+            </button>
+            <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "knowbase" ? "active" : "")" @onclick='() => SetTab("knowbase")'>
+                <i class="ti ti-book"></i>
+                <span>@T("Base de connaissances")</span>
+            </button>
+            <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "impact" ? "active" : "")" @onclick='() => SetTab("impact")'>
+                <i class="ti ti-affiliate"></i>
+                <span>@T("Analyse d'impact")</span>
+            </button>
+            <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "contracts" ? "active" : "")" @onclick='() => SetTab("contracts")'>
+                <i class="ti ti-file-text"></i>
+                <span>@T("Contrats")</span>
+            </button>
+            <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "documents" ? "active" : "")" @onclick='() => SetTab("documents")'>
+                <i class="ti ti-file"></i>
+                <span>@T("Documents")</span>
+            </button>
+            <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "notes" ? "active" : "")" @onclick='() => SetTab("notes")'>
+                <i class="ti ti-notes"></i>
+                <span>@T("Notes")</span>
+            </button>
             <button type="button" class="glping-fiche-tab-item @(_activeTabKey == "links" ? "active" : "")" @onclick='() => SetTab("links")'>
                 <i class="ti ti-external-link"></i>
                 <span>@T("Liens externes")</span>
@@ -107,6 +159,58 @@ else
                             </div>
                         }
                     </div>
+                    break;
+
+                case "management":
+                    <ItemManagementTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Rack" ItemId="ItemId" />
+                    break;
+
+                case "certificates":
+                    <ItemRelationsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Rack" ItemId="ItemId" Relation="@GlpiNg.Modules.Abstractions.Items.ItemRelationKinds.Certificate" />
+                    break;
+
+                case "domains":
+                    <ItemRelationsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Rack" ItemId="ItemId" Relation="@GlpiNg.Modules.Abstractions.Items.ItemRelationKinds.Domain" />
+                    break;
+
+                case "applications":
+                    <ItemRelationsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Rack" ItemId="ItemId" Relation="@GlpiNg.Modules.Abstractions.Items.ItemRelationKinds.Appliance" />
+                    break;
+
+                case "projects":
+                    <ItemRelationsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Rack" ItemId="ItemId" Relation="@GlpiNg.Modules.Abstractions.Items.ItemRelationKinds.Project" />
+                    break;
+
+                case "tickets":
+                    <ItemRelationsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Rack" ItemId="ItemId" Relation="@GlpiNg.Modules.Abstractions.Items.ItemRelationKinds.Ticket" />
+                    break;
+
+                case "problems":
+                    <ItemRelationsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Rack" ItemId="ItemId" Relation="@GlpiNg.Modules.Abstractions.Items.ItemRelationKinds.Problem" />
+                    break;
+
+                case "changes":
+                    <ItemRelationsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Rack" ItemId="ItemId" Relation="@GlpiNg.Modules.Abstractions.Items.ItemRelationKinds.Change" />
+                    break;
+
+                case "knowbase":
+                    <ItemRelationsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Rack" ItemId="ItemId" Relation="@GlpiNg.Modules.Abstractions.Items.ItemRelationKinds.Knowledge" />
+                    break;
+
+                case "impact":
+                    <ItemRelationsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Rack" ItemId="ItemId" Relation="@GlpiNg.Modules.Abstractions.Items.ItemRelationKinds.Impact" />
+                    break;
+
+                case "contracts":
+                    <ItemContractsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Rack" ItemId="ItemId" />
+                    break;
+
+                case "documents":
+                    <ItemDocumentsTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Rack" ItemId="ItemId" />
+                    break;
+
+                case "notes":
+                    <ItemNotesTab ItemType="@GlpiNg.Modules.Abstractions.Items.ItemTypes.Rack" ItemId="ItemId" />
                     break;
 
                 case "links":

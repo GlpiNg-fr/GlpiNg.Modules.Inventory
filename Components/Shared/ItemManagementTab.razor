@@ -1,0 +1,150 @@
+@using GlpiNg.Modules.Abstractions.Items
+@inject IServiceProvider Services
+
+@* Onglet « Gestion » d'une fiche de parc : achat, garantie, fournisseur, budget. Les dates sont des
+   valeurs murales saisies à la main : stockées telles quelles, jamais converties de fuseau. *@
+
+@if (_management is null)
+{
+    <div class="glping-config-placeholder">
+        <i class="ti ti-wallet-off"></i>
+        <p class="mb-0">@T("Cette fonction n'est pas active sur cette installation.")</p>
+    </div>
+}
+else
+{
+    <div class="glping-fiche-form">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="glping-fiche-field">
+                    <label>@T("Fournisseur")</label>
+                    <select class="form-select" @bind="_supplierId">
+                        <option value="0">—</option>
+                        @foreach (ManagementOption supplier in _suppliers)
+                        {
+                            <option value="@supplier.Id">@supplier.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="glping-fiche-field">
+                    <label>@T("Budget")</label>
+                    <select class="form-select" @bind="_budgetId">
+                        <option value="0">—</option>
+                        @foreach (ManagementOption budget in _budgets)
+                        {
+                            <option value="@budget.Id">@budget.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="glping-fiche-field">
+                    <label>@T("Valeur")</label>
+                    <input type="number" step="0.01" class="form-control" @bind="_value" />
+                </div>
+                <div class="glping-fiche-field">
+                    <label>@T("Numéro de commande")</label>
+                    <input class="form-control" @bind="_orderNumber" />
+                </div>
+                <div class="glping-fiche-field">
+                    <label>@T("Numéro de livraison")</label>
+                    <input class="form-control" @bind="_deliveryNumber" />
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="glping-fiche-field">
+                    <label>@T("Date d'achat")</label>
+                    <input type="date" class="form-control" @bind="_purchaseDate" />
+                </div>
+                <div class="glping-fiche-field">
+                    <label>@T("Date de livraison")</label>
+                    <input type="date" class="form-control" @bind="_deliveryDate" />
+                </div>
+                <div class="glping-fiche-field">
+                    <label>@T("Date de mise en service")</label>
+                    <input type="date" class="form-control" @bind="_useDate" />
+                </div>
+                <div class="glping-fiche-field">
+                    <label>@T("Garantie (mois)")</label>
+                    <input type="number" min="0" class="form-control" @bind="_warrantyMonths" />
+                    @if (WarrantyEnd is { } end)
+                    {
+                        <small class="text-secondary">@T("Fin de garantie : {0}", Display.LocalDate(end))</small>
+                    }
+                </div>
+                <div class="glping-fiche-field">
+                    <label>@T("Informations de garantie")</label>
+                    <textarea class="form-control" rows="3" @bind="_warrantyInfo"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-3 mt-2">
+            <button type="button" class="btn btn-primary" @onclick="SaveAsync">
+                <i class="ti ti-device-floppy me-1"></i>@T("Enregistrer")
+            </button>
+            @if (_saved)
+            {
+                <span class="text-success"><i class="ti ti-check me-1"></i>@T("Enregistré.")</span>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public required string ItemType { get; set; }
+
+    [Parameter, EditorRequired]
+    public int ItemId { get; set; }
+
+    private IItemManagement? _management;
+    private List<ManagementOption> _suppliers = [];
+    private List<ManagementOption> _budgets = [];
+    private int _supplierId;
+    private int _budgetId;
+    private decimal? _value;
+    private string? _orderNumber;
+    private string? _deliveryNumber;
+    private DateTime? _purchaseDate;
+    private DateTime? _deliveryDate;
+    private DateTime? _useDate;
+    private int? _warrantyMonths;
+    private string? _warrantyInfo;
+    private bool _saved;
+
+    /// <summary>Fin de garantie : la date d'achat (à défaut de mise en service) prolongée de la durée.</summary>
+    private DateTime? WarrantyEnd =>
+        _warrantyMonths is > 0 && (_purchaseDate ?? _useDate) is { } start ? start.AddMonths(_warrantyMonths.Value) : null;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _management = Services.GetService(typeof(IItemManagement)) as IItemManagement;
+        if (_management is null)
+        {
+            return;
+        }
+
+        _suppliers = [.. await _management.GetSuppliersAsync()];
+        _budgets = [.. await _management.GetBudgetsAsync()];
+
+        ItemManagementData data = await _management.GetAsync(ItemType, ItemId);
+        _supplierId = data.SupplierId ?? 0;
+        _budgetId = data.BudgetId ?? 0;
+        _value = data.Value;
+        _orderNumber = data.OrderNumber;
+        _deliveryNumber = data.DeliveryNumber;
+        _purchaseDate = data.PurchaseDate;
+        _deliveryDate = data.DeliveryDate;
+        _useDate = data.UseDate;
+        _warrantyMonths = data.WarrantyMonths;
+        _warrantyInfo = data.WarrantyInfo;
+        _saved = false;
+    }
+
+    private async Task SaveAsync()
+    {
+        await _management!.SaveAsync(ItemType, ItemId, new ItemManagementData(
+            _supplierId == 0 ? null : _supplierId, _budgetId == 0 ? null : _budgetId,
+            _purchaseDate, _deliveryDate, _useDate, _warrantyMonths, _warrantyInfo, _value, _orderNumber, _deliveryNumber));
+        _saved = true;
+    }
+}
