@@ -307,6 +307,12 @@ public partial class Detail : ComponentBase, IDisposable
             .Include(computer => computer.Peripherals)
             .Include(computer => computer.Volumes)
             .Include(computer => computer.Batteries)
+            .Include(computer => computer.VirtualMachines)
+            .Include(computer => computer.Processes)
+            .Include(computer => computer.EnvironmentVariables)
+            .Include(computer => computer.LocalAccounts)
+            .Include(computer => computer.Firewalls)
+            .Include(computer => computer.Licenses)
             .Include(computer => computer.NetworkPorts)
             .Include(computer => computer.Connectors)
             .Include(computer => computer.Antiviruses)
@@ -1090,7 +1096,7 @@ public partial class Detail : ComponentBase, IDisposable
     }
 
     // Reprend la liste et l'ordre des onglets de la fiche "Ordinateur" de GLPI. Seuls
-    // "computer", "os", "components", "batteries", "volumes", "software", "connections",
+    // "computer", "os", "components", "batteries", "volumes", "system", "software", "connections",
     // "networkports", "connectors", "antivirus", "locks", "domains", "importinfo", "history",
     // "tasks", "collectinfo", "links" et "deploy" ont un contenu réel pour l'instant (voir le
     // @switch de Detail.razor) ; les autres affichent un placeholder en attendant d'être
@@ -1165,6 +1171,8 @@ public partial class Detail : ComponentBase, IDisposable
         new("components", "ti-cpu", "Composants", computer.Components.Count),
         new("batteries", "ti-battery", "Batteries", computer.Batteries.Count),
         new("volumes", "ti-server-2", "Volumes", computer.Volumes.Count),
+        new("system", "ti-terminal-2", "Système",
+            computer.VirtualMachines.Count + computer.Processes.Count + computer.EnvironmentVariables.Count + computer.LocalAccounts.Count + computer.Firewalls.Count + computer.Licenses.Count),
         new("software", "ti-apps", "Logiciels", computer.Softwares.Count),
         new("connections", "ti-plug-connected", "Connexions", computer.Peripherals.Count),
         new("networkports", "ti-network", "Ports réseau", computer.NetworkPorts.Count),

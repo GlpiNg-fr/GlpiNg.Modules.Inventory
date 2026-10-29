@@ -72,6 +72,12 @@ public class Computer : IEntityScoped
     public List<ComputerPeripheral> Peripherals { get; set; } = [];
     public List<ComputerVolume> Volumes { get; set; } = [];
     public List<ComputerBattery> Batteries { get; set; } = [];
+    public List<ComputerVirtualMachine> VirtualMachines { get; set; } = [];
+    public List<ComputerProcess> Processes { get; set; } = [];
+    public List<ComputerEnvironmentVariable> EnvironmentVariables { get; set; } = [];
+    public List<ComputerLocalAccount> LocalAccounts { get; set; } = [];
+    public List<ComputerFirewall> Firewalls { get; set; } = [];
+    public List<ComputerLicense> Licenses { get; set; } = [];
     public List<ComputerNetworkPort> NetworkPorts { get; set; } = [];
     public List<ComputerConnector> Connectors { get; set; } = [];
     public List<ComputerAntivirus> Antiviruses { get; set; } = [];
@@ -256,4 +262,84 @@ public class ComputerHistoryEntry
     public required string User { get; set; }
     public required string Field { get; set; }
     public required string Description { get; set; }
+}
+
+/// <summary>Machine virtuelle hébergée par le poste, remontée par content.virtualmachines.</summary>
+public class ComputerVirtualMachine
+{
+    public int Id { get; set; }
+    public int ComputerId { get; set; }
+    public required string Name { get; set; }
+    public string? Uuid { get; set; }
+    public string? VmType { get; set; }
+    public string? Subsystem { get; set; }
+    public string? Status { get; set; }
+    public int? VCpu { get; set; }
+    public int? MemoryMb { get; set; }
+}
+
+/// <summary>Processus en cours d'exécution au moment de l'inventaire (content.processes).</summary>
+public class ComputerProcess
+{
+    public int Id { get; set; }
+    public int ComputerId { get; set; }
+    public int? Pid { get; set; }
+    public string? User { get; set; }
+    public required string Command { get; set; }
+    public double? CpuUsage { get; set; }
+    public long? VirtualMemory { get; set; }
+    public string? Started { get; set; }
+}
+
+/// <summary>Variable d'environnement remontée par content.envs.</summary>
+public class ComputerEnvironmentVariable
+{
+    public int Id { get; set; }
+    public int ComputerId { get; set; }
+    public required string Name { get; set; }
+    public string? Value { get; set; }
+}
+
+/// <summary>Compte ou groupe local (content.local_users / content.local_groups).</summary>
+public class ComputerLocalAccount
+{
+    public int Id { get; set; }
+    public int ComputerId { get; set; }
+
+    /// <summary>Vrai pour un groupe local, faux pour un utilisateur.</summary>
+    public bool IsGroup { get; set; }
+
+    /// <summary>Identifiant du compte (SID sous Windows, uid/gid ailleurs).</summary>
+    public string? AccountId { get; set; }
+    public required string Name { get; set; }
+}
+
+/// <summary>Profil de pare-feu remonté par content.firewall (un par profil Windows, par exemple).</summary>
+public class ComputerFirewall
+{
+    public int Id { get; set; }
+    public int ComputerId { get; set; }
+    public string? Profile { get; set; }
+
+    /// <summary>État tel que remonté par l'agent (« on » / « off »).</summary>
+    public string? Status { get; set; }
+    public string? Description { get; set; }
+    public string? IpAddress { get; set; }
+    public string? IpAddress6 { get; set; }
+}
+
+/// <summary>Licence logicielle détectée (content.licenseinfos : Office, Windows...).</summary>
+public class ComputerLicense
+{
+    public int Id { get; set; }
+    public int ComputerId { get; set; }
+    public required string Name { get; set; }
+    public string? FullName { get; set; }
+    public string? Key { get; set; }
+    public string? ProductId { get; set; }
+    public string? Components { get; set; }
+    public bool Trial { get; set; }
+    public bool Update { get; set; }
+    public bool Oem { get; set; }
+    public string? ActivationDate { get; set; }
 }

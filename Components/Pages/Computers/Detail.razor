@@ -485,6 +485,126 @@ else
                     }
                     break;
 
+                case "system":
+                    @if (_computer.VirtualMachines.Count + _computer.Processes.Count + _computer.EnvironmentVariables.Count + _computer.LocalAccounts.Count + _computer.Firewalls.Count + _computer.Licenses.Count == 0)
+                    {
+                        <div class="glping-config-placeholder">
+                            <i class="ti ti-terminal-2"></i>
+                            <p class="mb-0">@T("Aucune donnée système remontée.")</p>
+                        </div>
+                    }
+                    @if (_computer.VirtualMachines.Count > 0)
+                    {
+                        <div class="glping-fiche-block">
+                            <div class="glping-fiche-block-title"><i class="ti ti-box"></i>@T("Machines virtuelles ({0})", _computer.VirtualMachines.Count)</div>
+                            <div class="table-responsive">
+                                <table class="table table-vcenter card-table mb-0">
+                                    <thead><tr><th>@T("Nom")</th><th>@T("Type")</th><th>@T("Sous-système")</th><th>@T("Statut")</th><th>@T("Processeurs")</th><th>@T("Mémoire (Mo)")</th><th>UUID</th></tr></thead>
+                                    <tbody>
+                                        @foreach (ComputerVirtualMachine machine in _computer.VirtualMachines)
+                                        {
+                                            <tr><td>@machine.Name</td><td>@(machine.VmType ?? "—")</td><td>@(machine.Subsystem ?? "—")</td><td>@(machine.Status ?? "—")</td><td>@(machine.VCpu?.ToString() ?? "—")</td><td>@(machine.MemoryMb?.ToString() ?? "—")</td><td>@(machine.Uuid ?? "—")</td></tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    }
+                    @if (_computer.Firewalls.Count > 0)
+                    {
+                        <div class="glping-fiche-block">
+                            <div class="glping-fiche-block-title"><i class="ti ti-flame"></i>@T("Pare-feu ({0})", _computer.Firewalls.Count)</div>
+                            <div class="table-responsive">
+                                <table class="table table-vcenter card-table mb-0">
+                                    <thead><tr><th>@T("Profil")</th><th>@T("Statut")</th><th>@T("Description")</th><th>IPv4</th><th>IPv6</th></tr></thead>
+                                    <tbody>
+                                        @foreach (ComputerFirewall firewall in _computer.Firewalls)
+                                        {
+                                            <tr><td>@(firewall.Profile ?? "—")</td><td>@(firewall.Status ?? "—")</td><td>@(firewall.Description ?? "—")</td><td>@(firewall.IpAddress ?? "—")</td><td>@(firewall.IpAddress6 ?? "—")</td></tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    }
+                    @if (_computer.Licenses.Count > 0)
+                    {
+                        <div class="glping-fiche-block">
+                            <div class="glping-fiche-block-title"><i class="ti ti-key"></i>@T("Licences ({0})", _computer.Licenses.Count)</div>
+                            <div class="table-responsive">
+                                <table class="table table-vcenter card-table mb-0">
+                                    <thead><tr><th>@T("Nom")</th><th>@T("Nom complet")</th><th>@T("Clé")</th><th>@T("Identifiant produit")</th><th>@T("Composants")</th><th>@T("Activation")</th><th>@T("Options")</th></tr></thead>
+                                    <tbody>
+                                        @foreach (ComputerLicense license in _computer.Licenses)
+                                        {
+                                            <tr>
+                                                <td>@license.Name</td><td>@(license.FullName ?? "—")</td><td class="text-break">@(license.Key ?? "—")</td>
+                                                <td>@(license.ProductId ?? "—")</td><td>@(license.Components ?? "—")</td><td>@(license.ActivationDate ?? "—")</td>
+                                                <td>
+                                                    @if (license.Trial) { <span class="badge bg-warning-lt">@T("Essai")</span> }
+                                                    @if (license.Update) { <span class="badge bg-info-lt">@T("Mise à jour")</span> }
+                                                    @if (license.Oem) { <span class="badge bg-secondary-lt">OEM</span> }
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    }
+                    @if (_computer.LocalAccounts.Count > 0)
+                    {
+                        <div class="glping-fiche-block">
+                            <div class="glping-fiche-block-title"><i class="ti ti-users"></i>@T("Comptes et groupes locaux ({0})", _computer.LocalAccounts.Count)</div>
+                            <div class="table-responsive">
+                                <table class="table table-vcenter card-table mb-0">
+                                    <thead><tr><th>@T("Type")</th><th>@T("Nom")</th><th>@T("Identifiant")</th></tr></thead>
+                                    <tbody>
+                                        @foreach (ComputerLocalAccount account in _computer.LocalAccounts.OrderBy(a => a.IsGroup).ThenBy(a => a.Name))
+                                        {
+                                            <tr><td>@(account.IsGroup ? T("Groupe") : T("Utilisateur"))</td><td>@account.Name</td><td>@(account.AccountId ?? "—")</td></tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    }
+                    @if (_computer.EnvironmentVariables.Count > 0)
+                    {
+                        <div class="glping-fiche-block">
+                            <div class="glping-fiche-block-title"><i class="ti ti-variable"></i>@T("Variables d'environnement ({0})", _computer.EnvironmentVariables.Count)</div>
+                            <div class="table-responsive">
+                                <table class="table table-vcenter card-table mb-0">
+                                    <thead><tr><th>@T("Nom")</th><th>@T("Valeur")</th></tr></thead>
+                                    <tbody>
+                                        @foreach (ComputerEnvironmentVariable env in _computer.EnvironmentVariables.OrderBy(e => e.Name))
+                                        {
+                                            <tr><td>@env.Name</td><td class="text-break">@(env.Value ?? "—")</td></tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    }
+                    @if (_computer.Processes.Count > 0)
+                    {
+                        <div class="glping-fiche-block">
+                            <div class="glping-fiche-block-title"><i class="ti ti-cpu"></i>@T("Processus ({0})", _computer.Processes.Count)</div>
+                            <div class="table-responsive">
+                                <table class="table table-vcenter card-table mb-0">
+                                    <thead><tr><th>PID</th><th>@T("Utilisateur")</th><th>@T("Commande")</th><th>@T("CPU (%)")</th><th>@T("Mémoire virtuelle")</th><th>@T("Démarré")</th></tr></thead>
+                                    <tbody>
+                                        @foreach (ComputerProcess process in _computer.Processes.OrderBy(p => p.Pid))
+                                        {
+                                            <tr><td>@(process.Pid?.ToString() ?? "—")</td><td>@(process.User ?? "—")</td><td class="text-break">@process.Command</td><td>@(process.CpuUsage?.ToString("0.##") ?? "—")</td><td>@(process.VirtualMemory?.ToString() ?? "—")</td><td>@(process.Started ?? "—")</td></tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    }
+                    break;
+
                 case "software":
                     @if (_computer.Softwares.Count == 0)
                     {
