@@ -42,6 +42,7 @@ public partial class Index : ComponentBase
         SearchField<Computer>.Text("lastloggeduser", "Dernier utilisateur connecté", computer => computer.LastLoggedUser),
         SearchField<Computer>.Number("memory", "Mémoire (Mo)", computer => computer.TotalMemoryMb),
         SearchField<Computer>.Number("battery", "Batterie (%)", computer => GetBatteryPercent(computer)),
+        SearchField<Computer>.Text("agentversion", "Version de l'agent", computer => computer.Agent?.AgentVersion),
         SearchField<Computer>.Date("lastinventory", "Dernière remontée", computer => computer.LastInventoryAt),
         SearchField<Computer>.Date("createdat", "Date de création", computer => computer.CreatedAt),
     ];
@@ -176,6 +177,7 @@ public partial class Index : ComponentBase
             .AsNoTracking()
             .Include(computer => computer.Batteries)
             .Include(computer => computer.StatusItem)
+            .Include(computer => computer.Agent)
             .Where(computer => computer.IsDeleted == _showTrash)
             .OrderBy(computer => computer.Name)
             .ToListAsync();
